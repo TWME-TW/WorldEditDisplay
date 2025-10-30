@@ -1,0 +1,101 @@
+# WorldEditDisplay English Language File
+# Language: English (United States)
+# Code: en_us
+
+# General Messages
+general:
+  prefix: "<gold>[WorldEditDisplay]</gold>"
+  no_permission: "<red>You don't have permission to use this command!"
+  player_only: "<red>This command can only be executed by players!"
+  reload_success: "<green>[WorldEditDisplay] Configuration reloaded successfully!"
+  reload_failed: "<red>[WorldEditDisplay] Configuration reload failed! Check console for details."
+
+# Player Settings Commands
+command:
+  wedisplay:
+    set:
+      usage: "<red>Usage: /wedisplay set <renderer> <setting> <value>"
+      example: "<red>Example: /wedisplay set cuboid edge_material DIAMOND_BLOCK"
+      invalid_renderer: "<red>Invalid renderer type!"
+      available_renderers: "<red>Available renderers: cuboid, cylinder, ellipsoid, polygon, polyhedron"
+      invalid_value: "<red>Invalid setting value!"
+      success: "<green>Set %s.%s = %s"
+      success_hint: "<gray>Selection will be updated on next refresh"
+      failed: "<red>Setting failed!"
+      failed_hint: "<red>Possible reason: Value exceeds server limit"
+    
+    reset:
+      usage: "<red>Usage: /wedisplay reset <renderer> [setting]"
+      example1: "<red>Example: /wedisplay reset cuboid edge_material"
+      example2: "<red>Example: /wedisplay reset cuboid (reset entire renderer)"
+      invalid_renderer: "<red>Invalid renderer type!"
+      success_setting: "<green>Reset %s.%s to server default"
+      success_all: "<green>Reset all settings for %s to server default"
+    
+    show:
+      invalid_renderer: "<red>Invalid renderer type!"
+      title: "<yellow>========== Your Personal Render Settings =========="
+      hint: "<gray>Use <white>/wedisplay show <renderer> <gray>to view detailed settings"
+      available: "<gold>Available renderers:"
+      cuboid: "<white>- cuboid <gray>(Cuboid)"
+      cylinder: "<white>- cylinder <gray>(Cylinder)"
+      ellipsoid: "<white>- ellipsoid <gray>(Ellipsoid)"
+      polygon: "<white>- polygon <gray>(Polygon)"
+      polyhedron: "<white>- polyhedron <gray>(Polyhedron)"
+      renderer_title: "<yellow>========== %s Render Settings =========="
+      modify_hint: "<gray>Use <white>/wedisplay set <renderer> <setting> <value> <gray>to modify settings"
+    
+    reload:
+      success: "<green>Personal settings reloaded!"
+    
+    lang:
+      usage: "<red>Usage: /wedisplay lang <language>"
+      example: "<red>Example: /wedisplay lang en_us"
+      disabled: "<red>This feature has been disabled by server administrator!"
+      success: "<green>Language changed to: %s"
+      invalid: "<red>Unsupported language! Available: %s"
+      current: "<gold>Current language: <white>%s"
+    
+    help:
+      title: "<yellow>========== WorldEditDisplay Personal Settings =========="
+      set: "<gold>/wedisplay set <renderer> <setting> <value>"
+      set_desc: "<gray>  Set personal parameter"
+      reset: "<gold>/wedisplay reset <renderer> [setting]"
+      reset_desc: "<gray>  Reset to server default"
+      show: "<gold>/wedisplay show [renderer]"
+      show_desc: "<gray>  Display current settings"
+      reload: "<gold>/wedisplay reloadplayer"
+      reload_desc: "<gray>  Reload personal settings"
+      lang: "<gold>/wedisplay lang [language]"
+      lang_desc: "<gray>  Set language"
+
+# Setting Names
+settings:
+  edge_material: "<gold>edge_material: <white>%s"
+  point1_material: "<gold>point1_material: <white>%s"
+  point2_material: "<gold>point2_material: <white>%s"
+  grid_material: "<gold>grid_material: <white>%s"
+  edge_thickness: "<gold>edge_thickness: <white>%.2f"
+  grid_thickness: "<gold>grid_thickness: <white>%.2f"
+  vertex_marker_size: "<gold>vertex_marker_size: <white>%.2f"
+  height_grid_division: "<gold>height_grid_division: <white>%d"
+  circle_material: "<gold>circle_material: <white>%s"
+  center_material: "<gold>center_material: <white>%s"
+  center_line_material: "<gold>center_line_material: <white>%s"
+  circle_thickness: "<gold>circle_thickness: <white>%.2f"
+  center_line_thickness: "<gold>center_line_thickness: <white>%.2f"
+  center_thickness: "<gold>center_thickness: <white>%.2f"
+  min_circle_segments: "<gold>min_circle_segments: <white>%d"
+  max_circle_segments: "<gold>max_circle_segments: <white>%d"
+  target_segment_length: "<gold>target_segment_length: <white>%.2f"
+  radius_grid_division: "<gold>radius_grid_division: <white>%d"
+  line_material: "<gold>line_material: <white>%s"
+  center_marker_size: "<gold>center_marker_size: <white>%.2f"
+  min_segments: "<gold>min_segments: <white>%d"
+  max_segments: "<gold>max_segments: <white>%d"
+  vertex_material: "<gold>vertex_material: <white>%s"
+  vertical_material: "<gold>vertical_material: <white>%s"
+  vertical_thickness: "<gold>vertical_thickness: <white>%.2f"
+  vertex0_material: "<gold>vertex0_material: <white>%s"
+  vertex_size: "<gold>vertex_size: <white>%.2f"
+  vertex_thickness: "<gold>vertex_thickness: <white>%.2f"

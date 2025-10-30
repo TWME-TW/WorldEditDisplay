@@ -1,0 +1,34 @@
+name: WorldEditDisplay
+version: '1.0.0'
+main: dev.twme.worldeditdisplay.WorldEditDisplay
+api-version: '1.21'
+authors: [ TWME-TW ]
+depend:
+  - packetevents
+  - WorldEdit
+
+commands:
+  wedisplayreload:
+    description: Reload WorldEditDisplay configuration
+    usage: /wedisplayreload
+    permission: worldeditdisplay.reload
+    permission-message: §cYou don't have permission to use this command!
+  wedisplay:
+    description: Manage personal rendering settings
+    usage: |
+      /wedisplay set <renderer> <setting> <value> - Set personal parameters
+      /wedisplay reset <renderer> [setting] - Reset to server defaults
+      /wedisplay show [renderer] - Show current settings
+      /wedisplay reloadplayer - Reload personal settings
+    aliases: [worldeditdisplay]
+
+permissions:
+  worldeditdisplay.use:
+    description: Allow using WorldEditDisplay rendering
+    default: true
+  worldeditdisplay.use.settings:
+    description: Allow managing personal rendering settings
+    default: true
+  worldeditdisplay.reload:
+    description: Allow reloading WorldEditDisplay configuration
+    default: op

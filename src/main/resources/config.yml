@@ -1,0 +1,142 @@
+# WorldEditDisplay Configuration File
+# Renderer Settings
+
+# Language Settings
+language:
+  default: "en_us"                      # Default language (zh_tw, en_us, ja_jp, ko_kr, zh_cn)
+  auto_detect: true                     # Auto detect player's client language
+  allow_player_change: true             # Allow players to change their language manually
+
+# Player Settings Limits - Admins can control the range of customization available to players
+player_limits:
+  # Thickness related settings range
+  thickness:
+    min: 0.005                          # Minimum thickness value
+    max: 0.5                            # Maximum thickness value
+  
+  # Marker size related settings range
+  marker_size:
+    min: 0.1                            # Minimum marker size
+    max: 2.0                            # Maximum marker size
+  
+  # Segments related settings range
+  segments:
+    min: 10                             # Minimum segments
+    max: 60                             # Maximum segments
+  
+  # Grid division related settings range
+  grid_division:
+    min: 5                              # Minimum grid division
+    max: 12                             # Maximum grid division
+  
+  # Grid spacing related settings range
+  grid_spacing:
+    min: 1                              # Minimum grid spacing (-1 for unlimited)
+    max: 100                            # Maximum grid spacing
+  
+  # Target segment length related settings range
+  target_segment_length:
+    min: 0.1                            # Minimum segment length
+    max: 1000.0                         # Maximum segment length
+  
+  # Scale factor related settings range
+  scale_factor:
+    min: 0.5                            # Minimum scale factor
+    max: 10.0                           # Maximum scale factor
+
+# Renderer Settings
+renderer:
+  # Cuboid (Rectangular Box) Renderer Settings
+  cuboid:
+    # Material Settings
+    edge_material: RED_CONCRETE         # Edge line material
+    point1_material: EMERALD_BLOCK      # First selection point marker material
+    point2_material: BLUE_CONCRETE      # Second selection point marker material
+    grid_material: WHITE_CONCRETE       # Grid line material
+    
+    # Thickness Settings
+    edge_thickness: 0.03                # Edge line thickness
+    grid_thickness: 0.01                # Grid line thickness
+    vertex_marker_size: 1.0             # Vertex marker size
+    
+    # Grid Density Settings
+    height_grid_division: 10            # Height grid division (height / this value = grid step)
+    max_grid_spacing: -1                # Maximum grid spacing (-1 for unlimited)
+  
+  # Cylinder Renderer Settings
+  cylinder:
+    # Material Settings
+    circle_material: YELLOW_CONCRETE    # Circle ring material
+    grid_material: WHITE_CONCRETE       # Grid line material
+    center_material: PINK_CONCRETE      # Center marker material
+    center_line_material: RED_CONCRETE  # Center line material
+    
+    # Thickness Settings
+    circle_thickness: 0.03              # Circle ring thickness
+    grid_thickness: 0.01                # Grid line thickness
+    center_line_thickness: 0.04         # Center line thickness
+    center_thickness: 0.05              # Center marker cube thickness
+    
+    # Circle Segments Settings
+    min_circle_segments: 20             # Minimum segments
+    max_circle_segments: 50             # Maximum segments
+    target_segment_length: 0.5          # Target arc length per segment (block units)
+    sqrt_scale_factor: 4.0              # Square root scale factor
+    
+    # Grid Density Settings
+    height_grid_division: 10            # Height grid division
+    radius_grid_division: 5             # Radius grid division
+    max_grid_spacing: -1                # Maximum grid spacing
+  
+  # Ellipsoid Renderer Settings
+  ellipsoid:
+    # Material Settings
+    line_material: WHITE_CONCRETE       # Line material
+    center_line_material: RED_CONCRETE  # Center line material
+    center_material: PINK_CONCRETE      # Center marker material
+    
+    # Thickness Settings
+    line_thickness: 0.04                # Line thickness
+    center_line_thickness: 0.05         # Center line thickness
+    center_marker_size: 1.0             # Center marker size
+    center_thickness: 0.05              # Center marker cube thickness
+    
+    # Ellipse Segments Settings
+    min_segments: 20                    # Minimum segments
+    max_segments: 40                    # Maximum segments
+    target_segment_length: 0.5          # Target arc length per segment (block units)
+    sqrt_scale_factor: 4.0              # Square root scale factor
+    
+    # Grid Density Settings
+    radius_grid_division: 6             # Radius grid division
+    max_grid_spacing: -1                # Maximum grid spacing
+  
+  # Polygon Renderer Settings
+  polygon:
+    # Material Settings
+    edge_material: YELLOW_CONCRETE      # Edge material
+    vertex_material: RED_CONCRETE       # Vertex material
+    vertical_material: YELLOW_CONCRETE  # Vertical line material
+    
+    # Thickness Settings
+    edge_thickness: 0.04                # Edge thickness
+    vertical_thickness: 0.04            # Vertical line thickness
+    
+    # Grid Density Settings
+    height_grid_division: 10            # Height grid division
+    max_grid_spacing: -1                # Maximum grid spacing
+  
+  # Polyhedron Renderer Settings
+  polyhedron:
+    # Material Settings
+    line_material: PINK_CONCRETE        # Edge line material
+    vertex0_material: EMERALD_BLOCK     # First vertex material
+    vertex_material: DIAMOND_BLOCK      # Other vertex material
+    
+    # Thickness Settings
+    line_thickness: 0.03                # Line thickness
+    vertex_size: 1.0                    # Vertex marker size
+    vertex_thickness: 0.03              # Vertex marker cube thickness
+
+# For available material names, see: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+
