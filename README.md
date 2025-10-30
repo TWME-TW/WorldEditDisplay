@@ -122,11 +122,16 @@ player_limits:
 ```
 
 Each renderer type has its own configuration section:
-- **cuboid** - 13 configurable parameters
-- **polygon** - 8 configurable parameters
-- **ellipsoid** - 11 configurable parameters
-- **cylinder** - 9 configurable parameters
-- **polyhedron** - 5 configurable parameters
+- **cuboid**
+- <img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/954498b1-cbe6-4475-8ff7-2bd49c3e6fd2" />
+- **polygon**
+- <img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/77465ba8-ebbb-458d-9ad4-d4375fb24a43" />
+- **ellipsoid**
+- <img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/79f27921-64eb-4839-a648-e9168c4ef43d" />
+- **cylinder**
+- <img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/d864832e-ade1-4851-818c-c140377c2fc5" />
+- **polyhedron**
+- <img width="2879" height="1750" alt="image" src="https://github.com/user-attachments/assets/33d98e90-d8e6-4f7d-8c24-ee2531cb473d" />
 
 ### How It Works
 
@@ -332,11 +337,16 @@ player_limits:
 ```
 
 每種渲染器類型都有自己的配置區段：
-- **cuboid** - 13 個可配置參數
-- **polygon** - 8 個可配置參數
-- **ellipsoid** - 11 個可配置參數
-- **cylinder** - 9 個可配置參數
-- **polyhedron** - 5 個可配置參數
+- **cuboid**
+- <img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/954498b1-cbe6-4475-8ff7-2bd49c3e6fd2" />
+- **polygon**
+- <img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/77465ba8-ebbb-458d-9ad4-d4375fb24a43" />
+- **ellipsoid**
+- <img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/79f27921-64eb-4839-a648-e9168c4ef43d" />
+- **cylinder**
+- <img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/d864832e-ade1-4851-818c-c140377c2fc5" />
+- **polyhedron**
+- <img width="2879" height="1750" alt="image" src="https://github.com/user-attachments/assets/33d98e90-d8e6-4f7d-8c24-ee2531cb473d" />
 
 ### 運作原理
 
