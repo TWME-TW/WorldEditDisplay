@@ -91,6 +91,10 @@ Players can customize their own rendering preferences:
 - Example: `/wedisplay show` (show all)
 - Example: `/wedisplay show cuboid` (show specific renderer)
 
+`/wedisplay toggle` - Toggle rendering on/off
+- Quick command to enable or disable selection visualization
+- Works independently for each player
+
 `/wedisplay reloadplayer` - Reload your personal configuration file
 
 `/wedisplay lang <language>` - Set interface language
@@ -156,10 +160,19 @@ The plugin uses Minecraft's Display Entity system:
 ### Permissions
 
 ```yaml
-worldeditdisplay.use:          # Use visualization features (default: true)
-worldeditdisplay.use.settings: # Manage personal settings (default: true)
-worldeditdisplay.reload:       # Reload configuration (default: op)
+worldeditdisplay.use:              # Use visualization features (default: true)
+worldeditdisplay.use.settings:     # Manage personal settings (default: true)
+worldeditdisplay.reload:           # Reload configuration (default: op)
+worldeditdisplay.render.auto-enable: # Automatically enable rendering on join (default: true)
 ```
+
+**About Auto-Enable Permission**
+
+The `worldeditdisplay.render.auto-enable` permission controls whether rendering is automatically enabled when a player joins the server:
+- **With permission**: Rendering is enabled by default when logging in
+- **Without permission**: Players must manually use `/wedisplay toggle` to enable rendering
+
+This allows server admins to control which player groups have rendering enabled by default.
 
 ### Usage
 
@@ -179,6 +192,9 @@ worldeditdisplay.reload:       # Reload configuration (default: op)
 
 # Change grid spacing
 /wedisplay set cuboid grid_spacing 16
+
+# Toggle rendering on/off
+/wedisplay toggle
 
 # Reset all settings
 /wedisplay reset cuboid
@@ -306,6 +322,10 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 - 範例：`/wedisplay show`（顯示全部）
 - 範例：`/wedisplay show cuboid`（顯示特定渲染器）
 
+`/wedisplay toggle` - 切換渲染開關
+- 快速指令來啟用或停用選區視覺化
+- 每個玩家獨立運作
+
 `/wedisplay reloadplayer` - 重新載入你的個人配置檔案
 
 `/wedisplay lang <language>` - 設定介面語言
@@ -371,10 +391,19 @@ player_limits:
 ### 權限
 
 ```yaml
-worldeditdisplay.use:          # 使用視覺化功能（預設：true）
-worldeditdisplay.use.settings: # 管理個人設定（預設：true）
-worldeditdisplay.reload:       # 重新載入配置（預設：op）
+worldeditdisplay.use:              # 使用視覺化功能（預設：true）
+worldeditdisplay.use.settings:     # 管理個人設定（預設：true）
+worldeditdisplay.reload:           # 重新載入配置（預設：op）
+worldeditdisplay.render.auto-enable: # 登入時自動啟用渲染（預設：true）
 ```
+
+**關於自動啟用權限**
+
+`worldeditdisplay.render.auto-enable` 權限控制玩家加入伺服器時是否自動啟用渲染：
+- **擁有權限**：登入時預設啟用渲染
+- **沒有權限**：玩家必須手動使用 `/wedisplay toggle` 來啟用渲染
+
+這讓伺服器管理員可以控制哪些玩家群組預設啟用渲染。
 
 ### 使用方式
 
@@ -394,6 +423,9 @@ worldeditdisplay.reload:       # 重新載入配置（預設：op）
 
 # 變更網格間距
 /wedisplay set cuboid grid_spacing 16
+
+# 切換渲染開關
+/wedisplay toggle
 
 # 重置所有設定
 /wedisplay reset cuboid
