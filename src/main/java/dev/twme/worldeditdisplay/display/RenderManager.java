@@ -88,6 +88,13 @@ public class RenderManager {
             return;
         }
         
+        // 檢查玩家是否啟用渲染
+        if (!playerData.isRenderingEnabled()) {
+            // 如果渲染被停用，清除所有現有渲染
+            clearRender(playerId);
+            return;
+        }
+        
         // 1. 渲染主選區
         Region mainSelection = playerData.getSelection();
         updateMainSelection(player, playerId, mainSelection);

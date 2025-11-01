@@ -21,7 +21,7 @@ import dev.twme.worldeditdisplay.WorldEditDisplay;
 public class PlayerSettingsCommandTabCompleter implements TabCompleter {
     
     private final WorldEditDisplay plugin;
-    private static final List<String> SUB_COMMANDS = Arrays.asList("set", "reset", "show", "reloadplayer", "lang", "language");
+    private static final List<String> SUB_COMMANDS = Arrays.asList("set", "reset", "show", "reloadplayer", "lang", "language", "toggle");
     private static final List<String> RENDERERS = Arrays.asList("cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron");
     
     public PlayerSettingsCommandTabCompleter(WorldEditDisplay plugin) {

@@ -13,12 +13,13 @@ commands:
     permission: worldeditdisplay.reload
     permission-message: §cYou don't have permission to use this command!
   wedisplay:
-    description: Manage personal rendering settings
+    description: Manage personal rendering settings and toggle rendering
     usage: |
       /wedisplay set <renderer> <setting> <value> - Set personal parameters
       /wedisplay reset <renderer> [setting] - Reset to server defaults
       /wedisplay show [renderer] - Show current settings
       /wedisplay reloadplayer - Reload personal settings
+      /wedisplay toggle - Toggle rendering on/off
     aliases: [worldeditdisplay]
 
 permissions:
@@ -31,3 +32,6 @@ permissions:
   worldeditdisplay.reload:
     description: Allow reloading WorldEditDisplay configuration
     default: op
+  worldeditdisplay.render.auto-enable:
+    description: Automatically enable rendering when player joins server
+    default: true

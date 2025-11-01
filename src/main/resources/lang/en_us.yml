@@ -56,6 +56,10 @@ command:
       invalid: "<red>Unsupported language! Available: %s"
       current: "<gold>Current language: <white>%s"
     
+    toggle:
+      enabled: "<green>WorldEdit selection rendering enabled!"
+      disabled: "<yellow>WorldEdit selection rendering disabled!"
+    
     help:
       title: "<yellow>========== WorldEditDisplay Personal Settings =========="
       set: "<gold>/wedisplay set <renderer> <setting> <value>"
@@ -68,6 +72,8 @@ command:
       reload_desc: "<gray>  Reload personal settings"
       lang: "<gold>/wedisplay lang [language]"
       lang_desc: "<gray>  Set language"
+      toggle: "<gold>/wedisplay toggle"
+      toggle_desc: "<gray>  Toggle rendering on/off"
 
 # Setting Names
 settings:

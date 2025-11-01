@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPluginMessage;
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.common.Constants;
+import dev.twme.worldeditdisplay.player.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,6 +25,14 @@ public class PlayerJoinListener implements Listener {
         
         // 獲取並設置玩家語言
         plugin.getLanguageManager().getPlayerLanguage(player);
+        
+        // 檢查玩家是否有自動啟用渲染的權限
+        PlayerData playerData = PlayerData.getPlayerData(player);
+        if (player.hasPermission("worldeditdisplay.render.auto-enable")) {
+            playerData.setRenderingEnabled(true);
+        } else {
+            playerData.setRenderingEnabled(false);
+        }
         
         // 延遲一秒，讓有 CUI 的玩家先註冊
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {

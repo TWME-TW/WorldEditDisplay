@@ -18,6 +18,7 @@ public class PlayerData {
     private final CUIEventDispatcher dispatcher;
     private boolean isCuiEnabled = false;
     private CUI_MODE mode;
+    private boolean renderingEnabled = false; // 預設關閉，需要權限才會在登入時開啟
     
     // Region data
     private Region currentRegion;
@@ -81,6 +82,20 @@ public class PlayerData {
 
     public void setCuiEnabled(boolean isCuiEnabled){
         this.isCuiEnabled = isCuiEnabled;
+    }
+    
+    /**
+     * Check if rendering is enabled for this player
+     */
+    public boolean isRenderingEnabled() {
+        return renderingEnabled;
+    }
+    
+    /**
+     * Set rendering enabled state for this player
+     */
+    public void setRenderingEnabled(boolean enabled) {
+        this.renderingEnabled = enabled;
     }
     
     // Region management methods

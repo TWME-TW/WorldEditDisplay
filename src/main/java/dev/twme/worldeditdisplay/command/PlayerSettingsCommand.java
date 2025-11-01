@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
+import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.util.MessageUtil;
 
 /**
@@ -64,6 +65,8 @@ public class PlayerSettingsCommand implements CommandExecutor {
             case "lang":
             case "language":
                 return handleLanguage(player, args);
+            case "toggle":
+                return handleToggle(player);
             default:
                 sendHelp(player);
                 return true;
@@ -240,6 +243,28 @@ public class PlayerSettingsCommand implements CommandExecutor {
     }
     
     /**
+     * 處理 toggle 命令 - 切換渲染開關
+     */
+    private boolean handleToggle(Player player) {
+        PlayerData playerData = PlayerData.getPlayerData(player);
+        
+        // 切換渲染狀態
+        boolean newState = !playerData.isRenderingEnabled();
+        playerData.setRenderingEnabled(newState);
+        
+        // 發送相應訊息
+        if (newState) {
+            MessageUtil.sendTranslated(player, "command.wedisplay.toggle.enabled");
+        } else {
+            MessageUtil.sendTranslated(player, "command.wedisplay.toggle.disabled");
+            // 關閉渲染時清除所有現有渲染
+            plugin.getRenderManager().clearRender(player.getUniqueId());
+        }
+        
+        return true;
+    }
+    
+    /**
      * 顯示特定渲染器的設定
      */
     private void showRendererSettings(Player player, String renderer, PlayerRenderSettings settings) {
@@ -324,6 +349,8 @@ public class PlayerSettingsCommand implements CommandExecutor {
         MessageUtil.sendTranslated(player, "command.wedisplay.help.reload_desc");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.lang");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.lang_desc");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.toggle");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.toggle_desc");
     }
     
     /**
