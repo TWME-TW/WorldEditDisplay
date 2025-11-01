@@ -55,10 +55,9 @@ Players can customize their own rendering preferences:
 - Hot reload without server restart
 ### Requirements
 
-- Minecraft 1.21.x (Paper)
+- Minecraft 1.20 ~ 1.21.x (Paper)
 - Java 21 or higher
 - Required plugins:
-  - [WorldEdit](https://dev.bukkit.org/projects/worldedit) (latest version)
   - [PacketEvents](https://github.com/retrooper/packetevents) 2.9.5+
 
 ### Installation
@@ -286,10 +285,9 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 
 ### 需求
 
-- Minecraft 1.21.x（Paper）
+- Minecraft 1.20 ~ 1.21.x（Paper）
 - Java 21 或更高版本
 - 必要插件：
-  - [WorldEdit](https://dev.bukkit.org/projects/worldedit)（最新版本）
   - [PacketEvents](https://github.com/retrooper/packetevents) 2.9.5+
 
 ### 安裝
