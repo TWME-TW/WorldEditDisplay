@@ -271,9 +271,9 @@ public abstract class RegionRenderer<T extends Region> {
         // 注意：我們需要一個 "乾淨" 的 Location (yaw/pitch = 0)
         Location spawnLoc = new Location(
                 player.getWorld(), 
-                player.getLocation().x(), 
-                player.getLocation().y(), 
-                player.getLocation().z()
+                player.getLocation().getX(),
+                player.getLocation().getY(),
+                player.getLocation().getZ()
         );
 
 

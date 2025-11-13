@@ -142,7 +142,7 @@ public class LanguageManager {
      */
     private String getClientLanguage(Player player) {
         try {
-            String clientLocale = player.locale().toString();
+            String clientLocale = player.getLocale();
             // 轉換格式: zh_TW -> zh_tw
             clientLocale = clientLocale.toLowerCase().replace("-", "_");
             

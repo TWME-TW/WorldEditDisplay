@@ -20,7 +20,7 @@ public class PlayerLocaleChangeListener implements Listener {
     
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerLocaleChange(PlayerLocaleChangeEvent event) {
-        String newLocale = event.locale().toString().toLowerCase().replace("-", "_");
+        String newLocale = event.getLocale().toLowerCase().replace("-", "_");
         
         // 更新玩家的語言設定
         plugin.getLanguageManager().setPlayerLanguage(

@@ -4,6 +4,7 @@ import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.lang.LanguageManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -15,6 +16,7 @@ import org.bukkit.entity.Player;
 public class MessageUtil {
     
     private static final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer legacySerializer = LegacyComponentSerializer.legacySection();
     private static WorldEditDisplay plugin;
     
     /**
@@ -32,7 +34,8 @@ public class MessageUtil {
      */
     public static void sendMessage(CommandSender sender, String message) {
         Component component = miniMessage.deserialize(message);
-        sender.sendMessage(component);
+        String legacyMessage = legacySerializer.serialize(component);
+        sender.sendMessage(legacyMessage);
     }
     
     /**
@@ -43,7 +46,8 @@ public class MessageUtil {
      */
     public static void sendMessage(Player player, String message) {
         Component component = miniMessage.deserialize(message);
-        player.sendMessage(component);
+        String legacyMessage = legacySerializer.serialize(component);
+        player.sendMessage(legacyMessage);
     }
     
     /**
