@@ -55,7 +55,7 @@ Players can customize their own rendering preferences:
 - Hot reload without server restart
 ### Requirements
 
-- Minecraft 1.20 ~ 1.21.x (Paper)
+- Minecraft 1.20 ~ 1.21.x (Spigot)
 - Java 21 or higher
 - Required plugins:
   - [PacketEvents](https://github.com/retrooper/packetevents) 2.10.1+
@@ -285,7 +285,7 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 
 ### 需求
 
-- Minecraft 1.20 ~ 1.21.x（Paper）
+- Minecraft 1.20 ~ 1.21.x（Spigot）
 - Java 21 或更高版本
 - 必要插件：
   - [PacketEvents](https://github.com/retrooper/packetevents) 2.10.1+
