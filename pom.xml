@@ -83,9 +83,9 @@
       <version>2.10.1</version>
     </dependency>
     <dependency>
-      <groupId>me.tofaa.entitylib</groupId>
+      <groupId>io.github.tofaa2</groupId>
       <artifactId>spigot</artifactId>
-      <version>+ed0a178-SNAPSHOT</version>
+      <version>+eba7ada-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>net.kyori</groupId>
