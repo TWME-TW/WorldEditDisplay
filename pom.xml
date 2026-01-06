@@ -14,10 +14,12 @@
   <properties>
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <platform>spigot</platform>
   </properties>
 
   <build>
     <defaultGoal>clean package</defaultGoal>
+    <finalName>${project.artifactId}-${project.version}-${platform}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -38,6 +40,37 @@
             <goals>
               <goal>shade</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.0</version>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Platform>${platform}</Platform>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <echo>Building ${project.artifactId} (${platform})</echo>
+              </target>
+            </configuration>
           </execution>
         </executions>
       </plugin>
