@@ -10,24 +10,26 @@ import dev.twme.worldeditdisplay.event.CUIEventDispatcher;
 import dev.twme.worldeditdisplay.region.Region;
 import dev.twme.worldeditdisplay.region.RegionType;
 
+/**
+ * Stores all per-player CUI / WorldEditDisplay state.
+ * Tracks current region selection(s), colors, rendering, and mode.
+ */
 public class PlayerData {
-
     private static final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
-    
+
     private final Player player;
     private final CUIEventDispatcher dispatcher;
     private boolean isCuiEnabled = false;
-    private CUI_MODE mode;
-    private boolean renderingEnabled = false; // 預設關閉，需要權限才會在登入時開啟
-    
-    // Region data
+    private boolean renderingEnabled = false; // default off; will enable on login if player has permission
+
+    // Current single selection
     private Region currentRegion;
+
+    // Multi-selection regions
     private final Map<UUID, Region> multiRegions = new HashMap<>();
-    
-    // 追蹤當前正在操作的多重選區
-    private UUID currentMultiRegionId;
-    
-    // Colour settings
+    private UUID currentMultiRegionId; // tracks which multi-region the player is currently editing
+
+    // Color settings
     private String primaryColor;
     private String secondaryColor;
     private String gridColor;
@@ -39,252 +41,188 @@ public class PlayerData {
         this.player = player;
         this.dispatcher = new CUIEventDispatcher(this);
     }
-    
+
     /**
      * Get or create PlayerData for a player
      */
     public static PlayerData getPlayerData(Player player) {
         return playerDataMap.computeIfAbsent(player.getUniqueId(), k -> new PlayerData(player));
     }
-    
+
     /**
-     * Remove PlayerData when player leaves
+     * Remove PlayerData for a player when they leave
      */
     public static void removePlayerData(UUID uuid) {
         playerDataMap.remove(uuid);
     }
-    
+
     public Player getPlayer() {
         return player;
     }
-    
+
     public CUIEventDispatcher getDispatcher() {
         return dispatcher;
     }
 
-
-
-
-
-
-
-    public CUI_MODE getMode(){
-        return mode;
-    }
-
-    public void setMode(CUI_MODE mode){
-        this.mode = mode;
-    }
-
-    public boolean isCuiEnabled(){
+    public boolean isCuiEnabled() {
         return isCuiEnabled;
     }
 
-    public void setCuiEnabled(boolean isCuiEnabled){
-        this.isCuiEnabled = isCuiEnabled;
+    public void setCuiEnabled(boolean enabled) {
+        this.isCuiEnabled = enabled;
     }
-    
+
     /**
      * Check if rendering is enabled for this player
      */
     public boolean isRenderingEnabled() {
         return renderingEnabled;
     }
-    
+
     /**
-     * Set rendering enabled state for this player
+     * Enable or disable rendering for this player
      */
     public void setRenderingEnabled(boolean enabled) {
         this.renderingEnabled = enabled;
     }
-    
-    // Region management methods
-    
+
     /**
-     * Get the current selection region (for non-multi selections)
+     * Get the current selection (for non-multi selections)
      */
     public Region getSelection() {
         return currentRegion;
     }
-    
+
     /**
      * Get a specific multi-selection region by UUID
      */
     public Region getSelection(UUID id) {
         return multiRegions.get(id);
     }
-    
+
     /**
-     * Get selection based on multi flag
-     * 修改：multi 模式時返回當前多重選區，而不是一般選區
+     * Get selection depending on multi-mode
+     * If multi = true, returns the current multi-selection region
      */
     public Region getSelection(boolean multi) {
-        if (!multi) {
-            return currentRegion;
-        }
-        
-        // 返回當前正在操作的多重選區
+        if (!multi) return currentRegion;
         return getCurrentMultiRegion();
     }
-    
+
     /**
-     * 取得當前正在操作的多重選區
+     * Get the current multi-selection region being edited
      */
     public Region getCurrentMultiRegion() {
-        if (currentMultiRegionId == null) {
-            return null;
-        }
+        if (currentMultiRegionId == null) return null;
         return multiRegions.get(currentMultiRegionId);
     }
-    
+
     /**
-     * 設定當前正在操作的多重選區 ID
+     * Set the ID of the current multi-selection region
      */
     public void setCurrentMultiRegionId(UUID id) {
         this.currentMultiRegionId = id;
     }
-    
+
     /**
-     * 取得當前多重選區 ID
+     * Get the ID of the current multi-selection region
      */
     public UUID getCurrentMultiRegionId() {
         return currentMultiRegionId;
     }
-    
+
     /**
-     * Set the current selection region
+     * Set the current single selection region
      */
     public void setSelection(Region region) {
         this.currentRegion = region;
     }
-    
+
     /**
-     * Set a multi-selection region
+     * Set a multi-selection region by ID
+     * If id = null, overwrites the single selection
      */
     public void setSelection(UUID id, Region region) {
         if (id == null) {
             this.currentRegion = region;
         } else {
-            if (region == null) {
-                multiRegions.remove(id);
-            } else {
-                multiRegions.put(id, region);
-            }
+            if (region == null) multiRegions.remove(id);
+            else multiRegions.put(id, region);
         }
     }
-    
+
     /**
-     * Create a new region of the specified type
+     * Create a new region by type key
      */
     public Region createRegion(String typeKey) {
         RegionType type = RegionType.fromKey(typeKey);
-        if (type == null) {
-            return null;
-        }
-        return type.createRegion(this);
+        return type == null ? null : type.createRegion(this);
     }
-    
+
     /**
-     * Clear all regions
-     * 修改：新增參數控制是否只清除多重選區
+     * Clear regions
+     * @param multiOnly if true, clears only multi-selection regions
      */
     public void clearRegions(boolean multiOnly) {
         if (multiOnly) {
-            // 只清除多重選區
-            this.multiRegions.clear();
-            this.currentMultiRegionId = null;
+            multiRegions.clear();
+            currentMultiRegionId = null;
         } else {
-            // 清除所有選區
-            this.currentRegion = null;
-            this.multiRegions.clear();
-            this.currentMultiRegionId = null;
+            currentRegion = null;
+            multiRegions.clear();
+            currentMultiRegionId = null;
         }
     }
-    
+
     /**
-     * Clear all regions (保留舊方法以向後相容)
+     * Clear all regions (legacy method)
      */
     public void clearRegions() {
         clearRegions(false);
     }
-    
+
     /**
      * Get all multi-selection regions
      */
     public Map<UUID, Region> getMultiRegions() {
         return new HashMap<>(multiRegions);
     }
-    
-    // Colour management methods
-    
+
     /**
-     * Set selection colours based on CUI colour event
-     * @param primary 主要顏色 (必需)
-     * @param secondary 次要顏色 (必需)
-     * @param grid 網格顏色 (null 或空字串表示停用網格)
-     * @param background 背景顏色 (null 或空字串表示停用背景)
+     * Set selection colors based on CUI event
+     * Empty or null grid/background disables them
      */
     public void setSelectionColors(String primary, String secondary, String grid, String background) {
         this.primaryColor = primary;
         this.secondaryColor = secondary;
-        
-        // 處理網格顏色 - 空值表示停用網格
-        if (grid != null && !grid.trim().isEmpty()) {
-            this.gridColor = grid;
-            this.gridEnabled = true;
-        } else {
-            this.gridColor = null;
-            this.gridEnabled = false;
-        }
-        
-        // 處理背景顏色 - 空值表示停用背景
-        if (background != null && !background.trim().isEmpty()) {
-            this.backgroundColor = background;
-            this.backgroundEnabled = true;
-        } else {
-            this.backgroundColor = null;
-            this.backgroundEnabled = false;
-        }
+
+        this.gridEnabled = grid != null && !grid.trim().isEmpty();
+        this.gridColor = gridEnabled ? grid : null;
+
+        this.backgroundEnabled = background != null && !background.trim().isEmpty();
+        this.backgroundColor = backgroundEnabled ? background : null;
     }
-    
-    /**
-     * Get primary selection colour
-     */
+
     public String getPrimaryColor() {
         return primaryColor;
     }
-    
-    /**
-     * Get secondary selection colour
-     */
+
     public String getSecondaryColor() {
         return secondaryColor;
     }
-    
-    /**
-     * Get grid colour (may be null if grid is disabled)
-     */
+
     public String getGridColor() {
         return gridColor;
     }
-    
-    /**
-     * Get background colour (may be null if background is disabled)
-     */
+
     public String getBackgroundColor() {
         return backgroundColor;
     }
-    
-    /**
-     * Check if grid display is enabled
-     */
+
     public boolean isGridEnabled() {
         return gridEnabled;
     }
-    
-    /**
-     * Check if background display is enabled
-     */
+
     public boolean isBackgroundEnabled() {
         return backgroundEnabled;
     }

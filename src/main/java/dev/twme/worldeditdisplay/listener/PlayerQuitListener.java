@@ -8,30 +8,30 @@ import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.player.PlayerData;
 
 /**
- * Listener for player disconnect events
- * Cleans up PlayerData and renders to prevent memory leaks
+ * Listens for players disconnecting.
+ * Cleans up their PlayerData, renders, and language records to prevent memory leaks.
  */
 public class PlayerQuitListener implements Listener {
-    
+
     private final WorldEditDisplay plugin;
-    
+
     public PlayerQuitListener(WorldEditDisplay plugin) {
         this.plugin = plugin;
     }
-    
+
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        // Clean up player renders first
+        // Clear any rendering data for the player
         if (plugin.getRenderManager() != null) {
             plugin.getRenderManager().clearRender(event.getPlayer().getUniqueId());
         }
-        
-        // Clean up player language record
+
+        // Remove player language record
         if (plugin.getLanguageManager() != null) {
             plugin.getLanguageManager().removePlayerLanguage(event.getPlayer().getUniqueId());
         }
-        
-        // Clean up player data when player disconnects
+
+        // Finally, remove player data
         PlayerData.removePlayerData(event.getPlayer().getUniqueId());
     }
 }

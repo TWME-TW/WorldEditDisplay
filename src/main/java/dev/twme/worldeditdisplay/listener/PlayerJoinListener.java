@@ -13,38 +13,44 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Handles player join events.
+ * Initializes language, PlayerData, rendering permissions, and CUI registration.
+ */
 public class PlayerJoinListener implements Listener {
-    WorldEditDisplay plugin;
+
+    private final WorldEditDisplay plugin;
 
     public PlayerJoinListener(WorldEditDisplay plugin) {
         this.plugin = plugin;
     }
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        
-        // 獲取並設置玩家語言
+
+        // Initialize player language
         plugin.getLanguageManager().getPlayerLanguage(player);
-        
-        // 檢查玩家是否有自動啟用渲染的權限
+
+        // Set auto-rendering based on permissions
         PlayerData playerData = PlayerData.getPlayerData(player);
-        if (player.hasPermission("worldeditdisplay.render.auto-enable")) {
-            playerData.setRenderingEnabled(true);
-        } else {
-            playerData.setRenderingEnabled(false);
-        }
-        
-        // 延遲一秒，讓有 CUI 的玩家先註冊
+        playerData.setRenderingEnabled(player.hasPermission("worldeditdisplay.render.auto-enable"));
+
+        // Delay one second to allow CUI registration first
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-            // 檢查玩家是否仍在線
-            if (!player.isOnline()) {
-                return;
-            }
-            
+            if (!player.isOnline()) return; // player left
+
             String cuiVersionMessage = "v|4";
 
-            WrapperPlayClientPluginMessage registerPacket = new WrapperPlayClientPluginMessage(Constants.REGISTER_CHANNEL, Constants.CUI_CHANNEL.getBytes(StandardCharsets.UTF_8));
-            WrapperPlayClientPluginMessage cuiVersionPacket = new WrapperPlayClientPluginMessage(Constants.CUI_CHANNEL, cuiVersionMessage.getBytes(StandardCharsets.UTF_8));
+            // Register channels for CUI
+            WrapperPlayClientPluginMessage registerPacket = new WrapperPlayClientPluginMessage(
+                    Constants.REGISTER_CHANNEL,
+                    Constants.CUI_CHANNEL.getBytes(StandardCharsets.UTF_8)
+            );
+            WrapperPlayClientPluginMessage cuiVersionPacket = new WrapperPlayClientPluginMessage(
+                    Constants.CUI_CHANNEL,
+                    cuiVersionMessage.getBytes(StandardCharsets.UTF_8)
+            );
 
             PacketEvents.getAPI().getPlayerManager().receivePacketSilently(player, registerPacket);
             PacketEvents.getAPI().getPlayerManager().receivePacketSilently(player, cuiVersionPacket);

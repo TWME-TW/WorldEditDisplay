@@ -8,161 +8,86 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 顏色匹配工具類，用於找到最接近指定顏色的方塊材質
+ * tries to match a color to the closest block material
  */
 public class ColorMatcher {
-    
+
     private static final Map<Material, Color> MATERIAL_COLOR_CACHE = new HashMap<>();
     private static boolean initialized = false;
-    
-    /**
-     * 初始化顏色快取
-     * 預先計算所有可用材質的顏色以提升效能
-     */
+
+    // init cache with colors for each material
     public static void initialize() {
-        if (initialized) {
-            return;
-        }
-        
+        if (initialized) return;
+
         for (Material material : Constants.COLOR_MATERIALS) {
             try {
                 BlockData blockData = material.createBlockData();
-                // 獲取地圖顏色
-                Color mapColor = blockData.getMapColor();
-                MATERIAL_COLOR_CACHE.put(material, mapColor);
+                MATERIAL_COLOR_CACHE.put(material, blockData.getMapColor());
             } catch (Exception e) {
-                // 如果無法獲取顏色，使用預設值
+                // fallback gray if can't get color
                 MATERIAL_COLOR_CACHE.put(material, Color.fromRGB(128, 128, 128));
             }
         }
-        
+
         initialized = true;
     }
-    
-    /**
-     * 找到最接近指定 RGBA 顏色的方塊材質
-     * 
-     * @param red 紅色分量 (0-255)
-     * @param green 綠色分量 (0-255)
-     * @param blue 藍色分量 (0-255)
-     * @param alpha 透明度分量 (0-255)，目前未使用
-     * @return 最接近的材質
-     */
+
+    // simple find closest with rgb + alpha (alpha ignored)
     public static Material findClosestMaterial(int red, int green, int blue, int alpha) {
-        if (!initialized) {
-            initialize();
-        }
-        
-        Color targetColor = Color.fromRGB(red, green, blue);
-        return findClosestMaterial(targetColor);
+        return findClosestMaterial(Color.fromRGB(red, green, blue));
     }
-    
-    /**
-     * 找到最接近指定 RGB 顏色的方塊材質
-     * 
-     * @param red 紅色分量 (0-255)
-     * @param green 綠色分量 (0-255)
-     * @param blue 藍色分量 (0-255)
-     * @return 最接近的材質
-     */
+
     public static Material findClosestMaterial(int red, int green, int blue) {
         return findClosestMaterial(red, green, blue, 255);
     }
-    
-    /**
-     * 找到最接近指定顏色的方塊材質
-     * 
-     * @param targetColor 目標顏色
-     * @return 最接近的材質
-     */
+
     public static Material findClosestMaterial(Color targetColor) {
-        if (!initialized) {
-            initialize();
-        }
-        
-        Material closestMaterial = Constants.COLOR_MATERIALS[0];
-        double minDistance = Double.MAX_VALUE;
-        
+        if (!initialized) initialize();
+
+        Material closest = Constants.COLOR_MATERIALS[0];
+        double minDist = Double.MAX_VALUE;
+
         for (Map.Entry<Material, Color> entry : MATERIAL_COLOR_CACHE.entrySet()) {
-            double distance = calculateColorDistance(targetColor, entry.getValue());
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestMaterial = entry.getKey();
+            double dist = colorDistance(targetColor, entry.getValue());
+            if (dist < minDist) {
+                minDist = dist;
+                closest = entry.getKey();
             }
         }
-        
-        return closestMaterial;
+
+        return closest;
     }
-    
-    /**
-     * 計算兩個顏色之間的歐幾里得距離
-     * 
-     * @param color1 第一個顏色
-     * @param color2 第二個顏色
-     * @return 顏色距離
-     */
-    private static double calculateColorDistance(Color color1, Color color2) {
-        int redDiff = color1.getRed() - color2.getRed();
-        int greenDiff = color1.getGreen() - color2.getGreen();
-        int blueDiff = color1.getBlue() - color2.getBlue();
-        
-        return Math.sqrt(redDiff * redDiff + greenDiff * greenDiff + blueDiff * blueDiff);
+
+    // normal euclidean distance
+    private static double colorDistance(Color c1, Color c2) {
+        int dr = c1.getRed() - c2.getRed();
+        int dg = c1.getGreen() - c2.getGreen();
+        int db = c1.getBlue() - c2.getBlue();
+        return Math.sqrt(dr * dr + dg * dg + db * db);
     }
-    
-    /**
-     * 計算加權的顏色距離（考慮人眼對不同顏色的敏感度）
-     * 此方法保留供未來可能的優化使用
-     * 
-     * @param color1 第一個顏色
-     * @param color2 第二個顏色
-     * @return 加權顏色距離
-     */
+
+    // keeps weighted distance for future use
     @SuppressWarnings("unused")
-    private static double calculateWeightedColorDistance(Color color1, Color color2) {
-        int redDiff = color1.getRed() - color2.getRed();
-        int greenDiff = color1.getGreen() - color2.getGreen();
-        int blueDiff = color1.getBlue() - color2.getBlue();
-        
-        // 使用加權公式，因為人眼對綠色最敏感，對藍色最不敏感
-        double redWeight = 0.30;
-        double greenWeight = 0.59;
-        double blueWeight = 0.11;
-        
-        return Math.sqrt(
-            redWeight * redDiff * redDiff +
-            greenWeight * greenDiff * greenDiff +
-            blueWeight * blueDiff * blueDiff
-        );
+    private static double weightedColorDistance(Color c1, Color c2) {
+        int dr = c1.getRed() - c2.getRed();
+        int dg = c1.getGreen() - c2.getGreen();
+        int db = c1.getBlue() - c2.getBlue();
+        return Math.sqrt(0.3 * dr * dr + 0.59 * dg * dg + 0.11 * db * db);
     }
-    
-    /**
-     * 獲取指定材質的快取顏色
-     * 
-     * @param material 材質
-     * @return 顏色，如果未快取則返回 null
-     */
+
+    // get cached color
     public static Color getMaterialColor(Material material) {
-        if (!initialized) {
-            initialize();
-        }
+        if (!initialized) initialize();
         return MATERIAL_COLOR_CACHE.get(material);
     }
-    
-    /**
-     * 獲取所有快取的材質顏色映射
-     * 
-     * @return 材質顏色映射的副本
-     */
+
+    // return copy of all cached colors
     public static Map<Material, Color> getAllMaterialColors() {
-        if (!initialized) {
-            initialize();
-        }
+        if (!initialized) initialize();
         return new HashMap<>(MATERIAL_COLOR_CACHE);
     }
-    
-    /**
-     * 清除快取並重新初始化
-     */
+
+    // clear and rebuild cache
     public static void refresh() {
         MATERIAL_COLOR_CACHE.clear();
         initialized = false;
