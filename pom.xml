@@ -81,11 +81,13 @@
       <groupId>com.github.retrooper</groupId>
       <artifactId>packetevents-spigot</artifactId>
       <version>2.11.1</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.github.tofaa2</groupId>
       <artifactId>spigot</artifactId>
       <version>+eba7ada-SNAPSHOT</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>
