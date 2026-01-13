@@ -1,20 +1,23 @@
 package dev.twme.worldeditdisplay.region;
 
-import org.bukkit.Material;
-
 import dev.twme.worldeditdisplay.player.PlayerData;
+import org.bukkit.Material;
 
 /**
  * Base class for all region types
- * This class stores region data without rendering logic
+ * Stores region data without rendering logic
  */
 public abstract class Region {
+
     protected final PlayerData playerData;
-    protected double gridSpacing = 0;
-    
-    // 顏色材質覆寫（來自 CUI col 事件）
-    // null 表示使用預設材質
-    protected Material[] colorMaterials = new Material[4];
+    protected double gridSpacing;
+
+    /**
+     * Color material overrides (for rendering)
+     * 0 = primary, 1 = secondary, 2 = grid, 3 = background
+     * null will return the default
+     */
+    protected final Material[] colorMaterials = new Material[4];
 
     protected Region(PlayerData playerData) {
         this.playerData = playerData;
@@ -29,9 +32,7 @@ public abstract class Region {
      * Check if the region is fully defined (has all required points/data)
      * Subclasses should override this to implement their specific logic
      */
-    public boolean isDefined() {
-        return false;  // Default to false, subclasses should override
-    }
+    public abstract boolean isDefined();
 
     /**
      * Set grid spacing for visualization
@@ -46,102 +47,99 @@ public abstract class Region {
     public double getGridSpacing() {
         return this.gridSpacing;
     }
-    
+
     /**
      * Set color materials override from CUI color event
-     * 
+     *
      * @param materials Array of materials for [primary, secondary, grid, background]
-     *                  null elements mean use default material
+     *                  null elements will use the default material
      */
     public void setColorMaterials(Material[] materials) {
         if (materials == null || materials.length != 4) {
             throw new IllegalArgumentException("Color materials array must have exactly 4 elements");
         }
-        this.colorMaterials = materials.clone();
+        System.arraycopy(materials, 0, this.colorMaterials, 0, 4);
     }
-    
+
     /**
      * Get color material override for specific index
-     * 
+     *
      * @param index Material index (0=primary, 1=secondary, 2=grid, 3=background)
      * @return Material override, or null if using default
      */
     public Material getColorMaterial(int index) {
-        if (index < 0 || index >= 4) {
-            return null;
-        }
-        return colorMaterials[index];
+        return (index >= 0 && index < 4) ? colorMaterials[index] : null;
     }
-    
+
     /**
      * Clear all color material overrides
      */
     public void clearColorMaterials() {
-        this.colorMaterials = new Material[4];
+        for (int i = 0; i < 4; i++) {
+            colorMaterials[i] = null;
+        }
     }
 
     /**
      * Set a cuboid point (for cuboid regions)
      */
     public void setCuboidPoint(int id, double x, double y, double z) {
-        throw new UnsupportedOperationException(
-                "setCuboidPoint is not supported for " + getType().getName());
+        unsupported("setCuboidPoint");
     }
 
     /**
      * Set a 2D polygon point (for polygon regions)
      */
     public void setPolygonPoint(int id, int x, int z) {
-        throw new UnsupportedOperationException(
-                "setPolygonPoint is not supported for " + getType().getName());
+        unsupported("setPolygonPoint");
     }
 
     /**
      * Set min/max Y bounds (for polygon regions)
      */
     public void setMinMax(int min, int max) {
-        throw new UnsupportedOperationException(
-                "setMinMax is not supported for " + getType().getName());
+        unsupported("setMinMax");
     }
 
     /**
      * Set ellipsoid center
      */
     public void setEllipsoidCenter(int x, int y, int z) {
-        throw new UnsupportedOperationException(
-                "setEllipsoidCenter is not supported for " + getType().getName());
+        unsupported("setEllipsoidCenter");
     }
 
     /**
      * Set ellipsoid radii
      */
     public void setEllipsoidRadii(double x, double y, double z) {
-        throw new UnsupportedOperationException(
-                "setEllipsoidRadii is not supported for " + getType().getName());
+        unsupported("setEllipsoidRadii");
     }
 
     /**
      * Set cylinder center
      */
     public void setCylinderCenter(int x, int y, int z) {
-        throw new UnsupportedOperationException(
-                "setCylinderCenter is not supported for " + getType().getName());
+        unsupported("setCylinderCenter");
     }
 
     /**
      * Set cylinder radius
      */
     public void setCylinderRadius(double x, double z) {
-        throw new UnsupportedOperationException(
-                "setCylinderRadius is not supported for " + getType().getName());
+        unsupported("setCylinderRadius");
     }
 
     /**
      * Add a polygon face (for polyhedron regions)
      */
     public void addPolygon(int[] vertexIds) {
+        unsupported("addPolygon");
+    }
+
+    protected void unsupported(String method) {
         throw new UnsupportedOperationException(
-                "addPolygon is not supported for " + getType().getName());
+                method + " is not supported for " + getType().getName()
+        );
     }
 
     /**

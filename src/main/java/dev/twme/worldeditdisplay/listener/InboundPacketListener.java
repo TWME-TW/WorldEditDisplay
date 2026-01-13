@@ -12,35 +12,32 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 import dev.twme.worldeditdisplay.common.Constants;
 import dev.twme.worldeditdisplay.player.PlayerData;
 
+/**
+ * Listens to incoming plugin messages.
+ * Detects CUI registration and marks players as having CUI enabled.
+ */
 public class InboundPacketListener implements PacketListener {
-
 
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
-        if (event.getPacketType() != PacketType.Play.Client.PLUGIN_MESSAGE) {
-            return;
-        }
+        if (event.getPacketType() != PacketType.Play.Client.PLUGIN_MESSAGE) return;
 
-        // 為了防止像是 Axiom 之類的模組封包大小過大導致的錯誤，使用 try-catch 包起來
-        // https://github.com/retrooper/packetevents/issues/1133
-        WrapperPlayClientPluginMessage packet = null;
+        // Catch exceptions for oversized packets (e.g., mods like Axiom)
+        WrapperPlayClientPluginMessage packet;
         try {
             packet = new WrapperPlayClientPluginMessage(event);
         } catch (Exception e) {
-            return;
+            return; // ignore invalid packets
         }
 
-        // 監聽 minecraft:register 頻道，檢查是否包含 worldedit:cui
+        // Listen for REGISTER channel to detect CUI
         if (Constants.REGISTER_CHANNEL.equals(packet.getChannelName())) {
-            byte[] data = packet.getData();
-            String registerMessage = new String(data, StandardCharsets.UTF_8);
-            
-            // 檢查是否包含 worldedit:cui
+            String registerMessage = new String(packet.getData(), StandardCharsets.UTF_8);
+
             if (registerMessage.contains(Constants.CUI_CHANNEL)) {
                 Player player = event.getPlayer();
                 PlayerData playerData = PlayerData.getPlayerData(player);
-                // 標記玩家已經有 CUI
-                playerData.setCuiEnabled(true);
+                playerData.setCuiEnabled(true); // mark player as having CUI
             }
         }
     }

@@ -6,7 +6,6 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 
 import dev.twme.worldeditdisplay.command.PlayerSettingsCommand;
-import dev.twme.worldeditdisplay.command.PlayerSettingsCommandTabCompleter;
 import dev.twme.worldeditdisplay.command.ReloadCommand;
 import dev.twme.worldeditdisplay.config.PlayerSettingsManager;
 import dev.twme.worldeditdisplay.config.RenderSettings;
@@ -17,7 +16,6 @@ import dev.twme.worldeditdisplay.listener.OutboundPacketListener;
 import dev.twme.worldeditdisplay.listener.PlayerJoinListener;
 import dev.twme.worldeditdisplay.listener.PlayerLocaleChangeListener;
 import dev.twme.worldeditdisplay.listener.PlayerQuitListener;
-import dev.twme.worldeditdisplay.player.PlayerManager;
 import dev.twme.worldeditdisplay.util.MessageUtil;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import me.tofaa.entitylib.APIConfig;
@@ -26,7 +24,6 @@ import me.tofaa.entitylib.spigot.SpigotEntityLibPlatform;
 
 public final class WorldEditDisplay extends JavaPlugin {
     private static WorldEditDisplay plugin;
-    private PlayerManager playerDataManager;
     private RenderManager renderManager;
     private RenderSettings renderSettings;
     private PlayerSettingsManager playerSettingsManager;
@@ -76,7 +73,6 @@ public final class WorldEditDisplay extends JavaPlugin {
         this.playerSettingsManager = new PlayerSettingsManager(this);
         
         // Initialize managers
-        this.playerDataManager = new PlayerManager();
         this.renderManager = new RenderManager(this);
 
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
@@ -86,7 +82,6 @@ public final class WorldEditDisplay extends JavaPlugin {
         // Register commands
         getCommand("wedisplayreload").setExecutor(new ReloadCommand(this));
         getCommand("wedisplay").setExecutor(new PlayerSettingsCommand(this));
-        getCommand("wedisplay").setTabCompleter(new PlayerSettingsCommandTabCompleter(this));
         
         getLogger().info("WorldEditDisplay enabled - Visualization rendering system ready");
     }
@@ -105,10 +100,6 @@ public final class WorldEditDisplay extends JavaPlugin {
         return plugin;
     }
 
-    public PlayerManager getPlayerDataManager() {
-        return playerDataManager;
-    }
-    
     public RenderManager getRenderManager() {
         return renderManager;
     }

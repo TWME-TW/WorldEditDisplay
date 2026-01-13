@@ -6,6 +6,7 @@ import dev.twme.worldeditdisplay.player.PlayerData;
  * Ellipsoid (sphere/oval) region
  */
 public class EllipsoidRegion extends Region {
+
     private Vector3 center;
     private Vector3 radii;
 
@@ -18,41 +19,42 @@ public class EllipsoidRegion extends Region {
         return RegionType.ELLIPSOID;
     }
 
+    /**
+     * Set the center point of the ellipsoid
+     */
     @Override
     public void setEllipsoidCenter(int x, int y, int z) {
-        this.center = Vector3.at(x, y, z);
+        center = Vector3.at(x, y, z);
     }
 
+    /**
+     * Set the radii of the ellipsoid along X, Y, Z axes
+     */
     @Override
     public void setEllipsoidRadii(double x, double y, double z) {
-        this.radii = Vector3.at(x, y, z);
+        radii = Vector3.at(x, y, z);
     }
 
-    public Vector3 getCenter() {
-        return center;
-    }
+    public Vector3 getCenter() { return center; }
+    public Vector3 getRadii() { return radii; }
 
-    public Vector3 getRadii() {
-        return radii;
-    }
-
+    @Override
     public boolean isDefined() {
         return center != null && radii != null;
     }
 
     @Override
     public String getInfo() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Ellipsoid Region:\n");
-        sb.append("  Center: ").append(center != null ? center.toString() : "Not set").append("\n");
-        sb.append("  Radii: ").append(radii != null ? radii.toString() : "Not set").append("\n");
-        
+        StringBuilder sb = new StringBuilder("Ellipsoid Region:\n");
+        sb.append("  Center: ").append(center != null ? center : "Not set").append('\n');
+        sb.append("  Radii: ").append(radii != null ? radii : "Not set").append('\n');
+
         if (isDefined()) {
-            // Approximate volume using ellipsoid formula: (4/3) * π * rx * ry * rz
+            // approximate volume: (4/3) * π * rx * ry * rz
             double volume = (4.0 / 3.0) * Math.PI * radii.getX() * radii.getY() * radii.getZ();
-            sb.append("  Approximate volume: ").append(String.format("%.0f", volume)).append(" blocks");
+            sb.append("  Approximate volume: ").append((long) volume).append(" blocks");
         }
-        
+
         return sb.toString();
     }
 }

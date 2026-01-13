@@ -15,46 +15,44 @@ import dev.twme.worldeditdisplay.common.Constants;
 import dev.twme.worldeditdisplay.event.CUIEventArgs;
 import dev.twme.worldeditdisplay.player.PlayerData;
 
+/**
+ * Listens to outgoing plugin messages.
+ * Captures CUI messages and dispatches CUI events for the plugin.
+ */
 public class OutboundPacketListener implements PacketListener {
+
     @Override
     public void onPacketSend(PacketSendEvent event) {
-        if (event.getPacketType() != PacketType.Play.Server.PLUGIN_MESSAGE) {
-            return;
-        }
+        if (event.getPacketType() != PacketType.Play.Server.PLUGIN_MESSAGE) return;
 
         WrapperPlayServerPluginMessage packet = new WrapperPlayServerPluginMessage(event);
         String channel = packet.getChannelName();
 
-        if (!Constants.CUI_CHANNEL.equals(channel)) {
-            return;
-        }
+        if (!Constants.CUI_CHANNEL.equals(channel)) return;
 
         byte[] data = packet.getData();
         String message = new String(data, StandardCharsets.UTF_8);
-        Player player = (Player) event.getPlayer();
+        Player player = event.getPlayer();
 
-        // 檢查玩家是否有使用權限
-        if (!player.hasPermission("worldeditdisplay.use")) {
-            return; // 沒有權限，直接返回不處理
-        }
+        // Skip if player lacks permission
+        if (!player.hasPermission("worldeditdisplay.use")) return;
 
-        // Get player data
         PlayerData playerData = PlayerData.getPlayerData(player);
-        
-        // 如果玩家已經有 CUI，直接傳出封包不處理
-        if (playerData.isCuiEnabled()) {
-            return;
-        }
 
-        event.setCancelled(true); // 取消封包傳送
+        // If CUI already enabled, let the packet go through
+        if (playerData.isCuiEnabled()) return;
 
-        // Parse the CUI message
-        String[] split = message.split("\\|", -1); // 使用 -1 保留尾部空字串
+        event.setCancelled(true); // cancel packet sending
+
+        // Parse CUI message
+        String[] split = message.split("\\|", -1); // preserve trailing empty strings
         boolean multi = split[0].startsWith("+");
         String type = split[0].substring(multi ? 1 : 0);
-        List<String> params = split.length > 1 ? Arrays.asList(Arrays.copyOfRange(split, 1, split.length)) : List.of();
-        
-        // Create event args and dispatch
+        List<String> params = split.length > 1
+                ? Arrays.asList(Arrays.copyOfRange(split, 1, split.length))
+                : List.of();
+
+        // Dispatch CUI event
         CUIEventArgs eventArgs = new CUIEventArgs(playerData, multi, type, params);
         playerData.getDispatcher().raiseEvent(eventArgs);
     }
