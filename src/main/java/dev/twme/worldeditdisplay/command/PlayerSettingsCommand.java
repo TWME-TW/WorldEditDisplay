@@ -415,12 +415,14 @@ public class PlayerSettingsCommand implements TabExecutor {
                     "circle_color", "grid_color", "center_color", "center_line_color",
                     "circle_thickness", "grid_thickness", "center_line_thickness", "center_thickness",
                     "min_circle_segments", "max_circle_segments", "target_segment_length",
-                    "height_grid_division", "radius_grid_division");
+                    "height_grid_division", "radius_grid_division",
+                    "fill_enabled", "fill_color");
             case "ellipsoid" -> Arrays.asList(
                     "line_color", "center_line_color", "center_color",
                     "line_thickness", "center_line_thickness", "center_marker_size", "center_thickness",
                     "min_segments", "max_segments", "target_segment_length",
-                    "radius_grid_division");
+                    "radius_grid_division",
+                    "fill_enabled", "fill_color", "fill_generators");
             case "polygon" -> Arrays.asList(
                     "edge_color", "vertex_color", "vertical_color",
                     "edge_thickness", "vertical_thickness", "height_grid_division",
