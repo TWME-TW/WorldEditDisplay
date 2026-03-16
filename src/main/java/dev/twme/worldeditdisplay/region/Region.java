@@ -1,7 +1,8 @@
 package dev.twme.worldeditdisplay.region;
 
+import org.bukkit.Color;
+
 import dev.twme.worldeditdisplay.player.PlayerData;
-import org.bukkit.Material;
 
 /**
  * Base class for all region types
@@ -13,11 +14,11 @@ public abstract class Region {
     protected double gridSpacing;
 
     /**
-     * Color material overrides (for rendering)
+     * Color overrides (for rendering)
      * 0 = primary, 1 = secondary, 2 = grid, 3 = background
      * null will return the default
      */
-    protected final Material[] colorMaterials = new Material[4];
+    protected final Color[] overrideColors = new Color[4];
 
     protected Region(PlayerData playerData) {
         this.playerData = playerData;
@@ -49,34 +50,34 @@ public abstract class Region {
     }
 
     /**
-     * Set color materials override from CUI color event
+     * Set color overrides from CUI color event
      *
-     * @param materials Array of materials for [primary, secondary, grid, background]
-     *                  null elements will use the default material
+     * @param colors Array of colors for [primary, secondary, grid, background]
+     *               null elements will use the default color
      */
-    public void setColorMaterials(Material[] materials) {
-        if (materials == null || materials.length != 4) {
-            throw new IllegalArgumentException("Color materials array must have exactly 4 elements");
+    public void setOverrideColors(Color[] colors) {
+        if (colors == null || colors.length != 4) {
+            throw new IllegalArgumentException("Override colors array must have exactly 4 elements");
         }
-        System.arraycopy(materials, 0, this.colorMaterials, 0, 4);
+        System.arraycopy(colors, 0, this.overrideColors, 0, 4);
     }
 
     /**
-     * Get color material override for specific index
+     * Get color override for specific index
      *
-     * @param index Material index (0=primary, 1=secondary, 2=grid, 3=background)
-     * @return Material override, or null if using default
+     * @param index Color index (0=primary, 1=secondary, 2=grid, 3=background)
+     * @return Color override, or null if using default
      */
-    public Material getColorMaterial(int index) {
-        return (index >= 0 && index < 4) ? colorMaterials[index] : null;
+    public Color getOverrideColor(int index) {
+        return (index >= 0 && index < 4) ? overrideColors[index] : null;
     }
 
     /**
-     * Clear all color material overrides
+     * Clear all color overrides
      */
-    public void clearColorMaterials() {
+    public void clearOverrideColors() {
         for (int i = 0; i < 4; i++) {
-            colorMaterials[i] = null;
+            overrideColors[i] = null;
         }
     }
 

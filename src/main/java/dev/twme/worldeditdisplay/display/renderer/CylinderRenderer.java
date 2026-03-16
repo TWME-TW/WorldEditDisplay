@@ -1,12 +1,13 @@
 package dev.twme.worldeditdisplay.display.renderer;
 
+import org.bukkit.Color;
+import org.bukkit.entity.Player;
+import org.joml.Vector3f;
+
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
 import dev.twme.worldeditdisplay.region.CylinderRegion;
 import dev.twme.worldeditdisplay.region.Vector3;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.joml.Vector3f;
 
 /**
  * Renders cylinder-shaped selections.
@@ -34,10 +35,10 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
         double cxCircle = center.getX() + 0.5;
         double czCircle = center.getZ() + 0.5;
 
-        Material circleMat = getMaterialWithOverride(region, 0, settings.getCylinderCircleMaterial(), isMulti);
-        Material gridMat = getMaterialWithOverride(region, 1, settings.getCylinderGridMaterial(), isMulti);
-        Material centerMat = getMaterialWithOverride(region, 2, settings.getCylinderCenterMaterial(), isMulti);
-        Material centerLineMat = settings.getCylinderCenterLineMaterial();
+        Color circleMat = getColorWithOverride(region, 0, settings.getCylinderCircleColor(), isMulti);
+        Color gridMat = getColorWithOverride(region, 1, settings.getCylinderGridColor(), isMulti);
+        Color centerMat = getColorWithOverride(region, 2, settings.getCylinderCenterColor(), isMulti);
+        Color centerLineMat = settings.getCylinderCenterLineColor();
 
         // If both radii are zero, just render the center cube
         if (radiusX == 0 && radiusZ == 0) {
@@ -86,12 +87,21 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
                         (float)(center.getY() + 0.5),
                         (float)(center.getZ() + 0.5)),
                 1.03f, centerMat, settings.getCylinderCenterThickness());
+
+        // Render fill surface using parallelograms
+        if (settings.isCylinderFillEnabled()) {
+            Color fillMat = getColorWithOverride(region, 3, settings.getCylinderFillColor(), isMulti);
+            renderCylinderBand(cxCircle, czCircle, radiusX, radiusZ,
+                    (float) minY, (float) (maxY + 1), fillMat);
+            renderCircleCap(cxCircle, minY, czCircle, radiusX, radiusZ, fillMat);
+            renderCircleCap(cxCircle, maxY + 1, czCircle, radiusX, radiusZ, fillMat);
+        }
     }
 
     private void renderRectangularGrid(double centerX, double centerZ,
                                        double radiusX, double radiusZ,
                                        int minY, int maxY,
-                                       Material gridMat, Material centerLineMat) {
+                                       Color gridMat, Color centerLineMat) {
         int stepY = calculateGridStep(maxY - minY + 1);
 
         if (radiusX == 0) {
@@ -107,7 +117,7 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
 
             for (int dz = (int)-Math.ceil(radiusZ); dz <= Math.ceil(radiusZ); dz++) {
                 double z = centerZ + dz;
-                Material mat = (dz == 0) ? centerLineMat : gridMat;
+                Color mat = (dz == 0) ? centerLineMat : gridMat;
                 float thick = (dz == 0) ? settings.getCylinderCenterLineThickness() : settings.getCylinderGridThickness();
                 renderLine(new Line(new Vector3f((float) centerX, (float)minY, (float)z),
                                 new Vector3f((float) centerX, (float)(maxY + 1), (float)z)),
@@ -127,7 +137,7 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
 
             for (int dx = (int)-Math.ceil(radiusX); dx <= Math.ceil(radiusX); dx++) {
                 double x = centerX + dx;
-                Material mat = (dx == 0) ? centerLineMat : gridMat;
+                Color mat = (dx == 0) ? centerLineMat : gridMat;
                 float thick = (dx == 0) ? settings.getCylinderCenterLineThickness() : settings.getCylinderGridThickness();
                 renderLine(new Line(new Vector3f((float)x, (float)minY, (float) centerZ),
                                 new Vector3f((float)x, (float)(maxY + 1), (float) centerZ)),
@@ -155,7 +165,7 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
 
     private void renderCircle(double cx, double y, double cz,
                               double radiusX, double radiusZ,
-                              Material mat, float thickness) {
+                              Color mat, float thickness) {
         int segments = calculateCircleSegments(radiusX, radiusZ);
         Vector3f[] points = new Vector3f[segments];
         double twoPi = Math.PI * 2;
@@ -175,7 +185,7 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
     private void renderGrid(double centerX, double centerZ,
                             double radiusX, double radiusZ,
                             int minY, int maxY,
-                            Material gridMat, Material centerLineMat) {
+                            Color gridMat, Color centerLineMat) {
         int posX = (int)Math.ceil(radiusX), negX = (int)-Math.ceil(radiusX);
         int posZ = (int)Math.ceil(radiusZ), negZ = (int)-Math.ceil(radiusZ);
 
@@ -184,7 +194,7 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
 
         for (int dx = negX; dx <= posX; dx += xStep) {
             double x = centerX + dx;
-            Material mat = (dx == 0) ? centerLineMat : gridMat;
+            Color mat = (dx == 0) ? centerLineMat : gridMat;
             float thick = (dx == 0) ? settings.getCylinderCenterLineThickness() : settings.getCylinderGridThickness();
 
             double ratio = dx / radiusX;
@@ -202,7 +212,7 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
 
         for (int dz = negZ; dz <= posZ; dz += zStep) {
             double z = centerZ + dz;
-            Material mat = (dz == 0) ? centerLineMat : gridMat;
+            Color mat = (dz == 0) ? centerLineMat : gridMat;
             float thick = (dz == 0) ? settings.getCylinderCenterLineThickness() : settings.getCylinderGridThickness();
 
             double ratio = dz / radiusZ;
@@ -229,6 +239,54 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
         int step = Math.max(1, (int)(radiusZ / settings.getCylinderRadiusGridDivision()));
         if (settings.getCylinderMaxGridSpacing() != -1) step = Math.min(step, settings.getCylinderMaxGridSpacing());
         return step;
+    }
+
+    /**
+     * Renders the lateral surface of a cylindrical band between two Y levels
+     * using N parallelogram quads around the perimeter.
+     * Each quad exactly covers one arc segment of the cylinder surface.
+     */
+    private void renderCylinderBand(double cx, double cz,
+                                    double radiusX, double radiusZ,
+                                    float y1, float y2, Color mat) {
+        int segments = calculateCircleSegments(radiusX, radiusZ);
+        double twoPi = Math.PI * 2;
+        for (int i = 0; i < segments; i++) {
+            double a1 = i * twoPi / segments;
+            double a2 = (i + 1) * twoPi / segments;
+            Vector3f p1 = new Vector3f(
+                    (float)(cx + radiusX * Math.cos(a1)), y1,
+                    (float)(cz + radiusZ * Math.sin(a1)));
+            Vector3f p2 = new Vector3f(
+                    (float)(cx + radiusX * Math.cos(a2)), y1,
+                    (float)(cz + radiusZ * Math.sin(a2)));
+            Vector3f p3 = new Vector3f(
+                    (float)(cx + radiusX * Math.cos(a1)), y2,
+                    (float)(cz + radiusZ * Math.sin(a1)));
+            renderParallelogram(p1, p2, p3, mat);
+        }
+    }
+
+    /**
+     * Renders a filled disc cap (top or bottom) as N triangles from the center
+     * to adjacent points on the ellipse perimeter.
+     */
+    private void renderCircleCap(double cx, double cy, double cz,
+                                  double radiusX, double radiusZ, Color mat) {
+        int segments = calculateCircleSegments(radiusX, radiusZ);
+        double twoPi = Math.PI * 2;
+        Vector3f center = new Vector3f((float) cx, (float) cy, (float) cz);
+        for (int i = 0; i < segments; i++) {
+            double a1 = i * twoPi / segments;
+            double a2 = (i + 1) * twoPi / segments;
+            Vector3f p1 = new Vector3f(
+                    (float)(cx + radiusX * Math.cos(a1)), (float) cy,
+                    (float)(cz + radiusZ * Math.sin(a1)));
+            Vector3f p2 = new Vector3f(
+                    (float)(cx + radiusX * Math.cos(a2)), (float) cy,
+                    (float)(cz + radiusZ * Math.sin(a2)));
+            renderTriangle(center, p1, p2, mat);
+        }
     }
 
     @Override

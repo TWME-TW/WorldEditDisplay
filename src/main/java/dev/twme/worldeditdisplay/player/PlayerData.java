@@ -4,8 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
+import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.event.CUIEventDispatcher;
 import dev.twme.worldeditdisplay.region.Region;
 import dev.twme.worldeditdisplay.region.RegionType;
@@ -21,6 +24,7 @@ public class PlayerData {
     private final CUIEventDispatcher dispatcher;
     private boolean isCuiEnabled = false;
     private boolean renderingEnabled = false; // default off; will enable on login if player has permission
+    private boolean debugEnabled = false;
 
     // Current single selection
     private Region currentRegion;
@@ -28,6 +32,9 @@ public class PlayerData {
     // Multi-selection regions
     private final Map<UUID, Region> multiRegions = new HashMap<>();
     private UUID currentMultiRegionId; // tracks which multi-region the player is currently editing
+
+    // Debounced render task
+    private BukkitTask pendingRenderTask;
 
     // Color settings
     private String primaryColor;
@@ -53,7 +60,10 @@ public class PlayerData {
      * Remove PlayerData for a player when they leave
      */
     public static void removePlayerData(UUID uuid) {
-        playerDataMap.remove(uuid);
+        PlayerData data = playerDataMap.remove(uuid);
+        if (data != null) {
+            data.cancelPendingRender();
+        }
     }
 
     public Player getPlayer() {
@@ -84,6 +94,20 @@ public class PlayerData {
      */
     public void setRenderingEnabled(boolean enabled) {
         this.renderingEnabled = enabled;
+    }
+
+    /**
+     * Check if debug mode is enabled for this player
+     */
+    public boolean isDebugEnabled() {
+        return debugEnabled;
+    }
+
+    /**
+     * Enable or disable debug mode for this player
+     */
+    public void setDebugEnabled(boolean enabled) {
+        this.debugEnabled = enabled;
     }
 
     /**
@@ -225,5 +249,34 @@ public class PlayerData {
 
     public boolean isBackgroundEnabled() {
         return backgroundEnabled;
+    }
+
+    /**
+     * 延遲渲染更新（防抖機制）
+     * 每次呼叫時重置計時器，等待 2 ticks（約 100ms）後才執行渲染
+     */
+    public synchronized void scheduleRenderUpdate() {
+        if (pendingRenderTask != null) {
+            pendingRenderTask.cancel();
+        }
+        WorldEditDisplay plugin = WorldEditDisplay.getPlugin();
+        if (plugin == null || plugin.getRenderManager() == null) return;
+
+        pendingRenderTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            synchronized (this) {
+                pendingRenderTask = null;
+            }
+            plugin.getRenderManager().updateRender(player);
+        }, 2L);
+    }
+
+    /**
+     * 取消待處理的渲染任務（用於玩家離開時清理）
+     */
+    public synchronized void cancelPendingRender() {
+        if (pendingRenderTask != null) {
+            pendingRenderTask.cancel();
+            pendingRenderTask = null;
+        }
     }
 }

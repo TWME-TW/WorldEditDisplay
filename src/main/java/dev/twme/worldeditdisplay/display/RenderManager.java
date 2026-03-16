@@ -6,9 +6,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
-import dev.twme.worldeditdisplay.WorldEditDisplay;
 import org.bukkit.entity.Player;
 
+import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.display.renderer.CuboidRenderer;
 import dev.twme.worldeditdisplay.display.renderer.CylinderRenderer;
 import dev.twme.worldeditdisplay.display.renderer.EllipsoidRenderer;
@@ -22,6 +22,7 @@ import dev.twme.worldeditdisplay.region.EllipsoidRegion;
 import dev.twme.worldeditdisplay.region.PolygonRegion;
 import dev.twme.worldeditdisplay.region.PolyhedronRegion;
 import dev.twme.worldeditdisplay.region.Region;
+import dev.twme.worldeditdisplay.util.MessageUtil;
 
 /**
  * keeps track of player renderers
@@ -74,6 +75,11 @@ public class RenderManager {
 
         updateMainSelection(player, playerId, playerData.getSelection());
         updateMultiSelections(player, playerId, playerData.getMultiRegions());
+
+        if (playerData.isDebugEnabled()) {
+            int entityCount = getPlayerEntityCount(playerId);
+            MessageUtil.sendTranslated(player, "command.wedisplay.debug.entity_count", entityCount);
+        }
     }
 
     private void updateMainSelection(Player player, UUID playerId, Region mainSelection) {
@@ -206,6 +212,21 @@ public class RenderManager {
         int mainCount = mainRenderers.size();
         int multiCount = multiRenderers.values().stream().mapToInt(Map::size).sum();
         return mainCount + multiCount;
+    }
+
+    public int getPlayerEntityCount(UUID playerId) {
+        int count = 0;
+        RegionRenderer mainRenderer = mainRenderers.get(playerId);
+        if (mainRenderer != null) {
+            count += mainRenderer.getEntityCount();
+        }
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.get(playerId);
+        if (playerMultiRenderers != null) {
+            for (RegionRenderer renderer : playerMultiRenderers.values()) {
+                count += renderer.getEntityCount();
+            }
+        }
+        return count;
     }
 
     public void shutdown() {

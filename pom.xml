@@ -38,6 +38,14 @@
             <goals>
               <goal>shade</goal>
             </goals>
+            <configuration>
+              <relocations>
+                <relocation>
+                  <pattern>dev.twme.textdisplayshape</pattern>
+                  <shadedPattern>dev.twme.worldeditdisplay.lib.textdisplayshape</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -84,9 +92,9 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>io.github.tofaa2</groupId>
-      <artifactId>spigot</artifactId>
-      <version>+eba7ada-SNAPSHOT</version>
+      <groupId>dev.twme</groupId>
+      <artifactId>TextDisplayShape</artifactId>
+      <version>1.1.0</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
