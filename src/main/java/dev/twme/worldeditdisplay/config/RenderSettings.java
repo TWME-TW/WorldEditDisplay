@@ -168,14 +168,14 @@ public class RenderSettings {
         ellipsoidRadiusGridDivision = 6;
         ellipsoidMaxGridSpacing = -1;
         ellipsoidFillEnabled = false;
-        ellipsoidFillColor = ColorUtil.parseHexColor("#CC4C4C50");
+        ellipsoidFillColor = ColorUtil.parseHexColor("#CC4C4C40");
         ellipsoidFillGenerators = 10;
         
         polygonEdgeColor = ColorUtil.parseHexColor("#CC4C4CCC");
         polygonVertexColor = ColorUtil.parseHexColor("#33CCCCCC");
         polygonVerticalColor = ColorUtil.parseHexColor("#CC4C4CCC");
         polygonFillEnabled = false;
-        polygonFillColor = ColorUtil.parseHexColor("#CC4C4C50");
+        polygonFillColor = ColorUtil.parseHexColor("#CC4C4C20");
         polygonEdgeThickness = 0.04f;
         polygonVerticalThickness = 0.04f;
         polygonHeightGridDivision = 10;
@@ -185,7 +185,7 @@ public class RenderSettings {
         polyhedronVertex0Color = ColorUtil.parseHexColor("#33CC33CC");
         polyhedronVertexColor = ColorUtil.parseHexColor("#3333CCCC");
         polyhedronFillEnabled = false;
-        polyhedronFillColor = ColorUtil.parseHexColor("#CC333350");
+        polyhedronFillColor = ColorUtil.parseHexColor("#CC333320");
         polyhedronLineThickness = 0.03f;
         polyhedronVertexSize = 1.0f;
         polyhedronVertexThickness = 0.03f;
