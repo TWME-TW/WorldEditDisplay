@@ -63,8 +63,8 @@ public class ColorUtil {
         if (h.length() != 6 && h.length() != 8) return false;
         try {
             for (char c : h.toCharArray()) {
-                Character.digit(c, 16);
-                if (Character.digit(c, 16) == -1) return false;
+                int digit = Character.digit(c, 16);
+                if (digit == -1) return false;
             }
             return true;
         } catch (Exception e) {
