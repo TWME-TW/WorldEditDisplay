@@ -1,23 +1,22 @@
 package dev.twme.worldeditdisplay.command;
 
-import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabExecutor;
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
-
-import dev.twme.worldeditdisplay.WorldEditDisplay;
-import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
-import dev.twme.worldeditdisplay.player.PlayerData;
-import dev.twme.worldeditdisplay.util.MessageUtil;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import dev.twme.worldeditdisplay.WorldEditDisplay;
+import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
+import dev.twme.worldeditdisplay.player.PlayerData;
+import dev.twme.worldeditdisplay.util.ColorUtil;
+import dev.twme.worldeditdisplay.util.MessageUtil;
 
 /**
  * command for players to manage their personal settings
@@ -60,6 +59,7 @@ public class PlayerSettingsCommand implements TabExecutor {
             case "reloadplayer" -> handleReload(player);
             case "lang", "language" -> handleLanguage(player, args);
             case "toggle" -> handleToggle(player);
+            case "debug" -> handleDebug(player);
             default -> sendHelp(player);
         }
 
@@ -210,26 +210,42 @@ public class PlayerSettingsCommand implements TabExecutor {
         return true;
     }
 
+    private boolean handleDebug(Player player) {
+        PlayerData data = PlayerData.getPlayerData(player);
+        boolean newState = !data.isDebugEnabled();
+        data.setDebugEnabled(newState);
+
+        if (newState) {
+            MessageUtil.sendTranslated(player, "command.wedisplay.debug.enabled");
+        } else {
+            MessageUtil.sendTranslated(player, "command.wedisplay.debug.disabled");
+        }
+
+        return true;
+    }
+
     // helpers
     private void showRendererSettings(Player player, String renderer, PlayerRenderSettings settings) {
         MessageUtil.sendTranslated(player, "command.wedisplay.show.renderer_title", renderer.toUpperCase());
 
         switch (renderer) {
             case "cuboid" -> {
-                MessageUtil.sendTranslated(player, "settings.edge_material", settings.getCuboidEdgeMaterial());
-                MessageUtil.sendTranslated(player, "settings.point1_material", settings.getCuboidPoint1Material());
-                MessageUtil.sendTranslated(player, "settings.point2_material", settings.getCuboidPoint2Material());
-                MessageUtil.sendTranslated(player, "settings.grid_material", settings.getCuboidGridMaterial());
+                MessageUtil.sendTranslated(player, "settings.edge_color", ColorUtil.toHexString(settings.getCuboidEdgeColor()));
+                MessageUtil.sendTranslated(player, "settings.point1_color", ColorUtil.toHexString(settings.getCuboidPoint1Color()));
+                MessageUtil.sendTranslated(player, "settings.point2_color", ColorUtil.toHexString(settings.getCuboidPoint2Color()));
+                MessageUtil.sendTranslated(player, "settings.grid_color", ColorUtil.toHexString(settings.getCuboidGridColor()));
                 MessageUtil.sendTranslated(player, "settings.edge_thickness", settings.getCuboidEdgeThickness());
                 MessageUtil.sendTranslated(player, "settings.grid_thickness", settings.getCuboidGridThickness());
                 MessageUtil.sendTranslated(player, "settings.vertex_marker_size", settings.getCuboidVertexMarkerSize());
                 MessageUtil.sendTranslated(player, "settings.height_grid_division", settings.getCuboidHeightGridDivision());
+                MessageUtil.sendTranslated(player, "settings.fill_enabled", settings.isCuboidFillEnabled());
+                MessageUtil.sendTranslated(player, "settings.fill_color", ColorUtil.toHexString(settings.getCuboidFillColor()));
             }
             case "cylinder" -> {
-                MessageUtil.sendTranslated(player, "settings.circle_material", settings.getCylinderCircleMaterial());
-                MessageUtil.sendTranslated(player, "settings.grid_material", settings.getCylinderGridMaterial());
-                MessageUtil.sendTranslated(player, "settings.center_material", settings.getCylinderCenterMaterial());
-                MessageUtil.sendTranslated(player, "settings.center_line_material", settings.getCylinderCenterLineMaterial());
+                MessageUtil.sendTranslated(player, "settings.circle_color", ColorUtil.toHexString(settings.getCylinderCircleColor()));
+                MessageUtil.sendTranslated(player, "settings.grid_color", ColorUtil.toHexString(settings.getCylinderGridColor()));
+                MessageUtil.sendTranslated(player, "settings.center_color", ColorUtil.toHexString(settings.getCylinderCenterColor()));
+                MessageUtil.sendTranslated(player, "settings.center_line_color", ColorUtil.toHexString(settings.getCylinderCenterLineColor()));
                 MessageUtil.sendTranslated(player, "settings.circle_thickness", settings.getCylinderCircleThickness());
                 MessageUtil.sendTranslated(player, "settings.grid_thickness", settings.getCylinderGridThickness());
                 MessageUtil.sendTranslated(player, "settings.center_line_thickness", settings.getCylinderCenterLineThickness());
@@ -241,9 +257,9 @@ public class PlayerSettingsCommand implements TabExecutor {
                 MessageUtil.sendTranslated(player, "settings.radius_grid_division", settings.getCylinderRadiusGridDivision());
             }
             case "ellipsoid" -> {
-                MessageUtil.sendTranslated(player, "settings.line_material", settings.getEllipsoidLineMaterial());
-                MessageUtil.sendTranslated(player, "settings.center_line_material", settings.getEllipsoidCenterLineMaterial());
-                MessageUtil.sendTranslated(player, "settings.center_material", settings.getEllipsoidCenterMaterial());
+                MessageUtil.sendTranslated(player, "settings.line_color", ColorUtil.toHexString(settings.getEllipsoidLineColor()));
+                MessageUtil.sendTranslated(player, "settings.center_line_color", ColorUtil.toHexString(settings.getEllipsoidCenterLineColor()));
+                MessageUtil.sendTranslated(player, "settings.center_color", ColorUtil.toHexString(settings.getEllipsoidCenterColor()));
                 MessageUtil.sendTranslated(player, "settings.line_thickness", settings.getEllipsoidLineThickness());
                 MessageUtil.sendTranslated(player, "settings.center_line_thickness", settings.getEllipsoidCenterLineThickness());
                 MessageUtil.sendTranslated(player, "settings.center_marker_size", settings.getEllipsoidCenterMarkerSize());
@@ -254,20 +270,24 @@ public class PlayerSettingsCommand implements TabExecutor {
                 MessageUtil.sendTranslated(player, "settings.radius_grid_division", settings.getEllipsoidRadiusGridDivision());
             }
             case "polygon" -> {
-                MessageUtil.sendTranslated(player, "settings.edge_material", settings.getPolygonEdgeMaterial());
-                MessageUtil.sendTranslated(player, "settings.vertex_material", settings.getPolygonVertexMaterial());
-                MessageUtil.sendTranslated(player, "settings.vertical_material", settings.getPolygonVerticalMaterial());
+                MessageUtil.sendTranslated(player, "settings.edge_color", ColorUtil.toHexString(settings.getPolygonEdgeColor()));
+                MessageUtil.sendTranslated(player, "settings.vertex_color", ColorUtil.toHexString(settings.getPolygonVertexColor()));
+                MessageUtil.sendTranslated(player, "settings.vertical_color", ColorUtil.toHexString(settings.getPolygonVerticalColor()));
                 MessageUtil.sendTranslated(player, "settings.edge_thickness", settings.getPolygonEdgeThickness());
                 MessageUtil.sendTranslated(player, "settings.vertical_thickness", settings.getPolygonVerticalThickness());
                 MessageUtil.sendTranslated(player, "settings.height_grid_division", settings.getPolygonHeightGridDivision());
+                MessageUtil.sendTranslated(player, "settings.fill_enabled", settings.isPolygonFillEnabled());
+                MessageUtil.sendTranslated(player, "settings.fill_color", ColorUtil.toHexString(settings.getPolygonFillColor()));
             }
             case "polyhedron" -> {
-                MessageUtil.sendTranslated(player, "settings.line_material", settings.getPolyhedronLineMaterial());
-                MessageUtil.sendTranslated(player, "settings.vertex0_material", settings.getPolyhedronVertex0Material());
-                MessageUtil.sendTranslated(player, "settings.vertex_material", settings.getPolyhedronVertexMaterial());
+                MessageUtil.sendTranslated(player, "settings.line_color", ColorUtil.toHexString(settings.getPolyhedronLineColor()));
+                MessageUtil.sendTranslated(player, "settings.vertex0_color", ColorUtil.toHexString(settings.getPolyhedronVertex0Color()));
+                MessageUtil.sendTranslated(player, "settings.vertex_color", ColorUtil.toHexString(settings.getPolyhedronVertexColor()));
                 MessageUtil.sendTranslated(player, "settings.line_thickness", settings.getPolyhedronLineThickness());
                 MessageUtil.sendTranslated(player, "settings.vertex_size", settings.getPolyhedronVertexSize());
                 MessageUtil.sendTranslated(player, "settings.vertex_thickness", settings.getPolyhedronVertexThickness());
+                MessageUtil.sendTranslated(player, "settings.fill_enabled", settings.isPolyhedronFillEnabled());
+                MessageUtil.sendTranslated(player, "settings.fill_color", ColorUtil.toHexString(settings.getPolyhedronFillColor()));
             }
         }
 
@@ -288,6 +308,8 @@ public class PlayerSettingsCommand implements TabExecutor {
         MessageUtil.sendTranslated(player, "command.wedisplay.help.lang_desc");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.toggle");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.toggle_desc");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.debug");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.debug_desc");
     }
 
     private boolean isValidRenderer(String renderer) {
@@ -297,9 +319,16 @@ public class PlayerSettingsCommand implements TabExecutor {
     }
 
     private Object parseValue(String setting, String value) {
-        if (setting.contains("material")) {
-            try { return Material.valueOf(value.toUpperCase()); }
-            catch (IllegalArgumentException e) { return null; }
+        if (setting.contains("color")) {
+            if (!value.startsWith("#")) {
+                value = "#" + value;
+            }
+            if (ColorUtil.isValidHexColor(value)) {
+                return value;
+            }
+            return null;
+        } else if (setting.contains("enabled")) {
+            return Boolean.parseBoolean(value);
         } else if (setting.contains("thickness") || setting.contains("size") ||
                 setting.contains("length") || setting.contains("factor")) {
             try { return Double.parseDouble(value); }
@@ -312,7 +341,7 @@ public class PlayerSettingsCommand implements TabExecutor {
 
     // Tab Completion
     private static final List<String> SUB_COMMANDS = Arrays.asList(
-            "set", "reset", "show", "reloadplayer", "lang", "language", "toggle");
+            "set", "reset", "show", "reloadplayer", "lang", "language", "toggle", "debug");
 
     // second argument options
     private static final List<String> RENDERERS = Arrays.asList(
@@ -362,13 +391,11 @@ public class PlayerSettingsCommand implements TabExecutor {
             String setting = args[2].toLowerCase();
 
             if (subCommand.equals("set")) {
-                if (setting.contains("material")) {
-                    // fourth arg: material value
-                    completions = getMaterialSuggestions().stream()
-                            .filter(mat -> mat.startsWith(args[3].toUpperCase()))
-                            .collect(Collectors.toList());
+                if (setting.contains("color")) {
+                    completions = Arrays.asList("#RRGGBBAA", "#FF0000FF", "#00FF00FF", "#0000FFFF", "#FFFFFF80");
+                } else if (setting.contains("enabled")) {
+                    completions = Arrays.asList("true", "false");
                 } else {
-                    // show examples
                     completions = Arrays.asList("<value>", "1", "0.05", "0.04", "0.03");
                 }
             }
@@ -381,33 +408,30 @@ public class PlayerSettingsCommand implements TabExecutor {
     private List<String> getSettingKeys(String renderer) {
         return switch (renderer) {
             case "cuboid" -> Arrays.asList(
-                    "edge_material", "point1_material", "point2_material", "grid_material",
-                    "edge_thickness", "grid_thickness", "vertex_marker_size", "height_grid_division");
+                    "edge_color", "point1_color", "point2_color", "grid_color",
+                    "edge_thickness", "grid_thickness", "vertex_marker_size", "height_grid_division",
+                    "fill_enabled", "fill_color");
             case "cylinder" -> Arrays.asList(
-                    "circle_material", "grid_material", "center_material", "center_line_material",
+                    "circle_color", "grid_color", "center_color", "center_line_color",
                     "circle_thickness", "grid_thickness", "center_line_thickness", "center_thickness",
                     "min_circle_segments", "max_circle_segments", "target_segment_length",
-                    "height_grid_division", "radius_grid_division");
+                    "height_grid_division", "radius_grid_division",
+                    "fill_enabled", "fill_color");
             case "ellipsoid" -> Arrays.asList(
-                    "line_material", "center_line_material", "center_material",
+                    "line_color", "center_line_color", "center_color",
                     "line_thickness", "center_line_thickness", "center_marker_size", "center_thickness",
                     "min_segments", "max_segments", "target_segment_length",
-                    "radius_grid_division");
+                    "radius_grid_division",
+                    "fill_enabled", "fill_color", "fill_generators");
             case "polygon" -> Arrays.asList(
-                    "edge_material", "vertex_material", "vertical_material",
-                    "edge_thickness", "vertical_thickness", "height_grid_division");
+                    "edge_color", "vertex_color", "vertical_color",
+                    "edge_thickness", "vertical_thickness", "height_grid_division",
+                    "fill_enabled", "fill_color");
             case "polyhedron" -> Arrays.asList(
-                    "line_material", "vertex0_material", "vertex_material",
-                    "line_thickness", "vertex_size", "vertex_thickness");
+                    "line_color", "vertex0_color", "vertex_color",
+                    "line_thickness", "vertex_size", "vertex_thickness",
+                    "fill_enabled", "fill_color");
             default -> new ArrayList<>();
         };
-    }
-
-    private List<String> getMaterialSuggestions() {
-        return Arrays.stream(Material.values())
-                .filter(Material::isSolid)
-                .map(Material::name)
-                .sorted()
-                .toList();
     }
 }

@@ -2,7 +2,6 @@ package dev.twme.worldeditdisplay.event;
 
 import java.util.List;
 
-import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.player.PlayerData;
 
 /**
@@ -45,12 +44,9 @@ public abstract class CUIEvent {
     public String execute() {
         String result = raise();
         
-        // 如果事件需要更新渲染,則觸發更新
+        // 如果事件需要更新渲染,則透過防抖機制延遲觸發更新
         if (shouldUpdateRender() && playerData != null && playerData.getPlayer() != null) {
-            WorldEditDisplay plugin = WorldEditDisplay.getPlugin();
-            if (plugin != null && plugin.getRenderManager() != null) {
-                plugin.getRenderManager().updateRender(playerData.getPlayer());
-            }
+            playerData.scheduleRenderUpdate();
         }
         
         return result;

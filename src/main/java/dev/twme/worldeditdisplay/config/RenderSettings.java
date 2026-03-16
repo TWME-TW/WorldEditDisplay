@@ -1,16 +1,12 @@
 package dev.twme.worldeditdisplay.config;
 
-import dev.twme.worldeditdisplay.WorldEditDisplay;
-import org.bukkit.Material;
+import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
-/**
- * 渲染設定管理類
- * 
- * 負責從 config.yml 讀取和管理所有渲染器的配置參數
- * 支援熱重載 (reload)
- */
+import dev.twme.worldeditdisplay.WorldEditDisplay;
+import dev.twme.worldeditdisplay.util.ColorUtil;
+
 public class RenderSettings {
     
     private final WorldEditDisplay plugin;
@@ -31,11 +27,16 @@ public class RenderSettings {
     private double scaleFactorMin;
     private double scaleFactorMax;
     
+    // === Global 設定 ===
+    private boolean seeThrough;
+    
     // === Cuboid 設定 ===
-    private Material cuboidEdgeMaterial;
-    private Material cuboidPoint1Material;
-    private Material cuboidPoint2Material;
-    private Material cuboidGridMaterial;
+    private Color cuboidEdgeColor;
+    private Color cuboidPoint1Color;
+    private Color cuboidPoint2Color;
+    private Color cuboidGridColor;
+    private boolean cuboidFillEnabled;
+    private Color cuboidFillColor;
     private float cuboidEdgeThickness;
     private float cuboidGridThickness;
     private float cuboidVertexMarkerSize;
@@ -43,10 +44,10 @@ public class RenderSettings {
     private int cuboidMaxGridSpacing;
     
     // === Cylinder 設定 ===
-    private Material cylinderCircleMaterial;
-    private Material cylinderGridMaterial;
-    private Material cylinderCenterMaterial;
-    private Material cylinderCenterLineMaterial;
+    private Color cylinderCircleColor;
+    private Color cylinderGridColor;
+    private Color cylinderCenterColor;
+    private Color cylinderCenterLineColor;
     private float cylinderCircleThickness;
     private float cylinderGridThickness;
     private float cylinderCenterLineThickness;
@@ -58,11 +59,13 @@ public class RenderSettings {
     private int cylinderHeightGridDivision;
     private int cylinderRadiusGridDivision;
     private int cylinderMaxGridSpacing;
+    private boolean cylinderFillEnabled;
+    private Color cylinderFillColor;
     
     // === Ellipsoid 設定 ===
-    private Material ellipsoidLineMaterial;
-    private Material ellipsoidCenterLineMaterial;
-    private Material ellipsoidCenterMaterial;
+    private Color ellipsoidLineColor;
+    private Color ellipsoidCenterLineColor;
+    private Color ellipsoidCenterColor;
     private float ellipsoidLineThickness;
     private float ellipsoidCenterLineThickness;
     private float ellipsoidCenterMarkerSize;
@@ -73,20 +76,27 @@ public class RenderSettings {
     private double ellipsoidSqrtScaleFactor;
     private int ellipsoidRadiusGridDivision;
     private int ellipsoidMaxGridSpacing;
+    private boolean ellipsoidFillEnabled;
+    private Color ellipsoidFillColor;
+    private int ellipsoidFillGenerators;
     
     // === Polygon 設定 ===
-    private Material polygonEdgeMaterial;
-    private Material polygonVertexMaterial;
-    private Material polygonVerticalMaterial;
+    private Color polygonEdgeColor;
+    private Color polygonVertexColor;
+    private Color polygonVerticalColor;
+    private boolean polygonFillEnabled;
+    private Color polygonFillColor;
     private float polygonEdgeThickness;
     private float polygonVerticalThickness;
     private int polygonHeightGridDivision;
     private int polygonMaxGridSpacing;
     
     // === Polyhedron 設定 ===
-    private Material polyhedronLineMaterial;
-    private Material polyhedronVertex0Material;
-    private Material polyhedronVertexMaterial;
+    private Color polyhedronLineColor;
+    private Color polyhedronVertex0Color;
+    private Color polyhedronVertexColor;
+    private boolean polyhedronFillEnabled;
+    private Color polyhedronFillColor;
     private float polyhedronLineThickness;
     private float polyhedronVertexSize;
     private float polyhedronVertexThickness;
@@ -96,11 +106,7 @@ public class RenderSettings {
         loadDefaults();
     }
     
-    /**
-     * 載入預設值
-     */
     private void loadDefaults() {
-        // 玩家設定限制預設值
         thicknessMin = 0.01;
         thicknessMax = 0.5;
         markerSizeMin = 0.1;
@@ -116,40 +122,43 @@ public class RenderSettings {
         scaleFactorMin = 0.5;
         scaleFactorMax = 10.0;
         
-        // Cuboid 預設值
-        cuboidEdgeMaterial = Material.GOLD_BLOCK;
-        cuboidPoint1Material = Material.DIAMOND_BLOCK;
-        cuboidPoint2Material = Material.EMERALD_BLOCK;
-        cuboidGridMaterial = Material.IRON_BLOCK;
-        cuboidEdgeThickness = 0.05f;
-        cuboidGridThickness = 0.03f;
+        seeThrough = true;
+        
+        cuboidEdgeColor = ColorUtil.parseHexColor("#CC3333CC");
+        cuboidPoint1Color = ColorUtil.parseHexColor("#33CC33CC");
+        cuboidPoint2Color = ColorUtil.parseHexColor("#3333CCCC");
+        cuboidGridColor = ColorUtil.parseHexColor("#CC4C4CCC");
+        cuboidFillEnabled = false;
+        cuboidFillColor = ColorUtil.parseHexColor("#FF000050");
+        cuboidEdgeThickness = 0.03f;
+        cuboidGridThickness = 0.01f;
         cuboidVertexMarkerSize = 1.0f;
         cuboidHeightGridDivision = 10;
         cuboidMaxGridSpacing = -1;
         
-        // Cylinder 預設值
-        cylinderCircleMaterial = Material.GOLD_BLOCK;
-        cylinderGridMaterial = Material.IRON_BLOCK;
-        cylinderCenterMaterial = Material.GLOWSTONE;
-        cylinderCenterLineMaterial = Material.REDSTONE_BLOCK;
-        cylinderCircleThickness = 0.08f;
-        cylinderGridThickness = 0.05f;
-        cylinderCenterLineThickness = 0.08f;
+        cylinderCircleColor = ColorUtil.parseHexColor("#CC4C4CCC");
+        cylinderGridColor = ColorUtil.parseHexColor("#CC3333CC");
+        cylinderCenterColor = ColorUtil.parseHexColor("#CC33CCCC");
+        cylinderCenterLineColor = ColorUtil.parseHexColor("#CC3333CC");
+        cylinderCircleThickness = 0.03f;
+        cylinderGridThickness = 0.01f;
+        cylinderCenterLineThickness = 0.04f;
         cylinderCenterThickness = 0.05f;
-        cylinderMinCircleSegments = 30;
-        cylinderMaxCircleSegments = 60;
+        cylinderMinCircleSegments = 20;
+        cylinderMaxCircleSegments = 50;
         cylinderTargetSegmentLength = 0.5;
         cylinderSqrtScaleFactor = 4.0;
         cylinderHeightGridDivision = 10;
         cylinderRadiusGridDivision = 5;
         cylinderMaxGridSpacing = -1;
+        cylinderFillEnabled = false;
+        cylinderFillColor = ColorUtil.parseHexColor("#CC4C4C50");
         
-        // Ellipsoid 預設值
-        ellipsoidLineMaterial = Material.GOLD_BLOCK;
-        ellipsoidCenterLineMaterial = Material.REDSTONE_BLOCK;
-        ellipsoidCenterMaterial = Material.GLOWSTONE;
-        ellipsoidLineThickness = 0.06f;
-        ellipsoidCenterLineThickness = 0.08f;
+        ellipsoidLineColor = ColorUtil.parseHexColor("#CC4C4CCC");
+        ellipsoidCenterLineColor = ColorUtil.parseHexColor("#CC3333CC");
+        ellipsoidCenterColor = ColorUtil.parseHexColor("#CCCC33CC");
+        ellipsoidLineThickness = 0.04f;
+        ellipsoidCenterLineThickness = 0.05f;
         ellipsoidCenterMarkerSize = 1.0f;
         ellipsoidCenterThickness = 0.05f;
         ellipsoidMinSegments = 20;
@@ -158,65 +167,50 @@ public class RenderSettings {
         ellipsoidSqrtScaleFactor = 4.0;
         ellipsoidRadiusGridDivision = 6;
         ellipsoidMaxGridSpacing = -1;
+        ellipsoidFillEnabled = false;
+        ellipsoidFillColor = ColorUtil.parseHexColor("#CC4C4C40");
+        ellipsoidFillGenerators = 10;
         
-        // Polygon 預設值
-        polygonEdgeMaterial = Material.GOLD_BLOCK;
-        polygonVertexMaterial = Material.DIAMOND_BLOCK;
-        polygonVerticalMaterial = Material.IRON_BLOCK;
-        polygonEdgeThickness = 0.05f;
+        polygonEdgeColor = ColorUtil.parseHexColor("#CC4C4CCC");
+        polygonVertexColor = ColorUtil.parseHexColor("#33CCCCCC");
+        polygonVerticalColor = ColorUtil.parseHexColor("#CC4C4CCC");
+        polygonFillEnabled = false;
+        polygonFillColor = ColorUtil.parseHexColor("#CC4C4C20");
+        polygonEdgeThickness = 0.04f;
         polygonVerticalThickness = 0.04f;
         polygonHeightGridDivision = 10;
         polygonMaxGridSpacing = -1;
         
-        // Polyhedron 預設值
-        polyhedronLineMaterial = Material.CYAN_STAINED_GLASS;
-        polyhedronVertex0Material = Material.ORANGE_STAINED_GLASS;
-        polyhedronVertexMaterial = Material.YELLOW_STAINED_GLASS;
+        polyhedronLineColor = ColorUtil.parseHexColor("#CC3333CC");
+        polyhedronVertex0Color = ColorUtil.parseHexColor("#33CC33CC");
+        polyhedronVertexColor = ColorUtil.parseHexColor("#3333CCCC");
+        polyhedronFillEnabled = false;
+        polyhedronFillColor = ColorUtil.parseHexColor("#CC333320");
         polyhedronLineThickness = 0.03f;
         polyhedronVertexSize = 1.0f;
         polyhedronVertexThickness = 0.03f;
     }
     
-    /**
-     * 從配置文件重新載入設定
-     */
     public void reload() {
         plugin.reloadConfig();
         FileConfiguration config = plugin.getConfig();
         
         try {
-            // 載入玩家設定限制
             loadPlayerLimits(config.getConfigurationSection("player_limits"));
-            
-            // 載入 Cuboid 設定
+            loadGlobalSettings(config.getConfigurationSection("renderer.global"));
             loadCuboidSettings(config.getConfigurationSection("renderer.cuboid"));
-            
-            // 載入 Cylinder 設定
             loadCylinderSettings(config.getConfigurationSection("renderer.cylinder"));
-            
-            // 載入 Ellipsoid 設定
             loadEllipsoidSettings(config.getConfigurationSection("renderer.ellipsoid"));
-            
-            // 載入 Polygon 設定
             loadPolygonSettings(config.getConfigurationSection("renderer.polygon"));
-            
-            // 載入 Polyhedron 設定
             loadPolyhedronSettings(config.getConfigurationSection("renderer.polyhedron"));
-            
         } catch (Exception e) {
             loadDefaults();
         }
     }
     
-    /**
-     * 載入玩家設定限制
-     */
     private void loadPlayerLimits(ConfigurationSection section) {
-        if (section == null) {
-            return;
-        }
+        if (section == null) return;
         
-        // 載入各項限制
         ConfigurationSection thickness = section.getConfigurationSection("thickness");
         if (thickness != null) {
             thicknessMin = thickness.getDouble("min", thicknessMin);
@@ -260,18 +254,19 @@ public class RenderSettings {
         }
     }
     
-    /**
-     * 載入 Cuboid 設定
-     */
+    private void loadGlobalSettings(ConfigurationSection section) {
+        if (section == null) return;
+        seeThrough = section.getBoolean("see_through", seeThrough);
+    }
+    
     private void loadCuboidSettings(ConfigurationSection section) {
-        if (section == null) {
-            return;
-        }
-        
-        cuboidEdgeMaterial = getMaterial(section, "edge_material", cuboidEdgeMaterial);
-        cuboidPoint1Material = getMaterial(section, "point1_material", cuboidPoint1Material);
-        cuboidPoint2Material = getMaterial(section, "point2_material", cuboidPoint2Material);
-        cuboidGridMaterial = getMaterial(section, "grid_material", cuboidGridMaterial);
+        if (section == null) return;
+        cuboidEdgeColor = getColor(section, "edge_color", cuboidEdgeColor);
+        cuboidPoint1Color = getColor(section, "point1_color", cuboidPoint1Color);
+        cuboidPoint2Color = getColor(section, "point2_color", cuboidPoint2Color);
+        cuboidGridColor = getColor(section, "grid_color", cuboidGridColor);
+        cuboidFillEnabled = section.getBoolean("fill_enabled", cuboidFillEnabled);
+        cuboidFillColor = getColor(section, "fill_color", cuboidFillColor);
         cuboidEdgeThickness = (float) section.getDouble("edge_thickness", cuboidEdgeThickness);
         cuboidGridThickness = (float) section.getDouble("grid_thickness", cuboidGridThickness);
         cuboidVertexMarkerSize = (float) section.getDouble("vertex_marker_size", cuboidVertexMarkerSize);
@@ -279,18 +274,12 @@ public class RenderSettings {
         cuboidMaxGridSpacing = section.getInt("max_grid_spacing", cuboidMaxGridSpacing);
     }
     
-    /**
-     * 載入 Cylinder 設定
-     */
     private void loadCylinderSettings(ConfigurationSection section) {
-        if (section == null) {
-            return;
-        }
-        
-        cylinderCircleMaterial = getMaterial(section, "circle_material", cylinderCircleMaterial);
-        cylinderGridMaterial = getMaterial(section, "grid_material", cylinderGridMaterial);
-        cylinderCenterMaterial = getMaterial(section, "center_material", cylinderCenterMaterial);
-        cylinderCenterLineMaterial = getMaterial(section, "center_line_material", cylinderCenterLineMaterial);
+        if (section == null) return;
+        cylinderCircleColor = getColor(section, "circle_color", cylinderCircleColor);
+        cylinderGridColor = getColor(section, "grid_color", cylinderGridColor);
+        cylinderCenterColor = getColor(section, "center_color", cylinderCenterColor);
+        cylinderCenterLineColor = getColor(section, "center_line_color", cylinderCenterLineColor);
         cylinderCircleThickness = (float) section.getDouble("circle_thickness", cylinderCircleThickness);
         cylinderGridThickness = (float) section.getDouble("grid_thickness", cylinderGridThickness);
         cylinderCenterLineThickness = (float) section.getDouble("center_line_thickness", cylinderCenterLineThickness);
@@ -302,19 +291,15 @@ public class RenderSettings {
         cylinderHeightGridDivision = section.getInt("height_grid_division", cylinderHeightGridDivision);
         cylinderRadiusGridDivision = section.getInt("radius_grid_division", cylinderRadiusGridDivision);
         cylinderMaxGridSpacing = section.getInt("max_grid_spacing", cylinderMaxGridSpacing);
+        cylinderFillEnabled = section.getBoolean("fill_enabled", cylinderFillEnabled);
+        cylinderFillColor = getColor(section, "fill_color", cylinderFillColor);
     }
     
-    /**
-     * 載入 Ellipsoid 設定
-     */
     private void loadEllipsoidSettings(ConfigurationSection section) {
-        if (section == null) {
-            return;
-        }
-        
-        ellipsoidLineMaterial = getMaterial(section, "line_material", ellipsoidLineMaterial);
-        ellipsoidCenterLineMaterial = getMaterial(section, "center_line_material", ellipsoidCenterLineMaterial);
-        ellipsoidCenterMaterial = getMaterial(section, "center_material", ellipsoidCenterMaterial);
+        if (section == null) return;
+        ellipsoidLineColor = getColor(section, "line_color", ellipsoidLineColor);
+        ellipsoidCenterLineColor = getColor(section, "center_line_color", ellipsoidCenterLineColor);
+        ellipsoidCenterColor = getColor(section, "center_color", ellipsoidCenterColor);
         ellipsoidLineThickness = (float) section.getDouble("line_thickness", ellipsoidLineThickness);
         ellipsoidCenterLineThickness = (float) section.getDouble("center_line_thickness", ellipsoidCenterLineThickness);
         ellipsoidCenterMarkerSize = (float) section.getDouble("center_marker_size", ellipsoidCenterMarkerSize);
@@ -325,328 +310,130 @@ public class RenderSettings {
         ellipsoidSqrtScaleFactor = section.getDouble("sqrt_scale_factor", ellipsoidSqrtScaleFactor);
         ellipsoidRadiusGridDivision = section.getInt("radius_grid_division", ellipsoidRadiusGridDivision);
         ellipsoidMaxGridSpacing = section.getInt("max_grid_spacing", ellipsoidMaxGridSpacing);
+        ellipsoidFillEnabled = section.getBoolean("fill_enabled", ellipsoidFillEnabled);
+        ellipsoidFillColor = getColor(section, "fill_color", ellipsoidFillColor);
+        ellipsoidFillGenerators = section.getInt("fill_generators", ellipsoidFillGenerators);
     }
     
-    /**
-     * 載入 Polygon 設定
-     */
     private void loadPolygonSettings(ConfigurationSection section) {
-        if (section == null) {
-            return;
-        }
-        
-        polygonEdgeMaterial = getMaterial(section, "edge_material", polygonEdgeMaterial);
-        polygonVertexMaterial = getMaterial(section, "vertex_material", polygonVertexMaterial);
-        polygonVerticalMaterial = getMaterial(section, "vertical_material", polygonVerticalMaterial);
+        if (section == null) return;
+        polygonEdgeColor = getColor(section, "edge_color", polygonEdgeColor);
+        polygonVertexColor = getColor(section, "vertex_color", polygonVertexColor);
+        polygonVerticalColor = getColor(section, "vertical_color", polygonVerticalColor);
+        polygonFillEnabled = section.getBoolean("fill_enabled", polygonFillEnabled);
+        polygonFillColor = getColor(section, "fill_color", polygonFillColor);
         polygonEdgeThickness = (float) section.getDouble("edge_thickness", polygonEdgeThickness);
         polygonVerticalThickness = (float) section.getDouble("vertical_thickness", polygonVerticalThickness);
         polygonHeightGridDivision = section.getInt("height_grid_division", polygonHeightGridDivision);
         polygonMaxGridSpacing = section.getInt("max_grid_spacing", polygonMaxGridSpacing);
     }
     
-    /**
-     * 載入 Polyhedron 設定
-     */
     private void loadPolyhedronSettings(ConfigurationSection section) {
-        if (section == null) {
-            return;
-        }
-        
-        polyhedronLineMaterial = getMaterial(section, "line_material", polyhedronLineMaterial);
-        polyhedronVertex0Material = getMaterial(section, "vertex0_material", polyhedronVertex0Material);
-        polyhedronVertexMaterial = getMaterial(section, "vertex_material", polyhedronVertexMaterial);
+        if (section == null) return;
+        polyhedronLineColor = getColor(section, "line_color", polyhedronLineColor);
+        polyhedronVertex0Color = getColor(section, "vertex0_color", polyhedronVertex0Color);
+        polyhedronVertexColor = getColor(section, "vertex_color", polyhedronVertexColor);
+        polyhedronFillEnabled = section.getBoolean("fill_enabled", polyhedronFillEnabled);
+        polyhedronFillColor = getColor(section, "fill_color", polyhedronFillColor);
         polyhedronLineThickness = (float) section.getDouble("line_thickness", polyhedronLineThickness);
         polyhedronVertexSize = (float) section.getDouble("vertex_size", polyhedronVertexSize);
         polyhedronVertexThickness = (float) section.getDouble("vertex_thickness", polyhedronVertexThickness);
     }
     
-    /**
-     * 從配置中讀取 Material
-     * 
-     * @param section 配置區段
-     * @param key 鍵名
-     * @param defaultValue 預設值
-     * @return Material
-     */
-    private Material getMaterial(ConfigurationSection section, String key, Material defaultValue) {
-        String materialName = section.getString(key);
-        if (materialName == null || materialName.isEmpty()) {
-            return defaultValue;
-        }
-        
-        try {
-            Material material = Material.valueOf(materialName.toUpperCase());
-            return material;
-        } catch (IllegalArgumentException e) {
-            return defaultValue;
-        }
+    private Color getColor(ConfigurationSection section, String key, Color defaultValue) {
+        String colorStr = section.getString(key);
+        if (colorStr == null || colorStr.isEmpty()) return defaultValue;
+        Color parsed = ColorUtil.parseHexColor(colorStr);
+        return parsed != null ? parsed : defaultValue;
     }
+    
+    // === Global Getters ===
+    public boolean isSeeThrough() { return seeThrough; }
     
     // === Cuboid Getters ===
-    
-    public Material getCuboidEdgeMaterial() {
-        return cuboidEdgeMaterial;
-    }
-    
-    public Material getCuboidPoint1Material() {
-        return cuboidPoint1Material;
-    }
-    
-    public Material getCuboidPoint2Material() {
-        return cuboidPoint2Material;
-    }
-    
-    public Material getCuboidGridMaterial() {
-        return cuboidGridMaterial;
-    }
-    
-    public float getCuboidEdgeThickness() {
-        return cuboidEdgeThickness;
-    }
-    
-    public float getCuboidGridThickness() {
-        return cuboidGridThickness;
-    }
-    
-    public float getCuboidVertexMarkerSize() {
-        return cuboidVertexMarkerSize;
-    }
-    
-    public int getCuboidHeightGridDivision() {
-        return cuboidHeightGridDivision;
-    }
-    
-    public int getCuboidMaxGridSpacing() {
-        return cuboidMaxGridSpacing;
-    }
+    public Color getCuboidEdgeColor() { return cuboidEdgeColor; }
+    public Color getCuboidPoint1Color() { return cuboidPoint1Color; }
+    public Color getCuboidPoint2Color() { return cuboidPoint2Color; }
+    public Color getCuboidGridColor() { return cuboidGridColor; }
+    public boolean isCuboidFillEnabled() { return cuboidFillEnabled; }
+    public Color getCuboidFillColor() { return cuboidFillColor; }
+    public float getCuboidEdgeThickness() { return cuboidEdgeThickness; }
+    public float getCuboidGridThickness() { return cuboidGridThickness; }
+    public float getCuboidVertexMarkerSize() { return cuboidVertexMarkerSize; }
+    public int getCuboidHeightGridDivision() { return cuboidHeightGridDivision; }
+    public int getCuboidMaxGridSpacing() { return cuboidMaxGridSpacing; }
     
     // === Cylinder Getters ===
-    
-    public Material getCylinderCircleMaterial() {
-        return cylinderCircleMaterial;
-    }
-    
-    public Material getCylinderGridMaterial() {
-        return cylinderGridMaterial;
-    }
-    
-    public Material getCylinderCenterMaterial() {
-        return cylinderCenterMaterial;
-    }
-    
-    public Material getCylinderCenterLineMaterial() {
-        return cylinderCenterLineMaterial;
-    }
-    
-    public float getCylinderCircleThickness() {
-        return cylinderCircleThickness;
-    }
-    
-    public float getCylinderGridThickness() {
-        return cylinderGridThickness;
-    }
-    
-    public float getCylinderCenterLineThickness() {
-        return cylinderCenterLineThickness;
-    }
-    
-    public float getCylinderCenterThickness() {
-        return cylinderCenterThickness;
-    }
-    
-    public int getCylinderMinCircleSegments() {
-        return cylinderMinCircleSegments;
-    }
-    
-    public int getCylinderMaxCircleSegments() {
-        return cylinderMaxCircleSegments;
-    }
-    
-    public double getCylinderTargetSegmentLength() {
-        return cylinderTargetSegmentLength;
-    }
-    
-    public double getCylinderSqrtScaleFactor() {
-        return cylinderSqrtScaleFactor;
-    }
-    
-    public int getCylinderHeightGridDivision() {
-        return cylinderHeightGridDivision;
-    }
-    
-    public int getCylinderRadiusGridDivision() {
-        return cylinderRadiusGridDivision;
-    }
-    
-    public int getCylinderMaxGridSpacing() {
-        return cylinderMaxGridSpacing;
-    }
+    public Color getCylinderCircleColor() { return cylinderCircleColor; }
+    public Color getCylinderGridColor() { return cylinderGridColor; }
+    public Color getCylinderCenterColor() { return cylinderCenterColor; }
+    public Color getCylinderCenterLineColor() { return cylinderCenterLineColor; }
+    public float getCylinderCircleThickness() { return cylinderCircleThickness; }
+    public float getCylinderGridThickness() { return cylinderGridThickness; }
+    public float getCylinderCenterLineThickness() { return cylinderCenterLineThickness; }
+    public float getCylinderCenterThickness() { return cylinderCenterThickness; }
+    public int getCylinderMinCircleSegments() { return cylinderMinCircleSegments; }
+    public int getCylinderMaxCircleSegments() { return cylinderMaxCircleSegments; }
+    public double getCylinderTargetSegmentLength() { return cylinderTargetSegmentLength; }
+    public double getCylinderSqrtScaleFactor() { return cylinderSqrtScaleFactor; }
+    public int getCylinderHeightGridDivision() { return cylinderHeightGridDivision; }
+    public int getCylinderRadiusGridDivision() { return cylinderRadiusGridDivision; }
+    public int getCylinderMaxGridSpacing() { return cylinderMaxGridSpacing; }
+    public boolean isCylinderFillEnabled() { return cylinderFillEnabled; }
+    public Color getCylinderFillColor() { return cylinderFillColor; }
     
     // === Ellipsoid Getters ===
-    
-    public Material getEllipsoidLineMaterial() {
-        return ellipsoidLineMaterial;
-    }
-    
-    public Material getEllipsoidCenterLineMaterial() {
-        return ellipsoidCenterLineMaterial;
-    }
-    
-    public Material getEllipsoidCenterMaterial() {
-        return ellipsoidCenterMaterial;
-    }
-    
-    public float getEllipsoidLineThickness() {
-        return ellipsoidLineThickness;
-    }
-    
-    public float getEllipsoidCenterLineThickness() {
-        return ellipsoidCenterLineThickness;
-    }
-    
-    public float getEllipsoidCenterMarkerSize() {
-        return ellipsoidCenterMarkerSize;
-    }
-    
-    public float getEllipsoidCenterThickness() {
-        return ellipsoidCenterThickness;
-    }
-    
-    public int getEllipsoidMinSegments() {
-        return ellipsoidMinSegments;
-    }
-    
-    public int getEllipsoidMaxSegments() {
-        return ellipsoidMaxSegments;
-    }
-    
-    public double getEllipsoidTargetSegmentLength() {
-        return ellipsoidTargetSegmentLength;
-    }
-    
-    public double getEllipsoidSqrtScaleFactor() {
-        return ellipsoidSqrtScaleFactor;
-    }
-    
-    public int getEllipsoidRadiusGridDivision() {
-        return ellipsoidRadiusGridDivision;
-    }
-    
-    public int getEllipsoidMaxGridSpacing() {
-        return ellipsoidMaxGridSpacing;
-    }
+    public Color getEllipsoidLineColor() { return ellipsoidLineColor; }
+    public Color getEllipsoidCenterLineColor() { return ellipsoidCenterLineColor; }
+    public Color getEllipsoidCenterColor() { return ellipsoidCenterColor; }
+    public float getEllipsoidLineThickness() { return ellipsoidLineThickness; }
+    public float getEllipsoidCenterLineThickness() { return ellipsoidCenterLineThickness; }
+    public float getEllipsoidCenterMarkerSize() { return ellipsoidCenterMarkerSize; }
+    public float getEllipsoidCenterThickness() { return ellipsoidCenterThickness; }
+    public int getEllipsoidMinSegments() { return ellipsoidMinSegments; }
+    public int getEllipsoidMaxSegments() { return ellipsoidMaxSegments; }
+    public double getEllipsoidTargetSegmentLength() { return ellipsoidTargetSegmentLength; }
+    public double getEllipsoidSqrtScaleFactor() { return ellipsoidSqrtScaleFactor; }
+    public int getEllipsoidRadiusGridDivision() { return ellipsoidRadiusGridDivision; }
+    public int getEllipsoidMaxGridSpacing() { return ellipsoidMaxGridSpacing; }
+    public boolean isEllipsoidFillEnabled() { return ellipsoidFillEnabled; }
+    public Color getEllipsoidFillColor() { return ellipsoidFillColor; }
+    public int getEllipsoidFillGenerators() { return ellipsoidFillGenerators; }
     
     // === Polygon Getters ===
-    
-    public Material getPolygonEdgeMaterial() {
-        return polygonEdgeMaterial;
-    }
-    
-    public Material getPolygonVertexMaterial() {
-        return polygonVertexMaterial;
-    }
-    
-    public Material getPolygonVerticalMaterial() {
-        return polygonVerticalMaterial;
-    }
-    
-    public float getPolygonEdgeThickness() {
-        return polygonEdgeThickness;
-    }
-    
-    public float getPolygonVerticalThickness() {
-        return polygonVerticalThickness;
-    }
-    
-    public int getPolygonHeightGridDivision() {
-        return polygonHeightGridDivision;
-    }
-    
-    public int getPolygonMaxGridSpacing() {
-        return polygonMaxGridSpacing;
-    }
+    public Color getPolygonEdgeColor() { return polygonEdgeColor; }
+    public Color getPolygonVertexColor() { return polygonVertexColor; }
+    public Color getPolygonVerticalColor() { return polygonVerticalColor; }
+    public boolean isPolygonFillEnabled() { return polygonFillEnabled; }
+    public Color getPolygonFillColor() { return polygonFillColor; }
+    public float getPolygonEdgeThickness() { return polygonEdgeThickness; }
+    public float getPolygonVerticalThickness() { return polygonVerticalThickness; }
+    public int getPolygonHeightGridDivision() { return polygonHeightGridDivision; }
+    public int getPolygonMaxGridSpacing() { return polygonMaxGridSpacing; }
     
     // === Polyhedron Getters ===
-    
-    public Material getPolyhedronLineMaterial() {
-        return polyhedronLineMaterial;
-    }
-    
-    public Material getPolyhedronVertex0Material() {
-        return polyhedronVertex0Material;
-    }
-    
-    public Material getPolyhedronVertexMaterial() {
-        return polyhedronVertexMaterial;
-    }
-    
-    public float getPolyhedronLineThickness() {
-        return polyhedronLineThickness;
-    }
-    
-    public float getPolyhedronVertexSize() {
-        return polyhedronVertexSize;
-    }
-    
-    public float getPolyhedronVertexThickness() {
-        return polyhedronVertexThickness;
-    }
+    public Color getPolyhedronLineColor() { return polyhedronLineColor; }
+    public Color getPolyhedronVertex0Color() { return polyhedronVertex0Color; }
+    public Color getPolyhedronVertexColor() { return polyhedronVertexColor; }
+    public boolean isPolyhedronFillEnabled() { return polyhedronFillEnabled; }
+    public Color getPolyhedronFillColor() { return polyhedronFillColor; }
+    public float getPolyhedronLineThickness() { return polyhedronLineThickness; }
+    public float getPolyhedronVertexSize() { return polyhedronVertexSize; }
+    public float getPolyhedronVertexThickness() { return polyhedronVertexThickness; }
     
     // === 玩家設定限制 Getters ===
-    
-    public double getThicknessMin() {
-        return thicknessMin;
-    }
-    
-    public double getThicknessMax() {
-        return thicknessMax;
-    }
-    
-    public double getMarkerSizeMin() {
-        return markerSizeMin;
-    }
-    
-    public double getMarkerSizeMax() {
-        return markerSizeMax;
-    }
-    
-    public int getSegmentsMin() {
-        return segmentsMin;
-    }
-    
-    public int getSegmentsMax() {
-        return segmentsMax;
-    }
-    
-    public int getGridDivisionMin() {
-        return gridDivisionMin;
-    }
-    
-    public int getGridDivisionMax() {
-        return gridDivisionMax;
-    }
-    
-    public int getGridSpacingMin() {
-        return gridSpacingMin;
-    }
-    
-    public int getGridSpacingMax() {
-        return gridSpacingMax;
-    }
-    
-    public double getTargetSegmentLengthMin() {
-        return targetSegmentLengthMin;
-    }
-    
-    public double getTargetSegmentLengthMax() {
-        return targetSegmentLengthMax;
-    }
-    
-    public double getScaleFactorMin() {
-        return scaleFactorMin;
-    }
-    
-    public double getScaleFactorMax() {
-        return scaleFactorMax;
-    }
+    public double getThicknessMin() { return thicknessMin; }
+    public double getThicknessMax() { return thicknessMax; }
+    public double getMarkerSizeMin() { return markerSizeMin; }
+    public double getMarkerSizeMax() { return markerSizeMax; }
+    public int getSegmentsMin() { return segmentsMin; }
+    public int getSegmentsMax() { return segmentsMax; }
+    public int getGridDivisionMin() { return gridDivisionMin; }
+    public int getGridDivisionMax() { return gridDivisionMax; }
+    public int getGridSpacingMin() { return gridSpacingMin; }
+    public int getGridSpacingMax() { return gridSpacingMax; }
+    public double getTargetSegmentLengthMin() { return targetSegmentLengthMin; }
+    public double getTargetSegmentLengthMax() { return targetSegmentLengthMax; }
+    public double getScaleFactorMin() { return scaleFactorMin; }
+    public double getScaleFactorMax() { return scaleFactorMax; }
 }

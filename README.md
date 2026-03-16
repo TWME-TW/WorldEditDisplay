@@ -30,9 +30,10 @@ WorldEditDisplay is a server-side plugin for Minecraft that adds visual selectio
 - Polyhedron - Complex 3D polyhedral structures
 
 **Visual Rendering**
-- Uses Minecraft's Display Entity system
-- Customizable block materials for all visual elements
+- Uses Minecraft's Display Entity (TextDisplay) system
+- Customizable hex colors (#RRGGBBAA) for all visual elements
 - Adjustable line thickness and grid density
+- Translucent face filling for Cuboid, Polygon, and Polyhedron regions
 - Grid overlay for easier size calculation
 
 **Multi-language Support**
@@ -44,7 +45,8 @@ The interface is available in multiple languages with automatic client language 
 **Player Settings**
 
 Players can customize their own rendering preferences:
-- Choose preferred block materials
+- Choose preferred hex colors for elements
+- Enable or disable face filling
 - Adjust line thickness within server limits
 - Control grid spacing and density
 - Changes apply immediately
@@ -79,12 +81,12 @@ Players can customize their own rendering preferences:
 **Player Commands**
 
 `/wedisplay set <renderer> <setting> <value>` - Configure personal rendering settings
-- Example: `/wedisplay set cuboid line_material GOLD_BLOCK`
+- Example: `/wedisplay set cuboid edge_color #FFD700FF`
 - Permission: `worldeditdisplay.use.settings`
 
 `/wedisplay reset <renderer> [setting]` - Reset to server defaults
 - Example: `/wedisplay reset cuboid` (reset all settings)
-- Example: `/wedisplay reset cuboid line_material` (reset specific setting)
+- Example: `/wedisplay reset cuboid edge_color` (reset specific setting)
 
 `/wedisplay show [renderer]` - Show current settings
 - Example: `/wedisplay show` (show all)
@@ -112,9 +114,11 @@ language:
 
 renderer:
   cuboid:
-    line_material: GOLD_BLOCK   # Material for edges
-    line_thickness: 0.05        # Line thickness
+    edge_color: "#FFD700FF"     # Color for edges in #RRGGBBAA
+    edge_thickness: 0.05        # Line thickness
     grid_spacing: 8             # Grid spacing
+    fill_enabled: true          # Enable face filling
+    fill_color: "#FF000040"     # Face fill color
     # ... more settings
 
 player_limits:
@@ -183,14 +187,18 @@ This allows server admins to control which player groups have rendering enabled 
 
 **Customization Examples**
 ```bash
-# Change cuboid edges to diamond blocks
-/wedisplay set cuboid line_material DIAMOND_BLOCK
+# Change cuboid edges to solid diamond blue
+/wedisplay set cuboid edge_color #55FF55FF
 
 # Make lines thicker
-/wedisplay set cuboid line_thickness 0.08
+/wedisplay set cuboid edge_thickness 0.08
 
 # Change grid spacing
-/wedisplay set cuboid grid_spacing 16
+/wedisplay set cuboid height_grid_division 2
+
+# Enable face filling with half-transparent red
+/wedisplay set cuboid fill_enabled true
+/wedisplay set cuboid fill_color #FF000080
 
 # Toggle rendering on/off
 /wedisplay toggle
@@ -207,7 +215,7 @@ To build the plugin from source:
 mvn clean package
 ```
 
-The compiled jar will be in `target/worldeditdisplay-1.0.3.jar`
+The compiled jar will be in `target/WorldEditDisplay-1.0.5.jar`
 
 **Project Structure**
 ```
@@ -239,7 +247,7 @@ See [LICENSE](LICENSE) file for details.
 - [WorldEdit](https://github.com/EngineHub/WorldEdit) - The core editing tool
 - [WorldEditCUI](https://github.com/EngineHub/WorldEditCUI) - Client-side CUI mod (protocol reference)
 - [PacketEvents](https://github.com/retrooper/packetevents) - Packet handling library
-- [EntityLib](https://github.com/Tofaa2/EntityLib) - Entity manipulation library
+- [TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes) - Shape rendering library used by the plugin
 
 ---
 
@@ -259,8 +267,9 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 - 多面體 - 複雜的 3D 多面體結構
 
 **視覺渲染**
-- 使用 Minecraft 的 Display Entity
-- 所有視覺元素都可以自訂方塊材質
+- 使用 Minecraft 的 Display Entity (TextDisplay) 系統
+- 所有視覺元素都可以自訂 HEX 顏色 (#RRGGBBAA)
+- 支援長方體、多邊形與多面體的半透明表面填充
 - 可調整線條粗細和網格密度
 - 網格覆蓋層方便計算大小
 
@@ -273,7 +282,8 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 **玩家設定**
 
 玩家可以自訂渲染偏好：
-- 選擇喜歡的方塊材質
+- 選擇喜歡的 HEX 顏色
+- 開啟或關閉半透明表面填充
 - 在伺服器限制內調整線條粗細
 - 控制網格間距和密度
 - 變更後立即生效
@@ -309,12 +319,12 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 **玩家指令**
 
 `/wedisplay set <renderer> <setting> <value>` - 設定個人渲染設定
-- 範例：`/wedisplay set cuboid line_material GOLD_BLOCK`
+- 範例：`/wedisplay set cuboid edge_color #FFD700FF`
 - 權限：`worldeditdisplay.use.settings`
 
 `/wedisplay reset <renderer> [setting]` - 重置為伺服器預設值
 - 範例：`/wedisplay reset cuboid`（重置所有設定）
-- 範例：`/wedisplay reset cuboid line_material`（重置特定設定）
+- 範例：`/wedisplay reset cuboid edge_color`（重置特定設定）
 
 `/wedisplay show [renderer]` - 顯示當前設定
 - 範例：`/wedisplay show`（顯示全部）
@@ -342,9 +352,11 @@ language:
 
 renderer:
   cuboid:
-    line_material: GOLD_BLOCK   # 邊緣材質
-    line_thickness: 0.05        # 線條粗細
+    edge_color: "#FFD700FF"     # 邊緣顏色 (#RRGGBBAA)
+    edge_thickness: 0.05        # 線條粗細
     grid_spacing: 8             # 網格間距
+    fill_enabled: true          # 是否啟用表面填充
+    fill_color: "#FF000040"     # 表面填充顏色
     # ... 更多設定
 
 player_limits:
@@ -413,14 +425,18 @@ worldeditdisplay.render.auto-enable: # 登入時自動啟用渲染（預設：tr
 
 **自訂範例**
 ```bash
-# 將長方體邊緣改為鑽石塊
-/wedisplay set cuboid line_material DIAMOND_BLOCK
+# 將長方體邊緣改為不透明的鑽石藍色
+/wedisplay set cuboid edge_color #55FF55FF
 
 # 增加線條粗細
-/wedisplay set cuboid line_thickness 0.08
+/wedisplay set cuboid edge_thickness 0.08
 
-# 變更網格間距
-/wedisplay set cuboid grid_spacing 16
+# 變更高度網格分割
+/wedisplay set cuboid height_grid_division 2
+
+# 啟用半透明的紅色表面填充
+/wedisplay set cuboid fill_enabled true
+/wedisplay set cuboid fill_color #FF000080
 
 # 切換渲染開關
 /wedisplay toggle
@@ -437,7 +453,7 @@ worldeditdisplay.render.auto-enable: # 登入時自動啟用渲染（預設：tr
 mvn clean package
 ```
 
-編譯後的 jar 檔會在 `target/worldeditdisplay-1.0.3.jar`
+編譯後的 jar 檔會在 `target/WorldEditDisplay-1.0.5.jar`
 
 **專案結構**
 ```
@@ -469,7 +485,7 @@ src/main/java/dev/twme/worldeditdisplay/
 - [WorldEdit](https://github.com/EngineHub/WorldEdit) - 核心編輯工具
 - [WorldEditCUI](https://github.com/EngineHub/WorldEditCUI) - 客戶端 CUI 模組（協議參考）
 - [PacketEvents](https://github.com/retrooper/packetevents) - 封包處理函式庫
-- [EntityLib](https://github.com/Tofaa2/EntityLib) - 實體操作函式庫
+- [TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes) - 此插件使用的形狀渲染函式庫
 
 ---
 

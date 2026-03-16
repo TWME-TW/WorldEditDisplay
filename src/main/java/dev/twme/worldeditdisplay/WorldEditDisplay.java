@@ -54,7 +54,7 @@ public final class WorldEditDisplay extends JavaPlugin {
                 .tickTickables()
                 .usePlatformLogger();
         EntityLib.init(platform, settings);
-        
+
         // Load default configuration
         saveDefaultConfig();
         

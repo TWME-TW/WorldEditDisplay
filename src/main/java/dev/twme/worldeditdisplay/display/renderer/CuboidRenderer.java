@@ -1,17 +1,17 @@
 package dev.twme.worldeditdisplay.display.renderer;
 
-import org.bukkit.Material;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.Color;
 import org.bukkit.entity.Player;
+import org.joml.Vector3f;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
 import dev.twme.worldeditdisplay.region.BoundingBox;
 import dev.twme.worldeditdisplay.region.CuboidRegion;
 import dev.twme.worldeditdisplay.region.Vector3;
-
-import org.joml.Vector3f;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Renders WorldEdit-style cuboid selections.
@@ -39,15 +39,15 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
 
         if (point1 == null && point2 == null) return; // nothing to render
 
-        // determine materials
-        Material point1Material = getMaterialWithOverride(region, 2, settings.getCuboidPoint1Material(), isMultiSelection);
-        Material point2Material = getMaterialWithOverride(region, 3, settings.getCuboidPoint2Material(), isMultiSelection);
-        Material boxMaterial = getMaterialWithOverride(region, 0, settings.getCuboidEdgeMaterial(), isMultiSelection);
-        Material gridMaterial = getMaterialWithOverride(region, 1, settings.getCuboidGridMaterial(), isMultiSelection);
+        // determine colors
+        Color point1Color = getColorWithOverride(region, 2, settings.getCuboidPoint1Color(), isMultiSelection);
+        Color point2Color = getColorWithOverride(region, 3, settings.getCuboidPoint2Color(), isMultiSelection);
+        Color boxColor = getColorWithOverride(region, 0, settings.getCuboidEdgeColor(), isMultiSelection);
+        Color gridColor = getColorWithOverride(region, 1, settings.getCuboidGridColor(), isMultiSelection);
 
         // draw point markers
-        if (point1 != null) renderPointMarker(point1, point1Material, settings.getCuboidEdgeThickness());
-        if (point2 != null) renderPointMarker(point2, point2Material, settings.getCuboidEdgeThickness());
+        if (point1 != null) renderPointMarker(point1, point1Color, settings.getCuboidEdgeThickness());
+        if (point2 != null) renderPointMarker(point2, point2Color, settings.getCuboidEdgeThickness());
 
         if (!region.isDefined()) return; // need both points for box/grid
 
@@ -65,13 +65,18 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
         double maxY = max.getY() + 1.0;
         double maxZ = max.getZ() + 1.0;
 
-        if (renderBox) renderBoxFrame(minX, minY, minZ, maxX, maxY, maxZ, boxMaterial, settings.getCuboidEdgeThickness());
-        if (renderGrid) renderGrid(minX, minY, minZ, maxX, maxY, maxZ, region, gridMaterial);
+        if (renderBox) renderBoxFrame(minX, minY, minZ, maxX, maxY, maxZ, boxColor, settings.getCuboidEdgeThickness());
+        if (renderGrid) renderGrid(minX, minY, minZ, maxX, maxY, maxZ, region, gridColor);
+
+        // Render fill faces if enabled
+        if (settings.isCuboidFillEnabled()) {
+            renderFillFaces(minX, minY, minZ, maxX, maxY, maxZ, settings.getCuboidFillColor());
+        }
     }
 
     /** Draws a grid on the six faces of the cuboid */
     private void renderGrid(double x1, double y1, double z1, double x2, double y2, double z2,
-                            CuboidRegion region, Material gridMaterial) {
+                            CuboidRegion region, Color gridColor) {
 
         double sizeX = x2 - x1, sizeY = y2 - y1, sizeZ = z2 - z1;
         double gridSpacing = region.getGridSpacing();
@@ -98,16 +103,16 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
         if (sizeX < MIN_SPACING && sizeY < MIN_SPACING && sizeZ < MIN_SPACING) return;
 
         // draw grid on each face
-        renderXZPlane(x1, y1, z1, x2, z2, spacingX, spacingZ, gridMaterial);
-        renderXZPlane(x1, y2, z1, x2, z2, spacingX, spacingZ, gridMaterial);
-        renderXYPlane(x1, y1, z1, x2, y2, spacingX, spacingY, gridMaterial);
-        renderXYPlane(x1, y1, z2, x2, y2, spacingX, spacingY, gridMaterial);
-        renderYZPlane(x1, y1, z1, y2, z2, spacingY, spacingZ, gridMaterial);
-        renderYZPlane(x2, y1, z1, y2, z2, spacingY, spacingZ, gridMaterial);
+        renderXZPlane(x1, y1, z1, x2, z2, spacingX, spacingZ, gridColor);
+        renderXZPlane(x1, y2, z1, x2, z2, spacingX, spacingZ, gridColor);
+        renderXYPlane(x1, y1, z1, x2, y2, spacingX, spacingY, gridColor);
+        renderXYPlane(x1, y1, z2, x2, y2, spacingX, spacingY, gridColor);
+        renderYZPlane(x1, y1, z1, y2, z2, spacingY, spacingZ, gridColor);
+        renderYZPlane(x2, y1, z1, y2, z2, spacingY, spacingZ, gridColor);
     }
 
     private void renderXZPlane(double x1, double y, double z1, double x2, double z2,
-                               double spacingX, double spacingZ, Material material) {
+                               double spacingX, double spacingZ, Color color) {
         List<Line> lines = new ArrayList<>();
         for (double z = z1; z <= z2; z += spacingZ) {
             if (z > z1 && z2 - z < SKIP_THRESHOLD) continue;
@@ -119,11 +124,11 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
             lines.add(new Line(new Vector3f((float) x, (float) y, (float) z1),
                     new Vector3f((float) x, (float) y, (float) z2)));
         }
-        renderLines(material, settings.getCuboidGridThickness(), lines.toArray(new Line[0]));
+        renderLines(color, settings.getCuboidGridThickness(), lines.toArray(new Line[0]));
     }
 
     private void renderXYPlane(double x1, double y1, double z, double x2, double y2,
-                               double spacingX, double spacingY, Material material) {
+                               double spacingX, double spacingY, Color color) {
         List<Line> lines = new ArrayList<>();
         for (double y = y1; y <= y2; y += spacingY) {
             if (y > y1 && y2 - y < SKIP_THRESHOLD) continue;
@@ -135,11 +140,11 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
             lines.add(new Line(new Vector3f((float) x, (float) y1, (float) z),
                     new Vector3f((float) x, (float) y2, (float) z)));
         }
-        renderLines(material, settings.getCuboidGridThickness(), lines.toArray(new Line[0]));
+        renderLines(color, settings.getCuboidGridThickness(), lines.toArray(new Line[0]));
     }
 
     private void renderYZPlane(double x, double y1, double z1, double y2, double z2,
-                               double spacingY, double spacingZ, Material material) {
+                               double spacingY, double spacingZ, Color color) {
         List<Line> lines = new ArrayList<>();
         for (double z = z1; z <= z2; z += spacingZ) {
             if (z > z1 && z2 - z < SKIP_THRESHOLD) continue;
@@ -151,7 +156,32 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
             lines.add(new Line(new Vector3f((float) x, (float) y, (float) z1),
                     new Vector3f((float) x, (float) y, (float) z2)));
         }
-        renderLines(material, settings.getCuboidGridThickness(), lines.toArray(new Line[0]));
+        renderLines(color, settings.getCuboidGridThickness(), lines.toArray(new Line[0]));
+    }
+
+    /** Renders fill faces for the 6 sides of the cuboid, one parallelogram per face */
+    private void renderFillFaces(double x1, double y1, double z1, double x2, double y2, double z2, Color fillColor) {
+        Vector3f v000 = new Vector3f((float) x1, (float) y1, (float) z1);
+        Vector3f v001 = new Vector3f((float) x1, (float) y1, (float) z2);
+        Vector3f v010 = new Vector3f((float) x1, (float) y2, (float) z1);
+        Vector3f v011 = new Vector3f((float) x1, (float) y2, (float) z2);
+        Vector3f v100 = new Vector3f((float) x2, (float) y1, (float) z1);
+        Vector3f v101 = new Vector3f((float) x2, (float) y1, (float) z2);
+        Vector3f v110 = new Vector3f((float) x2, (float) y2, (float) z1);
+        Vector3f v111 = new Vector3f((float) x2, (float) y2, (float) z2);
+
+        // Bottom face (y1): p1=v000, p2=v100 (width), p3=v001 (depth)
+        renderParallelogram(v000, v100, v001, fillColor);
+        // Top face (y2): p1=v010, p2=v110 (width), p3=v011 (depth)
+        renderParallelogram(v010, v110, v011, fillColor);
+        // Front face (z1): p1=v000, p2=v100 (width), p3=v010 (height)
+        renderParallelogram(v000, v100, v010, fillColor);
+        // Back face (z2): p1=v001, p2=v101 (width), p3=v011 (height)
+        renderParallelogram(v001, v101, v011, fillColor);
+        // Left face (x1): p1=v000, p2=v001 (depth), p3=v010 (height)
+        renderParallelogram(v000, v001, v010, fillColor);
+        // Right face (x2): p1=v100, p2=v101 (depth), p3=v110 (height)
+        renderParallelogram(v100, v101, v110, fillColor);
     }
 
     public void setRenderGrid(boolean render) {
