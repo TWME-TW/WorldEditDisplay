@@ -3,7 +3,7 @@
 
 # Language Settings
 language:
-  default: "en_us"                      # Default language (zh_tw, en_us, ja_jp, ko_kr, zh_cn)
+  default: "en_us"                      # Default language (zh_tw, en_us, zh_cn)
   auto_detect: true                     # Auto detect player's client language
   allow_player_change: true             # Allow players to change their language manually
 
@@ -12,7 +12,7 @@ player_limits:
   # Thickness related settings range
   thickness:
     min: 0.005                          # Minimum thickness value
-    max: 0.5                            # Maximum thickness value
+    max: 0.7                            # Maximum thickness value
   
   # Marker size related settings range
   marker_size:
@@ -22,7 +22,7 @@ player_limits:
   # Segments related settings range
   segments:
     min: 10                             # Minimum segments
-    max: 60                             # Maximum segments
+    max: 40                             # Maximum segments
   
   # Grid division related settings range
   grid_division:
@@ -43,6 +43,11 @@ player_limits:
   scale_factor:
     min: 0.5                            # Minimum scale factor
     max: 10.0                           # Maximum scale factor
+  
+  # Fill generators related settings range (for ellipsoid fill face count)
+  fill_generators:
+    min: 3                              # Minimum fill generators (face count = n*(n-1))
+    max: 50                             # Maximum fill generators
 
 # Renderer Settings
 # Color format: #RRGGBBAA (hex, AA = alpha/opacity, 00=transparent, FF=opaque)

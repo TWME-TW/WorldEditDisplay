@@ -95,8 +95,9 @@ public class PlayerSettingsCommand implements TabExecutor {
 
         if (settings.set(path, parsedValue)) {
             MessageUtil.sendTranslated(player, "command.wedisplay.set.success", renderer, setting, value);
-            MessageUtil.sendTranslated(player, "command.wedisplay.set.success_hint");
             plugin.getRenderManager().refreshPlayerRenderer(player);
+            MessageUtil.sendMessage(player, "");
+            showRendererSettings(player, renderer, settings, setting);
         } else {
             MessageUtil.sendTranslated(player, "command.wedisplay.set.failed");
             MessageUtil.sendTranslated(player, "command.wedisplay.set.failed_hint");
@@ -146,7 +147,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 MessageUtil.sendTranslated(player, "command.wedisplay.show.invalid_renderer");
                 return true;
             }
-            showRendererSettings(player, renderer, settings);
+            showRendererSettings(player, renderer, settings, null);
         } else {
             MessageUtil.sendTranslated(player, "command.wedisplay.show.title");
             MessageUtil.sendTranslated(player, "command.wedisplay.show.hint");
@@ -225,73 +226,83 @@ public class PlayerSettingsCommand implements TabExecutor {
     }
 
     // helpers
-    private void showRendererSettings(Player player, String renderer, PlayerRenderSettings settings) {
+    private void showRendererSettings(Player player, String renderer, PlayerRenderSettings settings, @Nullable String highlightedSetting) {
         MessageUtil.sendTranslated(player, "command.wedisplay.show.renderer_title", renderer.toUpperCase());
 
         switch (renderer) {
             case "cuboid" -> {
-                MessageUtil.sendTranslated(player, "settings.edge_color", ColorUtil.toHexString(settings.getCuboidEdgeColor()));
-                MessageUtil.sendTranslated(player, "settings.point1_color", ColorUtil.toHexString(settings.getCuboidPoint1Color()));
-                MessageUtil.sendTranslated(player, "settings.point2_color", ColorUtil.toHexString(settings.getCuboidPoint2Color()));
-                MessageUtil.sendTranslated(player, "settings.grid_color", ColorUtil.toHexString(settings.getCuboidGridColor()));
-                MessageUtil.sendTranslated(player, "settings.edge_thickness", settings.getCuboidEdgeThickness());
-                MessageUtil.sendTranslated(player, "settings.grid_thickness", settings.getCuboidGridThickness());
-                MessageUtil.sendTranslated(player, "settings.vertex_marker_size", settings.getCuboidVertexMarkerSize());
-                MessageUtil.sendTranslated(player, "settings.height_grid_division", settings.getCuboidHeightGridDivision());
-                MessageUtil.sendTranslated(player, "settings.fill_enabled", settings.isCuboidFillEnabled());
-                MessageUtil.sendTranslated(player, "settings.fill_color", ColorUtil.toHexString(settings.getCuboidFillColor()));
+                sendRendererSetting(player, renderer, "edge_color", ColorUtil.toHexString(settings.getCuboidEdgeColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "point1_color", ColorUtil.toHexString(settings.getCuboidPoint1Color()), highlightedSetting);
+                sendRendererSetting(player, renderer, "point2_color", ColorUtil.toHexString(settings.getCuboidPoint2Color()), highlightedSetting);
+                sendRendererSetting(player, renderer, "grid_color", ColorUtil.toHexString(settings.getCuboidGridColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "edge_thickness", settings.getCuboidEdgeThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "grid_thickness", settings.getCuboidGridThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "vertex_marker_size", settings.getCuboidVertexMarkerSize(), highlightedSetting);
+                sendRendererSetting(player, renderer, "height_grid_division", settings.getCuboidHeightGridDivision(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_enabled", settings.isCuboidFillEnabled(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getCuboidFillColor()), highlightedSetting);
             }
             case "cylinder" -> {
-                MessageUtil.sendTranslated(player, "settings.circle_color", ColorUtil.toHexString(settings.getCylinderCircleColor()));
-                MessageUtil.sendTranslated(player, "settings.grid_color", ColorUtil.toHexString(settings.getCylinderGridColor()));
-                MessageUtil.sendTranslated(player, "settings.center_color", ColorUtil.toHexString(settings.getCylinderCenterColor()));
-                MessageUtil.sendTranslated(player, "settings.center_line_color", ColorUtil.toHexString(settings.getCylinderCenterLineColor()));
-                MessageUtil.sendTranslated(player, "settings.circle_thickness", settings.getCylinderCircleThickness());
-                MessageUtil.sendTranslated(player, "settings.grid_thickness", settings.getCylinderGridThickness());
-                MessageUtil.sendTranslated(player, "settings.center_line_thickness", settings.getCylinderCenterLineThickness());
-                MessageUtil.sendTranslated(player, "settings.center_thickness", settings.getCylinderCenterThickness());
-                MessageUtil.sendTranslated(player, "settings.min_circle_segments", settings.getCylinderMinCircleSegments());
-                MessageUtil.sendTranslated(player, "settings.max_circle_segments", settings.getCylinderMaxCircleSegments());
-                MessageUtil.sendTranslated(player, "settings.target_segment_length", settings.getCylinderTargetSegmentLength());
-                MessageUtil.sendTranslated(player, "settings.height_grid_division", settings.getCylinderHeightGridDivision());
-                MessageUtil.sendTranslated(player, "settings.radius_grid_division", settings.getCylinderRadiusGridDivision());
+                sendRendererSetting(player, renderer, "circle_color", ColorUtil.toHexString(settings.getCylinderCircleColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "grid_color", ColorUtil.toHexString(settings.getCylinderGridColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "center_color", ColorUtil.toHexString(settings.getCylinderCenterColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "center_line_color", ColorUtil.toHexString(settings.getCylinderCenterLineColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "circle_thickness", settings.getCylinderCircleThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "grid_thickness", settings.getCylinderGridThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "center_line_thickness", settings.getCylinderCenterLineThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "center_thickness", settings.getCylinderCenterThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "min_circle_segments", settings.getCylinderMinCircleSegments(), highlightedSetting);
+                sendRendererSetting(player, renderer, "max_circle_segments", settings.getCylinderMaxCircleSegments(), highlightedSetting);
+                sendRendererSetting(player, renderer, "target_segment_length", settings.getCylinderTargetSegmentLength(), highlightedSetting);
+                sendRendererSetting(player, renderer, "height_grid_division", settings.getCylinderHeightGridDivision(), highlightedSetting);
+                sendRendererSetting(player, renderer, "radius_grid_division", settings.getCylinderRadiusGridDivision(), highlightedSetting);
             }
             case "ellipsoid" -> {
-                MessageUtil.sendTranslated(player, "settings.line_color", ColorUtil.toHexString(settings.getEllipsoidLineColor()));
-                MessageUtil.sendTranslated(player, "settings.center_line_color", ColorUtil.toHexString(settings.getEllipsoidCenterLineColor()));
-                MessageUtil.sendTranslated(player, "settings.center_color", ColorUtil.toHexString(settings.getEllipsoidCenterColor()));
-                MessageUtil.sendTranslated(player, "settings.line_thickness", settings.getEllipsoidLineThickness());
-                MessageUtil.sendTranslated(player, "settings.center_line_thickness", settings.getEllipsoidCenterLineThickness());
-                MessageUtil.sendTranslated(player, "settings.center_marker_size", settings.getEllipsoidCenterMarkerSize());
-                MessageUtil.sendTranslated(player, "settings.center_thickness", settings.getEllipsoidCenterThickness());
-                MessageUtil.sendTranslated(player, "settings.min_segments", settings.getEllipsoidMinSegments());
-                MessageUtil.sendTranslated(player, "settings.max_segments", settings.getEllipsoidMaxSegments());
-                MessageUtil.sendTranslated(player, "settings.target_segment_length", settings.getEllipsoidTargetSegmentLength());
-                MessageUtil.sendTranslated(player, "settings.radius_grid_division", settings.getEllipsoidRadiusGridDivision());
+                sendRendererSetting(player, renderer, "line_color", ColorUtil.toHexString(settings.getEllipsoidLineColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "center_line_color", ColorUtil.toHexString(settings.getEllipsoidCenterLineColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "center_color", ColorUtil.toHexString(settings.getEllipsoidCenterColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "line_thickness", settings.getEllipsoidLineThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "center_line_thickness", settings.getEllipsoidCenterLineThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "center_marker_size", settings.getEllipsoidCenterMarkerSize(), highlightedSetting);
+                sendRendererSetting(player, renderer, "center_thickness", settings.getEllipsoidCenterThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "min_segments", settings.getEllipsoidMinSegments(), highlightedSetting);
+                sendRendererSetting(player, renderer, "max_segments", settings.getEllipsoidMaxSegments(), highlightedSetting);
+                sendRendererSetting(player, renderer, "target_segment_length", settings.getEllipsoidTargetSegmentLength(), highlightedSetting);
+                sendRendererSetting(player, renderer, "radius_grid_division", settings.getEllipsoidRadiusGridDivision(), highlightedSetting);
             }
             case "polygon" -> {
-                MessageUtil.sendTranslated(player, "settings.edge_color", ColorUtil.toHexString(settings.getPolygonEdgeColor()));
-                MessageUtil.sendTranslated(player, "settings.vertex_color", ColorUtil.toHexString(settings.getPolygonVertexColor()));
-                MessageUtil.sendTranslated(player, "settings.vertical_color", ColorUtil.toHexString(settings.getPolygonVerticalColor()));
-                MessageUtil.sendTranslated(player, "settings.edge_thickness", settings.getPolygonEdgeThickness());
-                MessageUtil.sendTranslated(player, "settings.vertical_thickness", settings.getPolygonVerticalThickness());
-                MessageUtil.sendTranslated(player, "settings.height_grid_division", settings.getPolygonHeightGridDivision());
-                MessageUtil.sendTranslated(player, "settings.fill_enabled", settings.isPolygonFillEnabled());
-                MessageUtil.sendTranslated(player, "settings.fill_color", ColorUtil.toHexString(settings.getPolygonFillColor()));
+                sendRendererSetting(player, renderer, "edge_color", ColorUtil.toHexString(settings.getPolygonEdgeColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "vertex_color", ColorUtil.toHexString(settings.getPolygonVertexColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "vertical_color", ColorUtil.toHexString(settings.getPolygonVerticalColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "edge_thickness", settings.getPolygonEdgeThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "vertical_thickness", settings.getPolygonVerticalThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "height_grid_division", settings.getPolygonHeightGridDivision(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_enabled", settings.isPolygonFillEnabled(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getPolygonFillColor()), highlightedSetting);
             }
             case "polyhedron" -> {
-                MessageUtil.sendTranslated(player, "settings.line_color", ColorUtil.toHexString(settings.getPolyhedronLineColor()));
-                MessageUtil.sendTranslated(player, "settings.vertex0_color", ColorUtil.toHexString(settings.getPolyhedronVertex0Color()));
-                MessageUtil.sendTranslated(player, "settings.vertex_color", ColorUtil.toHexString(settings.getPolyhedronVertexColor()));
-                MessageUtil.sendTranslated(player, "settings.line_thickness", settings.getPolyhedronLineThickness());
-                MessageUtil.sendTranslated(player, "settings.vertex_size", settings.getPolyhedronVertexSize());
-                MessageUtil.sendTranslated(player, "settings.vertex_thickness", settings.getPolyhedronVertexThickness());
-                MessageUtil.sendTranslated(player, "settings.fill_enabled", settings.isPolyhedronFillEnabled());
-                MessageUtil.sendTranslated(player, "settings.fill_color", ColorUtil.toHexString(settings.getPolyhedronFillColor()));
+                sendRendererSetting(player, renderer, "line_color", ColorUtil.toHexString(settings.getPolyhedronLineColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "vertex0_color", ColorUtil.toHexString(settings.getPolyhedronVertex0Color()), highlightedSetting);
+                sendRendererSetting(player, renderer, "vertex_color", ColorUtil.toHexString(settings.getPolyhedronVertexColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "line_thickness", settings.getPolyhedronLineThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "vertex_size", settings.getPolyhedronVertexSize(), highlightedSetting);
+                sendRendererSetting(player, renderer, "vertex_thickness", settings.getPolyhedronVertexThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_enabled", settings.isPolyhedronFillEnabled(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getPolyhedronFillColor()), highlightedSetting);
             }
         }
 
         MessageUtil.sendTranslated(player, "command.wedisplay.show.modify_hint");
+    }
+
+    private void sendRendererSetting(Player player, String renderer, String setting, Object value, @Nullable String highlightedSetting) {
+        if (highlightedSetting != null && setting.equalsIgnoreCase(highlightedSetting)) {
+            String line = MessageUtil.getTranslated(player, "settings." + renderer + "." + setting, value);
+            MessageUtil.sendMessage(player, "<yellow>> </yellow>" + line);
+            return;
+        }
+
+        MessageUtil.sendTranslated(player, "settings." + renderer + "." + setting, value);
     }
 
     private void sendHelp(Player player) {

@@ -26,6 +26,8 @@ public class RenderSettings {
     private double targetSegmentLengthMax;
     private double scaleFactorMin;
     private double scaleFactorMax;
+    private int fillGeneratorsMin;
+    private int fillGeneratorsMax;
     
     // === Global 設定 ===
     private boolean seeThrough;
@@ -121,6 +123,8 @@ public class RenderSettings {
         targetSegmentLengthMax = 5.0;
         scaleFactorMin = 0.5;
         scaleFactorMax = 10.0;
+        fillGeneratorsMin = 3;
+        fillGeneratorsMax = 50;
         
         seeThrough = true;
         
@@ -251,6 +255,12 @@ public class RenderSettings {
         if (scaleFactor != null) {
             scaleFactorMin = scaleFactor.getDouble("min", scaleFactorMin);
             scaleFactorMax = scaleFactor.getDouble("max", scaleFactorMax);
+        }
+        
+        ConfigurationSection fillGenerators = section.getConfigurationSection("fill_generators");
+        if (fillGenerators != null) {
+            fillGeneratorsMin = fillGenerators.getInt("min", fillGeneratorsMin);
+            fillGeneratorsMax = fillGenerators.getInt("max", fillGeneratorsMax);
         }
     }
     
@@ -436,4 +446,6 @@ public class RenderSettings {
     public double getTargetSegmentLengthMax() { return targetSegmentLengthMax; }
     public double getScaleFactorMin() { return scaleFactorMin; }
     public double getScaleFactorMax() { return scaleFactorMax; }
+    public int getFillGeneratorsMin() { return fillGeneratorsMin; }
+    public int getFillGeneratorsMax() { return fillGeneratorsMax; }
 }

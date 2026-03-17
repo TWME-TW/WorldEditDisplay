@@ -82,6 +82,10 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
         // Render vertical grid lines
         renderGrid(cxCircle, czCircle, radiusX, radiusZ, minY, maxY + 1, gridMat, centerLineMat);
 
+        // Render top/bottom cap grid lines
+        renderCapGrid(cxCircle, minY, czCircle, radiusX, radiusZ, gridMat, centerLineMat);
+        renderCapGrid(cxCircle, maxY + 1, czCircle, radiusX, radiusZ, gridMat, centerLineMat);
+
         // Render center cube
         renderCube(new Vector3f((float)(center.getX() + 0.5),
                         (float)(center.getY() + 0.5),
@@ -229,6 +233,47 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
         }
     }
 
+    /**
+     * Renders horizontal grid lines across the top or bottom cap of the cylinder.
+     * For each X grid line, draws a chord across the ellipse at that X offset.
+     * For each Z grid line, draws a chord across the ellipse at that Z offset.
+     */
+    private void renderCapGrid(double centerX, double y, double centerZ,
+                               double radiusX, double radiusZ,
+                               Color gridMat, Color centerLineMat) {
+        int posX = (int) Math.ceil(radiusX), negX = (int) -Math.ceil(radiusX);
+        int posZ = (int) Math.ceil(radiusZ), negZ = (int) -Math.ceil(radiusZ);
+
+        int xStep = calculateXGridStep(radiusX);
+        int zStep = calculateZGridStep(radiusZ);
+
+        for (int dx = negX; dx <= posX; dx += xStep) {
+            double ratio = dx / radiusX;
+            if (Math.abs(ratio) > 1.0) continue;
+            double offsetZ = radiusZ * Math.cos(Math.asin(ratio));
+            double x = centerX + dx;
+            double z1 = centerZ - offsetZ;
+            double z2 = centerZ + offsetZ;
+            Color mat = (dx == 0) ? centerLineMat : gridMat;
+            float thick = (dx == 0) ? settings.getCylinderCenterLineThickness() : settings.getCylinderGridThickness();
+            renderLine(new Line(new Vector3f((float) x, (float) y, (float) z1),
+                    new Vector3f((float) x, (float) y, (float) z2)), mat, thick);
+        }
+
+        for (int dz = negZ; dz <= posZ; dz += zStep) {
+            double ratio = dz / radiusZ;
+            if (Math.abs(ratio) > 1.0) continue;
+            double offsetX = radiusX * Math.sin(Math.acos(ratio));
+            double z = centerZ + dz;
+            double x1 = centerX - offsetX;
+            double x2 = centerX + offsetX;
+            Color mat = (dz == 0) ? centerLineMat : gridMat;
+            float thick = (dz == 0) ? settings.getCylinderCenterLineThickness() : settings.getCylinderGridThickness();
+            renderLine(new Line(new Vector3f((float) x1, (float) y, (float) z),
+                    new Vector3f((float) x2, (float) y, (float) z)), mat, thick);
+        }
+    }
+
     private int calculateXGridStep(double radiusX) {
         int step = Math.max(1, (int)(radiusX / settings.getCylinderRadiusGridDivision()));
         if (settings.getCylinderMaxGridSpacing() != -1) step = Math.min(step, settings.getCylinderMaxGridSpacing());
@@ -268,24 +313,52 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
     }
 
     /**
-     * Renders a filled disc cap (top or bottom) as N triangles from the center
-     * to adjacent points on the ellipse perimeter.
+        * Special thanks to Sexual Umut Şahin.
+        *
+     * Renders a filled disc cap (top or bottom) as a 2D zonogon:
+     * m = segments/2 generator vectors (consecutive arc chords on the upper semicircle)
+     * are used; each pair (i,j) produces one parallelogram tile so that together
+     * they cover the ellipse without any overlap or gap.
+     *
+     * <p>The generators are arc-chord vectors of the circle, so their Minkowski sum
+     * exactly spans the full ellipse boundary. The base corner for pair (i,j) is the
+     * sum of all generators strictly between i and j, shifted from the rightmost
+     * point of the ellipse.</p>
      */
     private void renderCircleCap(double cx, double cy, double cz,
                                   double radiusX, double radiusZ, Color mat) {
+
         int segments = calculateCircleSegments(radiusX, radiusZ);
+        int m = segments / 2;
+
+        Vector3f[] V = new Vector3f[m];
         double twoPi = Math.PI * 2;
-        Vector3f center = new Vector3f((float) cx, (float) cy, (float) cz);
-        for (int i = 0; i < segments; i++) {
+
+        for (int i = 0; i < m; i++) {
             double a1 = i * twoPi / segments;
             double a2 = (i + 1) * twoPi / segments;
-            Vector3f p1 = new Vector3f(
-                    (float)(cx + radiusX * Math.cos(a1)), (float) cy,
-                    (float)(cz + radiusZ * Math.sin(a1)));
-            Vector3f p2 = new Vector3f(
-                    (float)(cx + radiusX * Math.cos(a2)), (float) cy,
-                    (float)(cz + radiusZ * Math.sin(a2)));
-            renderTriangle(center, p1, p2, mat);
+            float vx = (float) (radiusX * Math.cos(a2) - radiusX * Math.cos(a1));
+            float vz = (float) (radiusZ * Math.sin(a2) - radiusZ * Math.sin(a1));
+            V[i] = new Vector3f(vx, 0, vz);
+        }
+
+        float y = (float) cy;
+        Vector3f originOffset = new Vector3f((float)(cx + radiusX), y, (float)cz);
+
+        for (int i = 0; i < m; i++) {
+            for (int j = i + 1; j < m; j++) {
+
+                Vector3f base = new Vector3f(originOffset);
+                for (int k = i + 1; k < j; k++) {
+                    base.add(V[k]);
+                }
+
+                Vector3f p1 = new Vector3f(base);
+                Vector3f p2 = new Vector3f(base).add(V[i]);
+                Vector3f p3 = new Vector3f(base).add(V[j]);
+
+                renderParallelogram(p1, p2, p3, mat);
+            }
         }
     }
 

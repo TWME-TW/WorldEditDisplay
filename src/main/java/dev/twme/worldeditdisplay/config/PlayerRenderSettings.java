@@ -257,6 +257,8 @@ public class PlayerRenderSettings {
             return value >= serverSettings.getTargetSegmentLengthMin() && value <= serverSettings.getTargetSegmentLengthMax();
         if (key.contains("scale_factor"))
             return value >= serverSettings.getScaleFactorMin() && value <= serverSettings.getScaleFactorMax();
+        if (key.equals("fill_generators"))
+            return value >= serverSettings.getFillGeneratorsMin() && value <= serverSettings.getFillGeneratorsMax();
         return true;
     }
 
