@@ -30,6 +30,11 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
     }
 
     @Override
+    protected boolean isSeeThrough() {
+        return settings.isCuboidSeeThrough();
+    }
+
+    @Override
     public void render(CuboidRegion region) {
         clear(); // remove old lines
 

@@ -20,6 +20,11 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
     }
 
     @Override
+    protected boolean isSeeThrough() {
+        return settings.isCylinderSeeThrough();
+    }
+
+    @Override
     public void render(CylinderRegion region) {
         clear();
 

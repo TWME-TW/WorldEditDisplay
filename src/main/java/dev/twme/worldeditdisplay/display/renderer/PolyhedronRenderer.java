@@ -20,6 +20,11 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
     }
 
     @Override
+    protected boolean isSeeThrough() {
+        return settings.isPolyhedronSeeThrough();
+    }
+
+    @Override
     public void render(PolyhedronRegion region) {
         clear();
 

@@ -231,6 +231,7 @@ public class PlayerSettingsCommand implements TabExecutor {
 
         switch (renderer) {
             case "cuboid" -> {
+                sendRendererSetting(player, renderer, "see_through", settings.isCuboidSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "edge_color", ColorUtil.toHexString(settings.getCuboidEdgeColor()), highlightedSetting);
                 sendRendererSetting(player, renderer, "point1_color", ColorUtil.toHexString(settings.getCuboidPoint1Color()), highlightedSetting);
                 sendRendererSetting(player, renderer, "point2_color", ColorUtil.toHexString(settings.getCuboidPoint2Color()), highlightedSetting);
@@ -243,6 +244,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getCuboidFillColor()), highlightedSetting);
             }
             case "cylinder" -> {
+                sendRendererSetting(player, renderer, "see_through", settings.isCylinderSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "circle_color", ColorUtil.toHexString(settings.getCylinderCircleColor()), highlightedSetting);
                 sendRendererSetting(player, renderer, "grid_color", ColorUtil.toHexString(settings.getCylinderGridColor()), highlightedSetting);
                 sendRendererSetting(player, renderer, "center_color", ColorUtil.toHexString(settings.getCylinderCenterColor()), highlightedSetting);
@@ -260,6 +262,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getCylinderFillColor()), highlightedSetting);
             }
             case "ellipsoid" -> {
+                sendRendererSetting(player, renderer, "see_through", settings.isEllipsoidSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "line_color", ColorUtil.toHexString(settings.getEllipsoidLineColor()), highlightedSetting);
                 sendRendererSetting(player, renderer, "center_line_color", ColorUtil.toHexString(settings.getEllipsoidCenterLineColor()), highlightedSetting);
                 sendRendererSetting(player, renderer, "center_color", ColorUtil.toHexString(settings.getEllipsoidCenterColor()), highlightedSetting);
@@ -276,6 +279,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "fill_generators", settings.getEllipsoidFillGenerators(), highlightedSetting);
             }
             case "polygon" -> {
+                sendRendererSetting(player, renderer, "see_through", settings.isPolygonSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "edge_color", ColorUtil.toHexString(settings.getPolygonEdgeColor()), highlightedSetting);
                 sendRendererSetting(player, renderer, "vertex_color", ColorUtil.toHexString(settings.getPolygonVertexColor()), highlightedSetting);
                 sendRendererSetting(player, renderer, "vertical_color", ColorUtil.toHexString(settings.getPolygonVerticalColor()), highlightedSetting);
@@ -286,6 +290,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getPolygonFillColor()), highlightedSetting);
             }
             case "polyhedron" -> {
+                sendRendererSetting(player, renderer, "see_through", settings.isPolyhedronSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "line_color", ColorUtil.toHexString(settings.getPolyhedronLineColor()), highlightedSetting);
                 sendRendererSetting(player, renderer, "vertex0_color", ColorUtil.toHexString(settings.getPolyhedronVertex0Color()), highlightedSetting);
                 sendRendererSetting(player, renderer, "vertex_color", ColorUtil.toHexString(settings.getPolyhedronVertexColor()), highlightedSetting);
@@ -343,7 +348,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 return value;
             }
             return null;
-        } else if (setting.contains("enabled")) {
+        } else if (setting.contains("enabled") || setting.contains("see_through")) {
             return Boolean.parseBoolean(value);
         } else if (setting.contains("thickness") || setting.contains("size") ||
                 setting.contains("length") || setting.contains("factor")) {

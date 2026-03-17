@@ -87,11 +87,10 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     /**
-     * Get global seeThrough setting
+     * Check if this shape should render through blocks
+     * Must be implemented by subclasses with shape-specific settings
      */
-    protected boolean isSeeThrough() {
-        return plugin.getRenderSettings().isSeeThrough();
-    }
+    protected abstract boolean isSeeThrough();
 
     /**
      * Render a line using TextDisplayShapes

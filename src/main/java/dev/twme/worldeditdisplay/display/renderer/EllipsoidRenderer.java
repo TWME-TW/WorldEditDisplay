@@ -21,6 +21,11 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
     }
 
     @Override
+    protected boolean isSeeThrough() {
+        return settings.isEllipsoidSeeThrough();
+    }
+
+    @Override
     public void render(EllipsoidRegion region) {
         clear();
 
