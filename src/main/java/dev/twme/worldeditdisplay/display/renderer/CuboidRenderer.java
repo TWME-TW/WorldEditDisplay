@@ -70,7 +70,8 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
 
         // Render fill faces if enabled
         if (settings.isCuboidFillEnabled()) {
-            renderFillFaces(minX, minY, minZ, maxX, maxY, maxZ, settings.getCuboidFillColor());
+            Color fillColor = getFillColorWithOverride(region, 1, settings.getCuboidFillColor(), isMultiSelection);
+            renderFillFaces(minX, minY, minZ, maxX, maxY, maxZ, fillColor);
         }
     }
 

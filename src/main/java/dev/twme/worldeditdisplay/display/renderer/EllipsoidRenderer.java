@@ -53,7 +53,7 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
 
         // Render fill surface using parallelogram latitude bands
         if (settings.isEllipsoidFillEnabled()) {
-            Color fillMat = getColorWithOverride(region, 3, settings.getEllipsoidFillColor(), multi);
+            Color fillMat = getFillColorWithOverride(region, 3, settings.getEllipsoidFillColor(), multi);
             renderEllipsoidFill(centerPos, radii, fillMat);
         }
     }

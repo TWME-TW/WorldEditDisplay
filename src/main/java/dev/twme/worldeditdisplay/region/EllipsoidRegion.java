@@ -25,6 +25,7 @@ public class EllipsoidRegion extends Region {
     @Override
     public void setEllipsoidCenter(int x, int y, int z) {
         center = Vector3.at(x, y, z);
+        markDirty();
     }
 
     /**
@@ -33,6 +34,7 @@ public class EllipsoidRegion extends Region {
     @Override
     public void setEllipsoidRadii(double x, double y, double z) {
         radii = Vector3.at(x, y, z);
+        markDirty();
     }
 
     public Vector3 getCenter() { return center; }

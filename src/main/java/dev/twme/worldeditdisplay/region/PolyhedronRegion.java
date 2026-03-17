@@ -1,8 +1,9 @@
 package dev.twme.worldeditdisplay.region;
 
-import dev.twme.worldeditdisplay.player.PlayerData;
 import java.util.ArrayList;
 import java.util.List;
+
+import dev.twme.worldeditdisplay.player.PlayerData;
 
 /**
  * Polyhedron region (3D polygon with faces)
@@ -28,6 +29,7 @@ public class PolyhedronRegion extends Region {
     public void setCuboidPoint(int id, double x, double y, double z) {
         while (vertices.size() <= id) vertices.add(null);
         vertices.set(id, Vector3.at(x, y, z));
+        markDirty();
     }
 
     /**
@@ -36,6 +38,7 @@ public class PolyhedronRegion extends Region {
     @Override
     public void addPolygon(int[] vertexIds) {
         faces.add(vertexIds.clone());
+        markDirty();
     }
 
     public List<Vector3> getVertices() {

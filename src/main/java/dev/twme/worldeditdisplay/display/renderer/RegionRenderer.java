@@ -208,7 +208,7 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     public int getEntityCount() {
-        return shapes.size();
+        return shapes.stream().mapToInt(s -> s.getEntityUUIDs().size()).sum();
     }
 
     public Player getPlayer() {
@@ -223,6 +223,19 @@ public abstract class RegionRenderer<T extends Region> {
         if (!isMultiSelection) return defaultColor;
         Color override = region.getOverrideColor(colorIndex);
         return override != null ? override : defaultColor;
+    }
+
+    /**
+     * Get the fill face color, using CUI override for multi-selection.
+     * When an override is active, alpha is reduced to 25% to match
+     * WorldEditCUI's visual convention (hidden-line alpha × 0.25).
+     */
+    protected Color getFillColorWithOverride(Region region, int colorIndex,
+                                              Color defaultColor, boolean isMultiSelection) {
+        if (!isMultiSelection) return defaultColor;
+        Color override = region.getOverrideColor(colorIndex);
+        if (override == null) return defaultColor;
+        return dev.twme.worldeditdisplay.util.ColorUtil.withAlphaFactor(override, 0.25f);
     }
 
     /**

@@ -24,6 +24,7 @@ public class CuboidRegion extends Region {
         Vector3 point = Vector3.at(x, y, z);
         if (id == 0) point1 = point;
         else if (id == 1) point2 = point;
+        markDirty();
     }
 
     public Vector3 getPoint1() { return point1; }
