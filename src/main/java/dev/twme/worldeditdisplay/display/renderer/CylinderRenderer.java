@@ -329,6 +329,13 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
                                   double radiusX, double radiusZ, Color mat) {
 
         int segments = calculateCircleSegments(radiusX, radiusZ);
+        // The zonogon-based cap fill assumes an even segment count so that
+        // m = segments / 2 generators cover one semicircle exactly. If the
+        // computed value is odd, bump it to the next even number to avoid
+        // dropping a generator and leaving gaps in the cap.
+        if ((segments & 1) != 0) {
+            segments++;
+        }
         int m = segments / 2;
 
         Vector3f[] V = new Vector3f[m];
