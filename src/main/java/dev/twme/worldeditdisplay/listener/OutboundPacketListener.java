@@ -14,6 +14,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPl
 import dev.twme.worldeditdisplay.common.Constants;
 import dev.twme.worldeditdisplay.event.CUIEventArgs;
 import dev.twme.worldeditdisplay.player.PlayerData;
+import dev.twme.worldeditdisplay.util.MessageUtil;
 
 /**
  * Listens to outgoing plugin messages.
@@ -38,6 +39,11 @@ public class OutboundPacketListener implements PacketListener {
         if (!player.hasPermission("worldeditdisplay.use")) return;
 
         PlayerData playerData = PlayerData.getPlayerData(player);
+
+        // If debug mode, show the received WECUI message
+        if (playerData.isDebugEnabled()) {
+            MessageUtil.sendTranslated(player, "command.wedisplay.debug.cui_message", message);
+        }
 
         // If CUI already enabled, let the packet go through
         if (playerData.isCuiEnabled()) return;

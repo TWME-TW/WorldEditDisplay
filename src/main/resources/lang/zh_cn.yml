@@ -64,6 +64,7 @@ command:
       enabled: "<green>已开启调试模式！每次渲染时将显示实体数量。"
       disabled: "<yellow>已关闭调试模式！"
       entity_count: "<gray>[调试] 当前显示实体数量: <white>%d"
+      cui_message: "<gray>[调试] 收到 WECUI 消息: <white>%s"
     
     help:
       title: "<yellow>========== WorldEditDisplay 个人设置 =========="

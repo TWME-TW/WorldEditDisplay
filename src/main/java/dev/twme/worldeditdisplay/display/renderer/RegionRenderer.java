@@ -208,7 +208,7 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     public int getEntityCount() {
-        return shapes.size();
+        return shapes.stream().mapToInt(s -> s.getEntityUUIDs().size()).sum();
     }
 
     public Player getPlayer() {

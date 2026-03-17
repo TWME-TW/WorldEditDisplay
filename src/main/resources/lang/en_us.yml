@@ -64,6 +64,7 @@ command:
       enabled: "<green>Debug mode enabled! Entity count will be shown on each render."
       disabled: "<yellow>Debug mode disabled!"
       entity_count: "<gray>[Debug] Current display entity count: <white>%d"
+      cui_message: "<gray>[Debug] Received WECUI message: <white>%s"
     
     help:
       title: "<yellow>========== WorldEditDisplay Personal Settings =========="

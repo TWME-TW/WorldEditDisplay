@@ -64,6 +64,7 @@ command:
       enabled: "<green>已開啟除錯模式！每次渲染時將顯示實體數量。"
       disabled: "<yellow>已關閉除錯模式！"
       entity_count: "<gray>[除錯] 目前顯示實體數量: <white>%d"
+      cui_message: "<gray>[除錯] 收到 WECUI 訊息: <white>%s"
     
     help:
       title: "<yellow>========== WorldEditDisplay 個人設定 =========="
