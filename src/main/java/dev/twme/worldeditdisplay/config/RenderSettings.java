@@ -155,7 +155,7 @@ public class RenderSettings {
         cylinderHeightGridDivision = 10;
         cylinderRadiusGridDivision = 5;
         cylinderMaxGridSpacing = -1;
-        cylinderFillEnabled = true;
+        cylinderFillEnabled = false;
         cylinderFillColor = ColorUtil.parseHexColor("#CC4C4C40");
         
         ellipsoidLineColor = ColorUtil.parseHexColor("#CC4C4CCC");
