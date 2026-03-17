@@ -103,6 +103,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .seeThrough(isSeeThrough())
                 .doubleSided(true)
                 .brightness(15, 15)
+                .viewRange(100f)
                 .build();
         shape.addViewer(player);
         shape.spawn();
@@ -179,6 +180,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .seeThrough(isSeeThrough())
                 .doubleSided(true)
                 .brightness(15, 15)
+                .viewRange(100f)
                 .build();
         shape.addViewer(player);
         shape.spawn();
@@ -196,6 +198,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .seeThrough(isSeeThrough())
                 .doubleSided(true)
                 .brightness(15, 15)
+                .viewRange(100f)
                 .build();
         shape.addViewer(player);
         shape.spawn();
