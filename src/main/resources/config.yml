@@ -91,13 +91,13 @@ renderer:
     
     # Thickness Settings
     circle_thickness: 0.03              # Circle ring thickness
-    grid_thickness: 0.01                # Grid line thickness
+    grid_thickness: 0.03                # Grid line thickness
     center_line_thickness: 0.04         # Center line thickness
     center_thickness: 0.05              # Center marker cube thickness
     
     # Circle Segments Settings
-    min_circle_segments: 20             # Minimum segments
-    max_circle_segments: 50             # Maximum segments
+    min_circle_segments: 15             # Minimum segments
+    max_circle_segments: 30             # Maximum segments
     target_segment_length: 0.5          # Target arc length per segment (block units)
     sqrt_scale_factor: 4.0              # Square root scale factor
     
@@ -125,8 +125,8 @@ renderer:
     center_thickness: 0.05              # Center marker cube thickness
     
     # Ellipse Segments Settings
-    min_segments: 20                    # Minimum segments
-    max_segments: 40                    # Maximum segments
+    min_segments: 15                    # Minimum segments
+    max_segments: 30                    # Maximum segments
     target_segment_length: 0.5          # Target arc length per segment (block units)
     sqrt_scale_factor: 4.0              # Square root scale factor
     
