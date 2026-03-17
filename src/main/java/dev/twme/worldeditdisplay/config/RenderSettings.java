@@ -26,6 +26,8 @@ public class RenderSettings {
     private double targetSegmentLengthMax;
     private double scaleFactorMin;
     private double scaleFactorMax;
+    private int fillGeneratorsMin;
+    private int fillGeneratorsMax;
     
     // === Global 設定 ===
     private boolean seeThrough;
@@ -107,20 +109,22 @@ public class RenderSettings {
     }
     
     private void loadDefaults() {
-        thicknessMin = 0.01;
-        thicknessMax = 0.5;
+        thicknessMin = 0.005;
+        thicknessMax = 0.7;
         markerSizeMin = 0.1;
-        markerSizeMax = 5.0;
+        markerSizeMax = 2.0;
         segmentsMin = 10;
-        segmentsMax = 120;
-        gridDivisionMin = 1;
-        gridDivisionMax = 50;
+        segmentsMax = 40;
+        gridDivisionMin = 5;
+        gridDivisionMax = 12;
         gridSpacingMin = -1;
         gridSpacingMax = 100;
         targetSegmentLengthMin = 0.1;
-        targetSegmentLengthMax = 5.0;
+        targetSegmentLengthMax = 1000.0;
         scaleFactorMin = 0.5;
         scaleFactorMax = 10.0;
+        fillGeneratorsMin = 3;
+        fillGeneratorsMax = 50;
         
         seeThrough = true;
         
@@ -128,8 +132,8 @@ public class RenderSettings {
         cuboidPoint1Color = ColorUtil.parseHexColor("#33CC33CC");
         cuboidPoint2Color = ColorUtil.parseHexColor("#3333CCCC");
         cuboidGridColor = ColorUtil.parseHexColor("#CC4C4CCC");
-        cuboidFillEnabled = false;
-        cuboidFillColor = ColorUtil.parseHexColor("#FF000050");
+        cuboidFillEnabled = true;
+        cuboidFillColor = ColorUtil.parseHexColor("#FF000020");
         cuboidEdgeThickness = 0.03f;
         cuboidGridThickness = 0.01f;
         cuboidVertexMarkerSize = 1.0f;
@@ -141,18 +145,18 @@ public class RenderSettings {
         cylinderCenterColor = ColorUtil.parseHexColor("#CC33CCCC");
         cylinderCenterLineColor = ColorUtil.parseHexColor("#CC3333CC");
         cylinderCircleThickness = 0.03f;
-        cylinderGridThickness = 0.01f;
+        cylinderGridThickness = 0.03f;
         cylinderCenterLineThickness = 0.04f;
         cylinderCenterThickness = 0.05f;
-        cylinderMinCircleSegments = 20;
-        cylinderMaxCircleSegments = 50;
+        cylinderMinCircleSegments = 15;
+        cylinderMaxCircleSegments = 30;
         cylinderTargetSegmentLength = 0.5;
         cylinderSqrtScaleFactor = 4.0;
         cylinderHeightGridDivision = 10;
         cylinderRadiusGridDivision = 5;
         cylinderMaxGridSpacing = -1;
         cylinderFillEnabled = false;
-        cylinderFillColor = ColorUtil.parseHexColor("#CC4C4C50");
+        cylinderFillColor = ColorUtil.parseHexColor("#CC4C4C40");
         
         ellipsoidLineColor = ColorUtil.parseHexColor("#CC4C4CCC");
         ellipsoidCenterLineColor = ColorUtil.parseHexColor("#CC3333CC");
@@ -161,15 +165,15 @@ public class RenderSettings {
         ellipsoidCenterLineThickness = 0.05f;
         ellipsoidCenterMarkerSize = 1.0f;
         ellipsoidCenterThickness = 0.05f;
-        ellipsoidMinSegments = 20;
-        ellipsoidMaxSegments = 40;
+        ellipsoidMinSegments = 15;
+        ellipsoidMaxSegments = 30;
         ellipsoidTargetSegmentLength = 0.5;
         ellipsoidSqrtScaleFactor = 4.0;
         ellipsoidRadiusGridDivision = 6;
         ellipsoidMaxGridSpacing = -1;
         ellipsoidFillEnabled = false;
         ellipsoidFillColor = ColorUtil.parseHexColor("#CC4C4C40");
-        ellipsoidFillGenerators = 10;
+        ellipsoidFillGenerators = 15;
         
         polygonEdgeColor = ColorUtil.parseHexColor("#CC4C4CCC");
         polygonVertexColor = ColorUtil.parseHexColor("#33CCCCCC");
@@ -251,6 +255,12 @@ public class RenderSettings {
         if (scaleFactor != null) {
             scaleFactorMin = scaleFactor.getDouble("min", scaleFactorMin);
             scaleFactorMax = scaleFactor.getDouble("max", scaleFactorMax);
+        }
+        
+        ConfigurationSection fillGenerators = section.getConfigurationSection("fill_generators");
+        if (fillGenerators != null) {
+            fillGeneratorsMin = fillGenerators.getInt("min", fillGeneratorsMin);
+            fillGeneratorsMax = fillGenerators.getInt("max", fillGeneratorsMax);
         }
     }
     
@@ -436,4 +446,6 @@ public class RenderSettings {
     public double getTargetSegmentLengthMax() { return targetSegmentLengthMax; }
     public double getScaleFactorMin() { return scaleFactorMin; }
     public double getScaleFactorMax() { return scaleFactorMax; }
+    public int getFillGeneratorsMin() { return fillGeneratorsMin; }
+    public int getFillGeneratorsMax() { return fillGeneratorsMax; }
 }
