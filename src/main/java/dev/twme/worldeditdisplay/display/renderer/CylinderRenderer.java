@@ -90,7 +90,7 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
 
         // Render fill surface using parallelograms
         if (settings.isCylinderFillEnabled()) {
-            Color fillMat = getColorWithOverride(region, 3, settings.getCylinderFillColor(), isMulti);
+            Color fillMat = getFillColorWithOverride(region, 3, settings.getCylinderFillColor(), isMulti);
             renderCylinderBand(cxCircle, czCircle, radiusX, radiusZ,
                     (float) minY, (float) (maxY + 1), fillMat);
             renderCircleCap(cxCircle, minY, czCircle, radiusX, radiusZ, fillMat);

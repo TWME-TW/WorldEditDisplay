@@ -62,7 +62,8 @@ public class PolygonRenderer extends RegionRenderer<PolygonRegion> {
 
         // Render fill faces if enabled
         if (settings.isPolygonFillEnabled() && points.size() >= 3) {
-            renderFillFaces(points, minY, maxY, settings.getPolygonFillColor());
+            Color fillColor = getFillColorWithOverride(region, 1, settings.getPolygonFillColor(), multi);
+            renderFillFaces(points, minY, maxY, fillColor);
         }
     }
 

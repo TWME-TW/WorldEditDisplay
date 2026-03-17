@@ -46,7 +46,8 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
 
             // Render fill faces if enabled
             if (settings.isPolyhedronFillEnabled()) {
-                renderFillFaces(vertices, faces, settings.getPolyhedronFillColor());
+                Color fillColor = getFillColorWithOverride(region, 1, settings.getPolyhedronFillColor(), multi);
+                renderFillFaces(vertices, faces, fillColor);
             }
         }
     }

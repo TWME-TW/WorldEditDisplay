@@ -226,6 +226,19 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     /**
+     * Get the fill face color, using CUI override for multi-selection.
+     * When an override is active, alpha is reduced to 25% to match
+     * WorldEditCUI's visual convention (hidden-line alpha × 0.25).
+     */
+    protected Color getFillColorWithOverride(Region region, int colorIndex,
+                                              Color defaultColor, boolean isMultiSelection) {
+        if (!isMultiSelection) return defaultColor;
+        Color override = region.getOverrideColor(colorIndex);
+        if (override == null) return defaultColor;
+        return dev.twme.worldeditdisplay.util.ColorUtil.withAlphaFactor(override, 0.25f);
+    }
+
+    /**
      * Check if a region is part of a multi-selection
      */
     protected boolean isMultiSelection(Region region) {

@@ -55,6 +55,14 @@ public class ColorUtil {
     }
 
     /**
+     * 返回相同 RGB 但 alpha 乘以指定係數的顏色（用於填充面淡化）
+     */
+    public static Color withAlphaFactor(Color color, float factor) {
+        int newAlpha = Math.min(255, Math.max(0, Math.round(color.getAlpha() * factor)));
+        return Color.fromARGB(newAlpha, color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    /**
      * 驗證 HEX 顏色字串格式是否正確
      */
     public static boolean isValidHexColor(String hex) {
