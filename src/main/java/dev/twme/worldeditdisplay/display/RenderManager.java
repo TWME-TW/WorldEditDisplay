@@ -108,8 +108,11 @@ public class RenderManager {
             }
         }
 
+        if (!mainSelection.isDirty()) return;
+
         try {
             currentRenderer.render(mainSelection);
+            mainSelection.clearDirty();
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "main render fail: " + player.getName(), e);
         }
@@ -150,8 +153,11 @@ public class RenderManager {
                 }
             }
 
+            if (!region.isDirty()) continue;
+
             try {
                 renderer.render(region);
+                region.clearDirty();
             } catch (Exception e) {
                 plugin.getLogger().log(Level.SEVERE, "multi render fail: " + player.getName(), e);
             }
@@ -237,6 +243,16 @@ public class RenderManager {
     public void refreshPlayerRenderer(Player player) {
         UUID playerId = player.getUniqueId();
         clearRender(playerId);
+
+        PlayerData playerData = PlayerData.getPlayerData(player);
+        if (playerData != null) {
+            Region main = playerData.getSelection();
+            if (main != null) main.markDirty();
+            for (Region r : playerData.getMultiRegions().values()) {
+                if (r != null) r.markDirty();
+            }
+        }
+
         updateRender(player);
         plugin.getLogger().fine("refreshed renderer for " + player.getName());
     }

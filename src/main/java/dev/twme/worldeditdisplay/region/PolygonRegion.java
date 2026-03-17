@@ -1,8 +1,9 @@
 package dev.twme.worldeditdisplay.region;
 
-import dev.twme.worldeditdisplay.player.PlayerData;
 import java.util.ArrayList;
 import java.util.List;
+
+import dev.twme.worldeditdisplay.player.PlayerData;
 
 /**
  * 2D Polygon region (extends vertically)
@@ -29,6 +30,7 @@ public class PolygonRegion extends Region {
     public void setPolygonPoint(int id, int x, int z) {
         while (points.size() <= id) points.add(null);
         points.set(id, Vector2.at(x, z));
+        markDirty();
     }
 
     /**
@@ -38,6 +40,7 @@ public class PolygonRegion extends Region {
     public void setMinMax(int min, int max) {
         minY = min;
         maxY = max;
+        markDirty();
     }
 
     public List<Vector2> getPoints() { return new ArrayList<>(points); }

@@ -23,13 +23,13 @@ public class CylinderRegion extends Region {
     }
 
     @Override
-    public void setCylinderCenter(int x, int y, int z) { center = Vector3.at(x, y, z); }
+    public void setCylinderCenter(int x, int y, int z) { center = Vector3.at(x, y, z); markDirty(); }
 
     @Override
-    public void setCylinderRadius(double x, double z) { radiusX = x; radiusZ = z; }
+    public void setCylinderRadius(double x, double z) { radiusX = x; radiusZ = z; markDirty(); }
 
     @Override
-    public void setMinMax(int min, int max) { minY = min; maxY = max; }
+    public void setMinMax(int min, int max) { minY = min; maxY = max; markDirty(); }
 
     public Vector3 getCenter() { return center; }
     public double getRadiusX() { return radiusX; }

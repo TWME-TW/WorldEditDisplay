@@ -12,6 +12,7 @@ public abstract class Region {
 
     protected final PlayerData playerData;
     protected double gridSpacing;
+    protected boolean dirty = true;
 
     /**
      * Color overrides (for rendering)
@@ -22,6 +23,18 @@ public abstract class Region {
 
     protected Region(PlayerData playerData) {
         this.playerData = playerData;
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    public void clearDirty() {
+        dirty = false;
+    }
+
+    public void markDirty() {
+        dirty = true;
     }
 
     /**
@@ -40,6 +53,7 @@ public abstract class Region {
      */
     public void setGridSpacing(double spacing) {
         this.gridSpacing = spacing;
+        markDirty();
     }
 
     /**
@@ -60,6 +74,7 @@ public abstract class Region {
             throw new IllegalArgumentException("Override colors array must have exactly 4 elements");
         }
         System.arraycopy(colors, 0, this.overrideColors, 0, 4);
+        markDirty();
     }
 
     /**
@@ -79,6 +94,7 @@ public abstract class Region {
         for (int i = 0; i < 4; i++) {
             overrideColors[i] = null;
         }
+        markDirty();
     }
 
     /**
