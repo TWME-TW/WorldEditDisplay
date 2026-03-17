@@ -110,6 +110,8 @@ settings:
     target_segment_length: "<gold>目標分段長度: <white>%.2f <click:suggest_command:'/wedisplay set cylinder target_segment_length '><dark_gray>[編輯]</dark_gray></click>"
     height_grid_division: "<gold>高度網格分割: <white>%d <click:suggest_command:'/wedisplay set cylinder height_grid_division '><dark_gray>[編輯]</dark_gray></click>"
     radius_grid_division: "<gold>半徑網格分割: <white>%d <click:suggest_command:'/wedisplay set cylinder radius_grid_division '><dark_gray>[編輯]</dark_gray></click>"
+    fill_enabled: "<gold>填充啟用: <white>%s <click:suggest_command:'/wedisplay set cylinder fill_enabled '><dark_gray>[編輯]</dark_gray></click>"
+    fill_color: "<gold>填充顏色: <white>%s <click:suggest_command:'/wedisplay set cylinder fill_color '><dark_gray>[編輯]</dark_gray></click>"
   ellipsoid:
     line_color: "<gold>線條顏色: <white>%s <click:suggest_command:'/wedisplay set ellipsoid line_color '><dark_gray>[編輯]</dark_gray></click>"
     center_line_color: "<gold>中心線顏色: <white>%s <click:suggest_command:'/wedisplay set ellipsoid center_line_color '><dark_gray>[編輯]</dark_gray></click>"

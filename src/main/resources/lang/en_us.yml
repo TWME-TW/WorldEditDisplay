@@ -110,6 +110,8 @@ settings:
     target_segment_length: "<gold>target_segment_length: <white>%.2f <click:suggest_command:'/wedisplay set cylinder target_segment_length '><dark_gray>[EDIT]</dark_gray></click>"
     height_grid_division: "<gold>height_grid_division: <white>%d <click:suggest_command:'/wedisplay set cylinder height_grid_division '><dark_gray>[EDIT]</dark_gray></click>"
     radius_grid_division: "<gold>radius_grid_division: <white>%d <click:suggest_command:'/wedisplay set cylinder radius_grid_division '><dark_gray>[EDIT]</dark_gray></click>"
+    fill_enabled: "<gold>fill_enabled: <white>%s <click:suggest_command:'/wedisplay set cylinder fill_enabled '><dark_gray>[EDIT]</dark_gray></click>"
+    fill_color: "<gold>fill_color: <white>%s <click:suggest_command:'/wedisplay set cylinder fill_color '><dark_gray>[EDIT]</dark_gray></click>"
   ellipsoid:
     line_color: "<gold>line_color: <white>%s <click:suggest_command:'/wedisplay set ellipsoid line_color '><dark_gray>[EDIT]</dark_gray></click>"
     center_line_color: "<gold>center_line_color: <white>%s <click:suggest_command:'/wedisplay set ellipsoid center_line_color '><dark_gray>[EDIT]</dark_gray></click>"

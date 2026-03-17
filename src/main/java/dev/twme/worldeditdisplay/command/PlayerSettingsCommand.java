@@ -256,6 +256,8 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "target_segment_length", settings.getCylinderTargetSegmentLength(), highlightedSetting);
                 sendRendererSetting(player, renderer, "height_grid_division", settings.getCylinderHeightGridDivision(), highlightedSetting);
                 sendRendererSetting(player, renderer, "radius_grid_division", settings.getCylinderRadiusGridDivision(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_enabled", settings.isCylinderFillEnabled(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getCylinderFillColor()), highlightedSetting);
             }
             case "ellipsoid" -> {
                 sendRendererSetting(player, renderer, "line_color", ColorUtil.toHexString(settings.getEllipsoidLineColor()), highlightedSetting);
@@ -269,6 +271,9 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "max_segments", settings.getEllipsoidMaxSegments(), highlightedSetting);
                 sendRendererSetting(player, renderer, "target_segment_length", settings.getEllipsoidTargetSegmentLength(), highlightedSetting);
                 sendRendererSetting(player, renderer, "radius_grid_division", settings.getEllipsoidRadiusGridDivision(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_enabled", settings.isEllipsoidFillEnabled(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getEllipsoidFillColor()), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_generators", settings.getEllipsoidFillGenerators(), highlightedSetting);
             }
             case "polygon" -> {
                 sendRendererSetting(player, renderer, "edge_color", ColorUtil.toHexString(settings.getPolygonEdgeColor()), highlightedSetting);
