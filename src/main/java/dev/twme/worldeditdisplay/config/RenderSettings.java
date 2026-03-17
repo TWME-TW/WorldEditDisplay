@@ -117,7 +117,7 @@ public class RenderSettings {
         segmentsMax = 40;
         gridDivisionMin = 5;
         gridDivisionMax = 12;
-        gridSpacingMin = 1;
+        gridSpacingMin = -1;
         gridSpacingMax = 100;
         targetSegmentLengthMin = 0.1;
         targetSegmentLengthMax = 1000.0;
