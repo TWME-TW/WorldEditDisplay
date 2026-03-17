@@ -117,33 +117,65 @@ public class PlayerRenderSettings {
     }
 
     private void clearFields() {
-        cuboidEdgeColor = null; cuboidPoint1Color = null; cuboidPoint2Color = null;
-        cuboidGridColor = null; cuboidFillEnabled = null; cuboidFillColor = null;
-        cuboidEdgeThickness = null; cuboidGridThickness = null;
-        cuboidVertexMarkerSize = null; cuboidHeightGridDivision = null;
+        cuboidEdgeColor = null;
+        cuboidPoint1Color = null;
+        cuboidPoint2Color = null;
+        cuboidGridColor = null;
+        cuboidFillEnabled = null;
+        cuboidFillColor = null;
+        cuboidEdgeThickness = null;
+        cuboidGridThickness = null;
+        cuboidVertexMarkerSize = null;
+        cuboidHeightGridDivision = null;
 
-        cylinderCircleColor = null; cylinderGridColor = null;
-        cylinderCenterColor = null; cylinderCenterLineColor = null;
-        cylinderCircleThickness = null; cylinderGridThickness = null;
-        cylinderCenterLineThickness = null; cylinderCenterThickness = null;
-        cylinderMinCircleSegments = null; cylinderMaxCircleSegments = null;
-        cylinderTargetSegmentLength = null; cylinderHeightGridDivision = null;
-        cylinderRadiusGridDivision = null; cylinderFillEnabled = null; cylinderFillColor = null;
+        cylinderCircleColor = null;
+        cylinderGridColor = null;
+        cylinderCenterColor = null;
+        cylinderCenterLineColor = null;
+        cylinderCircleThickness = null;
+        cylinderGridThickness = null;
+        cylinderCenterLineThickness = null;
+        cylinderCenterThickness = null;
+        cylinderMinCircleSegments = null;
+        cylinderMaxCircleSegments = null;
+        cylinderTargetSegmentLength = null;
+        cylinderHeightGridDivision = null;
+        cylinderRadiusGridDivision = null;
+        cylinderFillEnabled = null;
+        cylinderFillColor = null;
 
-        ellipsoidLineColor = null; ellipsoidCenterLineColor = null; ellipsoidCenterColor = null;
-        ellipsoidLineThickness = null; ellipsoidCenterLineThickness = null;
-        ellipsoidCenterMarkerSize = null; ellipsoidCenterThickness = null;
-        ellipsoidMinSegments = null; ellipsoidMaxSegments = null;
-        ellipsoidTargetSegmentLength = null; ellipsoidRadiusGridDivision = null;
-        ellipsoidFillEnabled = null; ellipsoidFillColor = null; ellipsoidFillGenerators = null;
+        ellipsoidLineColor = null;
+        ellipsoidCenterLineColor = null;
+        ellipsoidCenterColor = null;
+        ellipsoidLineThickness = null;
+        ellipsoidCenterLineThickness = null;
+        ellipsoidCenterMarkerSize = null;
+        ellipsoidCenterThickness = null;
+        ellipsoidMinSegments = null;
+        ellipsoidMaxSegments = null;
+        ellipsoidTargetSegmentLength = null;
+        ellipsoidRadiusGridDivision = null;
+        ellipsoidFillEnabled = null;
+        ellipsoidFillColor = null;
+        ellipsoidFillGenerators = null;
 
-        polygonEdgeColor = null; polygonVertexColor = null; polygonVerticalColor = null;
-        polygonFillEnabled = null; polygonFillColor = null;
-        polygonEdgeThickness = null; polygonVerticalThickness = null; polygonHeightGridDivision = null;
+        polygonEdgeColor = null;
+        polygonVertexColor = null;
+        polygonVerticalColor = null;
+        polygonFillEnabled = null;
+        polygonFillColor = null;
+        polygonEdgeThickness = null;
+        polygonVerticalThickness = null;
+        polygonHeightGridDivision = null;
 
-        polyhedronLineColor = null; polyhedronVertex0Color = null; polyhedronVertexColor = null;
-        polyhedronFillEnabled = null; polyhedronFillColor = null;
-        polyhedronLineThickness = null; polyhedronVertexSize = null; polyhedronVertexThickness = null;
+        polyhedronLineColor = null;
+        polyhedronVertex0Color = null;
+        polyhedronVertexColor = null;
+        polyhedronFillEnabled = null;
+        polyhedronFillColor = null;
+        polyhedronLineThickness = null;
+        polyhedronVertexSize = null;
+        polyhedronVertexThickness = null;
     }
 
     public void save() {
