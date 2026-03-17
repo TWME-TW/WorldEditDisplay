@@ -106,9 +106,10 @@ public class RenderManager {
                 plugin.getLogger().warning("cannot make renderer: " + mainSelection.getClass().getSimpleName());
                 return;
             }
+        } else if (!mainSelection.isDirty()) {
+            // renderer 已存在且 region 沒有變動，跳過
+            return;
         }
-
-        if (!mainSelection.isDirty()) return;
 
         try {
             currentRenderer.render(mainSelection);
@@ -151,9 +152,10 @@ public class RenderManager {
                     plugin.getLogger().warning("cannot make multi renderer: " + region.getClass().getSimpleName());
                     continue;
                 }
+            } else if (!region.isDirty()) {
+                // renderer 已存在且 region 沒有變動，跳過
+                continue;
             }
-
-            if (!region.isDirty()) continue;
 
             try {
                 renderer.render(region);
@@ -172,6 +174,68 @@ public class RenderManager {
         if (playerMultiRenderers != null) {
             playerMultiRenderers.values().forEach(RegionRenderer::clear);
             playerMultiRenderers.clear();
+        }
+    }
+
+    /**
+     * Only clear the main renderer for a player. Multi renderers are untouched.
+     */
+    public void clearMainRender(UUID playerId) {
+        RegionRenderer mainRenderer = mainRenderers.remove(playerId);
+        if (mainRenderer != null) mainRenderer.clear();
+    }
+
+    /**
+     * Remove a specific multi renderer only. Does not touch other renderers.
+     */
+    public void removeMultiRenderer(UUID playerId, UUID regionId) {
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.get(playerId);
+        if (playerMultiRenderers == null) return;
+        RegionRenderer renderer = playerMultiRenderers.remove(regionId);
+        if (renderer != null) renderer.clear();
+    }
+
+    /**
+     * Remove all multi renderers for a player. Does not touch the main renderer.
+     */
+    public void clearAllMultiRenderers(UUID playerId) {
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.remove(playerId);
+        if (playerMultiRenderers != null) {
+            playerMultiRenderers.values().forEach(RegionRenderer::clear);
+            playerMultiRenderers.clear();
+        }
+    }
+
+    /**
+     * Render (or re-render) a single multi region. Does not touch other renderers.
+     */
+    public void renderSingleMultiRegion(Player player, UUID regionId, Region region) {
+        if (region == null) return;
+        UUID playerId = player.getUniqueId();
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
+
+        RegionRenderer renderer = playerMultiRenderers.get(regionId);
+
+        if (renderer != null && !renderer.getRegionType().equals(region.getClass())) {
+            renderer.clear();
+            playerMultiRenderers.remove(regionId);
+            renderer = null;
+        }
+
+        if (renderer == null) {
+            renderer = createRenderer(player, region);
+            if (renderer != null) playerMultiRenderers.put(regionId, renderer);
+            else {
+                plugin.getLogger().warning("cannot make multi renderer: " + region.getClass().getSimpleName());
+                return;
+            }
+        }
+
+        try {
+            renderer.render(region);
+            region.clearDirty();
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "multi render fail: " + player.getName(), e);
         }
     }
 
