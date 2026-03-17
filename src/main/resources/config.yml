@@ -86,7 +86,7 @@ renderer:
     center_line_color: "#CC3333CC"      # Center line color
     
     # Fill Settings (uses parallelograms to approximate the curved surface)
-    fill_enabled: true                  # Whether to render fill parallelograms
+    fill_enabled: false                 # Whether to render fill parallelograms
     fill_color: "#CC4C4C40"             # Fill color (semi-transparent)
     
     # Thickness Settings
