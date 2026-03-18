@@ -414,7 +414,7 @@ public class PlayerSettingsCommand implements TabExecutor {
             if (subCommand.equals("set")) {
                 if (setting.contains("color")) {
                     completions = Arrays.asList("#RRGGBBAA", "#FF0000FF", "#00FF00FF", "#0000FFFF", "#FFFFFF80");
-                } else if (setting.contains("enabled")) {
+                } else if (setting.contains("enabled") || setting.contains("see_through")) {
                     completions = Arrays.asList("true", "false");
                 } else {
                     completions = Arrays.asList("<value>", "1", "0.05", "0.04", "0.03");
@@ -431,27 +431,27 @@ public class PlayerSettingsCommand implements TabExecutor {
             case "cuboid" -> Arrays.asList(
                     "edge_color", "point1_color", "point2_color", "grid_color",
                     "edge_thickness", "grid_thickness", "vertex_marker_size", "height_grid_division",
-                    "fill_enabled", "fill_color");
+                    "see_through", "fill_enabled", "fill_color");
             case "cylinder" -> Arrays.asList(
                     "circle_color", "grid_color", "center_color", "center_line_color",
                     "circle_thickness", "grid_thickness", "center_line_thickness", "center_thickness",
                     "min_circle_segments", "max_circle_segments", "target_segment_length",
                     "height_grid_division", "radius_grid_division",
-                    "fill_enabled", "fill_color");
+                    "see_through", "fill_enabled", "fill_color");
             case "ellipsoid" -> Arrays.asList(
                     "line_color", "center_line_color", "center_color",
                     "line_thickness", "center_line_thickness", "center_marker_size", "center_thickness",
                     "min_segments", "max_segments", "target_segment_length",
                     "radius_grid_division",
-                    "fill_enabled", "fill_color", "fill_generators");
+                    "see_through", "fill_enabled", "fill_color", "fill_generators");
             case "polygon" -> Arrays.asList(
                     "edge_color", "vertex_color", "vertical_color",
                     "edge_thickness", "vertical_thickness", "height_grid_division",
-                    "fill_enabled", "fill_color");
+                    "see_through", "fill_enabled", "fill_color");
             case "polyhedron" -> Arrays.asList(
                     "line_color", "vertex0_color", "vertex_color",
                     "line_thickness", "vertex_size", "vertex_thickness",
-                    "fill_enabled", "fill_color");
+                    "see_through", "fill_enabled", "fill_color");
             default -> new ArrayList<>();
         };
     }
