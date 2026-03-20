@@ -38,6 +38,11 @@ public abstract class RegionRenderer<T extends Region> {
 
     protected RenderConfig config;
 
+    // tracks where shapes were last spawned/rebased for distance checking
+    private Location lastRebaseOrigin;
+
+    private static final double REBASE_DISTANCE_SQUARED = 80.0 * 80.0;
+
     public RegionRenderer(WorldEditDisplay plugin, Player player, PlayerRenderSettings settings) {
         this.plugin = plugin;
         this.player = player;
@@ -69,6 +74,7 @@ public abstract class RegionRenderer<T extends Region> {
             }
         }
         shapes.clear();
+        lastRebaseOrigin = null;
     }
 
     protected Location toLocation(double x, double y, double z) {
@@ -83,7 +89,38 @@ public abstract class RegionRenderer<T extends Region> {
         Location loc = player.getLocation();
         loc.setYaw(0);
         loc.setPitch(0);
+        if (lastRebaseOrigin == null) {
+            lastRebaseOrigin = loc.clone();
+        }
         return loc;
+    }
+
+    /**
+     * Checks if the player has moved far enough from the original shape origin
+     * and teleports all shape entities to the player's feet if so.
+     * This prevents TextDisplay entities from exceeding their view range.
+     */
+    public void rebaseOriginIfNeeded() {
+        if (shapes.isEmpty() || lastRebaseOrigin == null) return;
+
+        Location playerLoc = player.getLocation();
+        if (!playerLoc.getWorld().equals(lastRebaseOrigin.getWorld())) return;
+
+        if (playerLoc.distanceSquared(lastRebaseOrigin) < REBASE_DISTANCE_SQUARED) return;
+
+        Location newOrigin = playerLoc.clone();
+        newOrigin.setYaw(0);
+        newOrigin.setPitch(0);
+
+        for (Shape shape : shapes) {
+            try {
+                shape.teleportOrigin(newOrigin);
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to rebase shape origin", e);
+            }
+        }
+
+        lastRebaseOrigin = newOrigin.clone();
     }
 
     /**
