@@ -139,7 +139,7 @@ renderer:
     sqrt_scale_factor: 4.0              # Square root scale factor
     
     # Grid Density Settings
-    radius_grid_division: 6             # Radius grid division
+    radius_grid_division: 6             # Approximate number of grid lines per axis plane (higher = more lines)
     max_grid_spacing: -1                # Maximum grid spacing
   
   # Polygon Renderer Settings

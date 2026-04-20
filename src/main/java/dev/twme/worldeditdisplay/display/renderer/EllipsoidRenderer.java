@@ -64,7 +64,7 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
     }
 
     private int calculateGridStep(double radius) {
-        int step = Math.max(1, (int) (radius / settings.getEllipsoidRadiusGridDivision()));
+        int step = Math.max(1, (int) Math.ceil(2.0 * radius / settings.getEllipsoidRadiusGridDivision()));
         if (settings.getEllipsoidMaxGridSpacing() != -1) step = Math.min(step, settings.getEllipsoidMaxGridSpacing());
         return step;
     }
