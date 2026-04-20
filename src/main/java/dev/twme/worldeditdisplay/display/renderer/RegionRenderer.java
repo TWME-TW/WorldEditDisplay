@@ -105,7 +105,6 @@ public abstract class RegionRenderer<T extends Region> {
 
         Location playerLoc = player.getLocation();
         if (!playerLoc.getWorld().equals(lastRebaseOrigin.getWorld())) return;
-
         if (playerLoc.distanceSquared(lastRebaseOrigin) < REBASE_DISTANCE_SQUARED) return;
 
         Location newOrigin = playerLoc.clone();
@@ -136,6 +135,7 @@ public abstract class RegionRenderer<T extends Region> {
         Location origin = getOrigin();
         Shape shape = TextDisplayShapes.packet()
                 .line(origin, line.start(), line.end(), thickness)
+            .rootAnchor(true)
                 .color(color)
                 .seeThrough(isSeeThrough())
                 .doubleSided(true)
@@ -213,6 +213,7 @@ public abstract class RegionRenderer<T extends Region> {
         Location origin = getOrigin();
         Shape shape = TextDisplayShapes.packet()
                 .parallelogram(origin, p1, p2, p3)
+            .rootAnchor(true)
                 .color(color)
                 .seeThrough(isSeeThrough())
                 .doubleSided(true)
@@ -231,6 +232,7 @@ public abstract class RegionRenderer<T extends Region> {
         Location origin = getOrigin();
         Shape shape = TextDisplayShapes.packet()
                 .triangle(origin, p1, p2, p3)
+            .rootAnchor(true)
                 .color(color)
                 .seeThrough(isSeeThrough())
                 .doubleSided(true)
