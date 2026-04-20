@@ -48,16 +48,18 @@ player_limits:
   fill_generators:
     min: 3                              # Minimum fill generators (face count = n*(n-1))
     max: 50                             # Maximum fill generators
+  
+  # See through related settings range (per-shape transparency through blocks)
+  see_through: true                    # Whether players can toggle see_through for individual shapes
 
 # Renderer Settings
 # Color format: #RRGGBBAA (hex, AA = alpha/opacity, 00=transparent, FF=opaque)
 renderer:
-  # Global display settings
-  global:
-    see_through: true                   # Whether shapes are visible through blocks
-
   # Cuboid (Rectangular Box) Renderer Settings
   cuboid:
+    # View Settings
+    see_through: true                   # Whether cuboid shapes are visible through blocks
+    
     # Color Settings
     edge_color: "#CC3333CC"             # Edge line color
     point1_color: "#33CC33CC"           # First selection point marker color
@@ -79,6 +81,9 @@ renderer:
   
   # Cylinder Renderer Settings
   cylinder:
+    # View Settings
+    see_through: true                   # Whether cylinder shapes are visible through blocks
+    
     # Color Settings
     circle_color: "#CC4C4CCC"           # Circle ring color
     grid_color: "#CC3333CC"             # Grid line color
@@ -108,6 +113,9 @@ renderer:
   
   # Ellipsoid Renderer Settings
   ellipsoid:
+    # View Settings
+    see_through: true                   # Whether ellipsoid shapes are visible through blocks
+    
     # Color Settings
     line_color: "#CC4C4CCC"             # Line color
     center_line_color: "#CC3333CC"      # Center line color
@@ -136,6 +144,9 @@ renderer:
   
   # Polygon Renderer Settings
   polygon:
+    # View Settings
+    see_through: true                   # Whether polygon shapes are visible through blocks
+    
     # Color Settings
     edge_color: "#CC4C4CCC"             # Edge color
     vertex_color: "#33CCCCCC"           # Vertex color
@@ -155,6 +166,9 @@ renderer:
   
   # Polyhedron Renderer Settings
   polyhedron:
+    # View Settings
+    see_through: true                   # Whether polyhedron shapes are visible through blocks
+    
     # Color Settings
     line_color: "#CC3333CC"             # Edge line color
     vertex0_color: "#33CC33CC"          # First vertex color

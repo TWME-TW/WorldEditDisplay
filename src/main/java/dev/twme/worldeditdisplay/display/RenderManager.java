@@ -6,7 +6,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.display.renderer.CuboidRenderer;
@@ -36,6 +38,8 @@ public class RenderManager {
     private final Map<UUID, Map<UUID, RegionRenderer>> multiRenderers;
     private final Map<Class<? extends Region>, Class<? extends RegionRenderer>> rendererTypes;
 
+    private BukkitTask rebaseTask;
+
     public RenderManager(WorldEditDisplay plugin) {
         this.plugin = plugin;
         this.mainRenderers = new ConcurrentHashMap<>();
@@ -43,6 +47,7 @@ public class RenderManager {
         this.rendererTypes = new HashMap<>();
 
         registerRendererTypes();
+        startRebaseTask();
         plugin.getLogger().info("RenderManager started");
     }
 
@@ -301,7 +306,37 @@ public class RenderManager {
 
     public void shutdown() {
         plugin.getLogger().info("shutdown render manager");
+        if (rebaseTask != null) {
+            rebaseTask.cancel();
+            rebaseTask = null;
+        }
         clearAllRenders();
+    }
+
+    /**
+     * Starts a periodic task that checks if players have moved far enough
+     * from the original shape spawn point to require rebasing entity origins.
+     * Runs every 10 ticks (0.5 seconds).
+     */
+    private void startRebaseTask() {
+        rebaseTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            for (RegionRenderer renderer : mainRenderers.values()) {
+                try {
+                    renderer.rebaseOriginIfNeeded();
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING, "rebase main renderer fail", e);
+                }
+            }
+            for (Map<UUID, RegionRenderer> playerMultiRenderers : multiRenderers.values()) {
+                for (RegionRenderer renderer : playerMultiRenderers.values()) {
+                    try {
+                        renderer.rebaseOriginIfNeeded();
+                    } catch (Exception e) {
+                        plugin.getLogger().log(Level.WARNING, "rebase multi renderer fail", e);
+                    }
+                }
+            }
+        }, 10L, 10L);
     }
 
     public void refreshPlayerRenderer(Player player) {

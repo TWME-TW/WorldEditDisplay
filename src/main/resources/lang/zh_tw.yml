@@ -86,6 +86,7 @@ command:
 # 設定項名稱
 settings:
   cuboid:
+    see_through: "<gold>透視顯示: <white>%s <click:suggest_command:'/wedisplay set cuboid see_through '><dark_gray>[編輯]</dark_gray></click>"
     edge_color: "<gold>邊緣顏色: <white>%s <click:suggest_command:'/wedisplay set cuboid edge_color '><dark_gray>[編輯]</dark_gray></click>"
     point1_color: "<gold>點1顏色: <white>%s <click:suggest_command:'/wedisplay set cuboid point1_color '><dark_gray>[編輯]</dark_gray></click>"
     point2_color: "<gold>點2顏色: <white>%s <click:suggest_command:'/wedisplay set cuboid point2_color '><dark_gray>[編輯]</dark_gray></click>"
@@ -97,6 +98,7 @@ settings:
     fill_enabled: "<gold>填充啟用: <white>%s <click:suggest_command:'/wedisplay set cuboid fill_enabled '><dark_gray>[編輯]</dark_gray></click>"
     fill_color: "<gold>填充顏色: <white>%s <click:suggest_command:'/wedisplay set cuboid fill_color '><dark_gray>[編輯]</dark_gray></click>"
   cylinder:
+    see_through: "<gold>透視顯示: <white>%s <click:suggest_command:'/wedisplay set cylinder see_through '><dark_gray>[編輯]</dark_gray></click>"
     circle_color: "<gold>圓形顏色: <white>%s <click:suggest_command:'/wedisplay set cylinder circle_color '><dark_gray>[編輯]</dark_gray></click>"
     grid_color: "<gold>網格顏色: <white>%s <click:suggest_command:'/wedisplay set cylinder grid_color '><dark_gray>[編輯]</dark_gray></click>"
     center_color: "<gold>中心顏色: <white>%s <click:suggest_command:'/wedisplay set cylinder center_color '><dark_gray>[編輯]</dark_gray></click>"
@@ -113,6 +115,7 @@ settings:
     fill_enabled: "<gold>填充啟用: <white>%s <click:suggest_command:'/wedisplay set cylinder fill_enabled '><dark_gray>[編輯]</dark_gray></click>"
     fill_color: "<gold>填充顏色: <white>%s <click:suggest_command:'/wedisplay set cylinder fill_color '><dark_gray>[編輯]</dark_gray></click>"
   ellipsoid:
+    see_through: "<gold>透視顯示: <white>%s <click:suggest_command:'/wedisplay set ellipsoid see_through '><dark_gray>[編輯]</dark_gray></click>"
     line_color: "<gold>線條顏色: <white>%s <click:suggest_command:'/wedisplay set ellipsoid line_color '><dark_gray>[編輯]</dark_gray></click>"
     center_line_color: "<gold>中心線顏色: <white>%s <click:suggest_command:'/wedisplay set ellipsoid center_line_color '><dark_gray>[編輯]</dark_gray></click>"
     center_color: "<gold>中心顏色: <white>%s <click:suggest_command:'/wedisplay set ellipsoid center_color '><dark_gray>[編輯]</dark_gray></click>"
@@ -128,6 +131,7 @@ settings:
     fill_color: "<gold>填充顏色: <white>%s <click:suggest_command:'/wedisplay set ellipsoid fill_color '><dark_gray>[編輯]</dark_gray></click>"
     fill_generators: "<gold>填充生成器: <white>%d <click:suggest_command:'/wedisplay set ellipsoid fill_generators '><dark_gray>[編輯]</dark_gray></click>"
   polygon:
+    see_through: "<gold>透視顯示: <white>%s <click:suggest_command:'/wedisplay set polygon see_through '><dark_gray>[編輯]</dark_gray></click>"
     edge_color: "<gold>邊緣顏色: <white>%s <click:suggest_command:'/wedisplay set polygon edge_color '><dark_gray>[編輯]</dark_gray></click>"
     vertex_color: "<gold>頂點顏色: <white>%s <click:suggest_command:'/wedisplay set polygon vertex_color '><dark_gray>[編輯]</dark_gray></click>"
     vertical_color: "<gold>垂直顏色: <white>%s <click:suggest_command:'/wedisplay set polygon vertical_color '><dark_gray>[編輯]</dark_gray></click>"
@@ -137,6 +141,7 @@ settings:
     fill_enabled: "<gold>填充啟用: <white>%s <click:suggest_command:'/wedisplay set polygon fill_enabled '><dark_gray>[編輯]</dark_gray></click>"
     fill_color: "<gold>填充顏色: <white>%s <click:suggest_command:'/wedisplay set polygon fill_color '><dark_gray>[編輯]</dark_gray></click>"
   polyhedron:
+    see_through: "<gold>透視顯示: <white>%s <click:suggest_command:'/wedisplay set polyhedron see_through '><dark_gray>[編輯]</dark_gray></click>"
     line_color: "<gold>線條顏色: <white>%s <click:suggest_command:'/wedisplay set polyhedron line_color '><dark_gray>[編輯]</dark_gray></click>"
     vertex0_color: "<gold>頂點0顏色: <white>%s <click:suggest_command:'/wedisplay set polyhedron vertex0_color '><dark_gray>[編輯]</dark_gray></click>"
     vertex_color: "<gold>頂點顏色: <white>%s <click:suggest_command:'/wedisplay set polyhedron vertex_color '><dark_gray>[編輯]</dark_gray></click>"

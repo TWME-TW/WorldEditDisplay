@@ -18,6 +18,11 @@ public class PolygonRenderer extends RegionRenderer<PolygonRegion> {
     }
 
     @Override
+    protected boolean isSeeThrough() {
+        return settings.isPolygonSeeThrough();
+    }
+
+    @Override
     public void render(PolygonRegion region) {
         clear();
 

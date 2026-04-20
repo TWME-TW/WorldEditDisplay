@@ -20,28 +20,31 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
     }
 
     @Override
+    protected boolean isSeeThrough() {
+        return settings.isPolyhedronSeeThrough();
+    }
+
+    @Override
     public void render(PolyhedronRegion region) {
         clear();
 
-        if (!region.isDefined()) return;
-
-        boolean multi = isMultiSelection(region);
-
         List<Vector3> vertices = region.getVertices();
-        List<int[]> faces = region.getFaces();
-
         if (vertices.isEmpty()) return;
 
         long validCount = vertices.stream().filter(v -> v != null).count();
         if (validCount == 0) return;
 
-        Color lineColor = getColorWithOverride(region, 0, settings.getPolyhedronLineColor(), multi);
+        boolean multi = isMultiSelection(region);
+
+        List<int[]> faces = region.getFaces();
+
         Color vertexColor = getColorWithOverride(region, 2, settings.getPolyhedronVertexColor(), multi);
         Color vertex0Color = getColorWithOverride(region, 3, settings.getPolyhedronVertex0Color(), multi);
 
         renderVertices(vertices, vertexColor, vertex0Color);
 
         if (!faces.isEmpty()) {
+            Color lineColor = getColorWithOverride(region, 0, settings.getPolyhedronLineColor(), multi);
             renderFaceEdges(vertices, faces, lineColor);
 
             // Render fill faces if enabled
