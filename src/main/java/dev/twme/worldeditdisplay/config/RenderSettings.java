@@ -12,6 +12,7 @@ public class RenderSettings {
     private final WorldEditDisplay plugin;
     
     // === 玩家設定限制 ===
+    private boolean seeThroughAllowed;
     private double thicknessMin;
     private double thicknessMax;
     private double markerSizeMin;
@@ -127,6 +128,7 @@ public class RenderSettings {
         scaleFactorMax = 10.0;
         fillGeneratorsMin = 3;
         fillGeneratorsMax = 50;
+        seeThroughAllowed = true;
         
         cuboidSeeThrough = true;
         cuboidPoint1Color = ColorUtil.parseHexColor("#33CC33CC");
@@ -140,6 +142,7 @@ public class RenderSettings {
         cuboidHeightGridDivision = 10;
         cuboidMaxGridSpacing = -1;
         
+        cylinderSeeThrough = true;
         cylinderCircleColor = ColorUtil.parseHexColor("#CC4C4CCC");
         cylinderGridColor = ColorUtil.parseHexColor("#CC3333CC");
         cylinderCenterColor = ColorUtil.parseHexColor("#CC33CCCC");
@@ -261,6 +264,7 @@ public class RenderSettings {
             fillGeneratorsMin = fillGenerators.getInt("min", fillGeneratorsMin);
             fillGeneratorsMax = fillGenerators.getInt("max", fillGeneratorsMax);
         }
+        seeThroughAllowed = section.getBoolean("see_through", seeThroughAllowed);
     }
     
     private void loadCuboidSettings(ConfigurationSection section) {
@@ -449,4 +453,5 @@ public class RenderSettings {
     public double getScaleFactorMax() { return scaleFactorMax; }
     public int getFillGeneratorsMin() { return fillGeneratorsMin; }
     public int getFillGeneratorsMax() { return fillGeneratorsMax; }
+    public boolean isSeeThroughAllowed() { return seeThroughAllowed; }
 }

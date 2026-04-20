@@ -34,6 +34,7 @@ public class PlayerRenderSettings {
     private Integer cuboidHeightGridDivision;
 
     // Cylinder
+    private Boolean cylinderSeeThrough;
     private Color cylinderCircleColor;
     private Color cylinderGridColor;
     private Color cylinderCenterColor;
@@ -51,7 +52,7 @@ public class PlayerRenderSettings {
     private Color cylinderFillColor;
 
     // Ellipsoid
-    private Boolean cylinderSeeThrough;
+    private Boolean ellipsoidSeeThrough;
     private Color ellipsoidLineColor;
     private Color ellipsoidCenterLineColor;
     private Color ellipsoidCenterColor;
@@ -68,7 +69,7 @@ public class PlayerRenderSettings {
     private Integer ellipsoidFillGenerators;
 
     // Polygon
-    private Boolean ellipsoidSeeThrough;
+    private Boolean polygonSeeThrough;
     private Color polygonEdgeColor;
     private Color polygonVertexColor;
     private Color polygonVerticalColor;
@@ -79,7 +80,7 @@ public class PlayerRenderSettings {
     private Integer polygonHeightGridDivision;
 
     // Polyhedron
-    private Boolean polygonSeeThrough;
+    private Boolean polyhedronSeeThrough;
     private Color polyhedronLineColor;
     private Color polyhedronVertex0Color;
     private Color polyhedronVertexColor;
@@ -88,7 +89,6 @@ public class PlayerRenderSettings {
     private Float polyhedronLineThickness;
     private Float polyhedronVertexSize;
     private Float polyhedronVertexThickness;
-    private Boolean polyhedronSeeThrough;
 
     public PlayerRenderSettings(WorldEditDisplay plugin, UUID playerUUID) {
         this.plugin = plugin;
@@ -311,6 +311,7 @@ public class PlayerRenderSettings {
                 return false;
             }
         }
+        if (path.endsWith("see_through") && !serverSettings.isSeeThroughAllowed()) return false;
         if (value instanceof Number && !validateNumericValue(path, ((Number) value).doubleValue())) return false;
 
         config.set(path, value instanceof Color ? ColorUtil.toHexString((Color) value) : value);
