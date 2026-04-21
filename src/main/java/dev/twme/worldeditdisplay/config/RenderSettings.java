@@ -190,7 +190,7 @@ public class RenderSettings {
         
         polyhedronSeeThrough = true;
         polyhedronVertex0Color = ColorUtil.parseHexColor("#33CC33CC");
-        polyhedronVertexColor = ColorUtil.parseHexColor("#3333CCCC");
+        polyhedronVertexColor = ColorUtil.parseHexColor("#33CCCCCC");
         polyhedronFillEnabled = false;
         polyhedronFillColor = ColorUtil.parseHexColor("#CC333320");
         polyhedronLineThickness = 0.03f;

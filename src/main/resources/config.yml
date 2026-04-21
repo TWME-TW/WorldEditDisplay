@@ -172,7 +172,7 @@ renderer:
     # Color Settings
     line_color: "#CC3333CC"             # Edge line color
     vertex0_color: "#33CC33CC"          # First vertex color
-    vertex_color: "#3333CCCC"           # Other vertex color
+    vertex_color: "#33CCCCCC"           # Other vertex color
     
     # Fill Settings
     fill_enabled: false                 # Whether to render fill faces
