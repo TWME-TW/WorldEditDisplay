@@ -79,7 +79,18 @@ public class PlayerData {
     }
 
     public void setCuiEnabled(boolean enabled) {
+        boolean wasDisabled = !this.isCuiEnabled;
         this.isCuiEnabled = enabled;
+
+        // When CUI becomes active, clear any built-in display that may have rendered
+        // during the brief window before the REGISTER packet was processed.
+        if (enabled && wasDisabled) {
+            WorldEditDisplay plugin = WorldEditDisplay.getPlugin();
+            if (plugin != null && plugin.getRenderManager() != null) {
+                Bukkit.getScheduler().runTask(plugin, () ->
+                        plugin.getRenderManager().clearRender(player.getUniqueId()));
+            }
+        }
     }
 
     /**
