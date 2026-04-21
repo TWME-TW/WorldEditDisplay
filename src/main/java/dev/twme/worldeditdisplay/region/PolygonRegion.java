@@ -49,7 +49,7 @@ public class PolygonRegion extends Region {
 
     @Override
     public boolean isDefined() {
-        return !points.isEmpty() && points.stream().anyMatch(p -> p != null) && maxY > minY;
+        return !points.isEmpty() && points.stream().anyMatch(p -> p != null) && maxY >= minY;
     }
 
     @Override
