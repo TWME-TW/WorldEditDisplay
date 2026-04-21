@@ -134,7 +134,7 @@ public class RenderSettings {
         cuboidPoint1Color = ColorUtil.parseHexColor("#33CC33CC");
         cuboidPoint2Color = ColorUtil.parseHexColor("#3333CCCC");
         cuboidGridColor = ColorUtil.parseHexColor("#CC4C4CCC");
-        cuboidFillEnabled = true;
+        cuboidFillEnabled = false;
         cuboidFillColor = ColorUtil.parseHexColor("#FF000020");
         cuboidEdgeThickness = 0.03f;
         cuboidGridThickness = 0.01f;

@@ -67,7 +67,7 @@ renderer:
     grid_color: "#CC4C4CCC"             # Grid line color
     
     # Fill Settings
-    fill_enabled: true                  # Whether to render fill faces
+    fill_enabled: false                 # Whether to render fill faces
     fill_color: "#FF000020"             # Fill face color (semi-transparent)
     
     # Thickness Settings
