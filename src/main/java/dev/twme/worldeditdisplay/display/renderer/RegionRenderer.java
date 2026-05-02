@@ -10,7 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.joml.Vector3f;
 
-import dev.twme.textdisplayshape.TextDisplayShapes;
+import dev.twme.textdisplayshape.packet.PacketShapeFactory;
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
@@ -113,7 +113,7 @@ public abstract class RegionRenderer<T extends Region> {
 
         for (Shape shape : shapes) {
             try {
-                shape.teleportOrigin(newOrigin);
+                shape.teleportOrigin(newOrigin.getX(), newOrigin.getY(), newOrigin.getZ());
             } catch (Exception e) {
                 plugin.getLogger().log(Level.WARNING, "Failed to rebase shape origin", e);
             }
@@ -133,7 +133,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderLine(Line line, Color color, float thickness) {
         Location origin = getOrigin();
-        Shape shape = TextDisplayShapes.packet()
+        Shape shape = new PacketShapeFactory()
                 .line(origin, line.start(), line.end(), thickness)
             .rootAnchor(true)
                 .color(color)
@@ -142,7 +142,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .brightness(15, 15)
                 .viewRange(100f)
                 .build();
-        shape.addViewer(player);
+        shape.addViewer(player.getUniqueId());
         shape.spawn();
         shapes.add(shape);
     }
@@ -211,7 +211,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderParallelogram(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = TextDisplayShapes.packet()
+        Shape shape = new PacketShapeFactory()
                 .parallelogram(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -220,7 +220,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .brightness(15, 15)
                 .viewRange(100f)
                 .build();
-        shape.addViewer(player);
+        shape.addViewer(player.getUniqueId());
         shape.spawn();
         shapes.add(shape);
     }
@@ -230,7 +230,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderTriangle(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = TextDisplayShapes.packet()
+        Shape shape = new PacketShapeFactory()
                 .triangle(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -239,7 +239,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .brightness(15, 15)
                 .viewRange(100f)
                 .build();
-        shape.addViewer(player);
+        shape.addViewer(player.getUniqueId());
         shape.spawn();
         shapes.add(shape);
     }
