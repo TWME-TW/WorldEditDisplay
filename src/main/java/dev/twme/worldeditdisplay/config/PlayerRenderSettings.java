@@ -102,6 +102,18 @@ public class PlayerRenderSettings {
         load();
     }
 
+    /**
+     * Protected constructor used by subclasses that manage their own colour overrides.
+     * Does NOT load any YAML file – all fields remain null and getters fall back to server settings.
+     */
+    protected PlayerRenderSettings(WorldEditDisplay plugin) {
+        this.plugin = plugin;
+        this.playerUUID = null;
+        this.serverSettings = plugin.getRenderSettings();
+        this.configFile = null;
+        this.config = new org.bukkit.configuration.file.YamlConfiguration();
+    }
+
     public void load() {
         clearFields();
         if (!configFile.exists()) {

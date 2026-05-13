@@ -29,6 +29,9 @@ permissions:
   worldeditdisplay.use.settings:
     description: Allow managing personal rendering settings
     default: true
+  worldeditdisplay.use.share:
+    description: Allow sharing WorldEdit selections with other players
+    default: true
   worldeditdisplay.reload:
     description: Allow reloading WorldEditDisplay configuration
     default: op

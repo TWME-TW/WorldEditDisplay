@@ -24,9 +24,11 @@ import dev.twme.worldeditdisplay.util.MessageUtil;
 public class PlayerSettingsCommand implements TabExecutor {
 
     private final WorldEditDisplay plugin;
+    private final ShareCommand shareCommand;
 
     public PlayerSettingsCommand(WorldEditDisplay plugin) {
         this.plugin = plugin;
+        this.shareCommand = new ShareCommand(plugin);
     }
 
     @Override
@@ -60,6 +62,7 @@ public class PlayerSettingsCommand implements TabExecutor {
             case "lang", "language" -> handleLanguage(player, args);
             case "toggle" -> handleToggle(player);
             case "debug" -> handleDebug(player);
+            case "share" -> shareCommand.handle(player, args);
             default -> sendHelp(player);
         }
 
@@ -362,7 +365,7 @@ public class PlayerSettingsCommand implements TabExecutor {
 
     // Tab Completion
     private static final List<String> SUB_COMMANDS = Arrays.asList(
-            "set", "reset", "show", "reloadplayer", "lang", "language", "toggle", "debug");
+            "set", "reset", "show", "reloadplayer", "lang", "language", "toggle", "debug", "share");
 
     // second argument options
     private static final List<String> RENDERERS = Arrays.asList(
@@ -394,6 +397,8 @@ public class PlayerSettingsCommand implements TabExecutor {
                 completions = plugin.getLanguageManager().getAvailableLanguages().stream()
                         .filter(lang -> lang.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
+            } else if (subCommand.equals("share")) {
+                return shareCommand.tabComplete((Player) sender, args);
             }
 
         } else if (args.length == 3) {
@@ -405,6 +410,8 @@ public class PlayerSettingsCommand implements TabExecutor {
                 completions = getSettingKeys(renderer).stream()
                         .filter(key -> key.startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList());
+            } else if (subCommand.equals("share")) {
+                return shareCommand.tabComplete((Player) sender, args);
             }
 
         } else if (args.length == 4) {

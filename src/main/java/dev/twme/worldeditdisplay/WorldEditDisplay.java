@@ -16,6 +16,7 @@ import dev.twme.worldeditdisplay.listener.OutboundPacketListener;
 import dev.twme.worldeditdisplay.listener.PlayerJoinListener;
 import dev.twme.worldeditdisplay.listener.PlayerLocaleChangeListener;
 import dev.twme.worldeditdisplay.listener.PlayerQuitListener;
+import dev.twme.worldeditdisplay.share.ShareManager;
 import dev.twme.worldeditdisplay.util.MessageUtil;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import me.tofaa.entitylib.APIConfig;
@@ -28,6 +29,7 @@ public final class WorldEditDisplay extends JavaPlugin {
     private RenderSettings renderSettings;
     private PlayerSettingsManager playerSettingsManager;
     private LanguageManager languageManager;
+    private ShareManager shareManager;
 
     @Override
     public void onLoad() {
@@ -75,6 +77,9 @@ public final class WorldEditDisplay extends JavaPlugin {
         // Initialize managers
         this.renderManager = new RenderManager(this);
 
+        // Initialize share manager
+        this.shareManager = new ShareManager(this);
+
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerLocaleChangeListener(this), this);
@@ -88,6 +93,11 @@ public final class WorldEditDisplay extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Save share data
+        if (shareManager != null) {
+            shareManager.save();
+        }
+
         // Clean up all renders
         if (renderManager != null) {
             renderManager.shutdown();
@@ -114,5 +124,9 @@ public final class WorldEditDisplay extends JavaPlugin {
     
     public LanguageManager getLanguageManager() {
         return languageManager;
+    }
+
+    public ShareManager getShareManager() {
+        return shareManager;
     }
 }
