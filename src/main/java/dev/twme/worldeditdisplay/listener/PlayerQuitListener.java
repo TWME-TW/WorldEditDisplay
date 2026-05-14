@@ -26,6 +26,11 @@ public class PlayerQuitListener implements Listener {
             plugin.getRenderManager().clearRender(event.getPlayer().getUniqueId());
         }
 
+        // Clean up share-related pending invites for this player
+        if (plugin.getShareManager() != null) {
+            plugin.getShareManager().onPlayerQuit(event.getPlayer().getUniqueId());
+        }
+
         // Remove player language record
         if (plugin.getLanguageManager() != null) {
             plugin.getLanguageManager().removePlayerLanguage(event.getPlayer().getUniqueId());
