@@ -1,7 +1,7 @@
 package dev.twme.worldeditdisplay.display;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -43,20 +43,14 @@ public class RenderManager {
     private final Map<UUID, Map<UUID, RegionRenderer>> multiRenderers;
     /** viewer → (sharer → renderer): renderers for other players' shared selections */
     private final Map<UUID, Map<UUID, RegionRenderer>> sharedRenderers;
+    /** sharer → colour: stable shared-selection colour assignments across all viewers */
+    private final Map<UUID, Color> sharedColors;
     private final Map<Class<? extends Region>, Class<? extends RegionRenderer>> rendererTypes;
 
-    /**
-     * Colour palette cycled through for each sharer slot.
-     * ARGB: fully-opaque cyan, magenta, yellow, orange, lime, pink.
-     */
-    private static final List<Color> SHARED_COLORS = List.of(
-            Color.fromARGB(204, 0,   200, 255),   // cyan
-            Color.fromARGB(204, 255, 80,  255),   // magenta
-            Color.fromARGB(204, 255, 220, 0  ),   // yellow
-            Color.fromARGB(204, 255, 140, 0  ),   // orange
-            Color.fromARGB(204, 80,  255, 80 ),   // lime
-            Color.fromARGB(204, 255, 100, 150)    // pink
-    );
+    private static final int SHARED_COLOR_ALPHA = 230;
+    private static final float SHARED_MIN_HUE_DISTANCE = 0.12f;
+    private static final float SHARED_HUE_STEP = 0.61803398875f;
+    private static final int SHARED_COLOR_ATTEMPTS = 12;
 
     private BukkitTask rebaseTask;
 
@@ -65,6 +59,7 @@ public class RenderManager {
         this.mainRenderers = new ConcurrentHashMap<>();
         this.multiRenderers = new ConcurrentHashMap<>();
         this.sharedRenderers = new ConcurrentHashMap<>();
+        this.sharedColors = new ConcurrentHashMap<>();
         this.rendererTypes = new HashMap<>();
 
         registerRendererTypes();
@@ -133,8 +128,9 @@ public class RenderManager {
             return false;
         });
 
-        for (UUID sharerId : sharers) {
-            renderSharedForViewer(viewer, viewerSharedRenderers, sharerId, computeSharerSlot(sharerId), false);
+        for (UUID sharerId : sharers.stream().sorted().toList()) {
+            Color sharedColor = getOrCreateSharedColor(sharerId);
+            renderSharedForViewer(viewer, viewerSharedRenderers, sharerId, sharedColor, false);
         }
     }
 
@@ -148,16 +144,14 @@ public class RenderManager {
         Set<UUID> viewers = shareManager.getActiveViewers(sharer.getUniqueId());
         if (viewers.isEmpty()) return;
 
-        // Build an ordered list so each viewer always gets the same colour slot for this sharer
-        int slot = computeSharerSlot(sharer.getUniqueId());
-
         for (UUID viewerId : viewers) {
             Player viewer = Bukkit.getPlayer(viewerId);
             if (viewer == null || !viewer.isOnline()) continue;
 
             Map<UUID, RegionRenderer> viewerSharedRenderers =
                     sharedRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
-            renderSharedForViewer(viewer, viewerSharedRenderers, sharer.getUniqueId(), slot, true);
+            Color color = getOrCreateSharedColor(sharer.getUniqueId());
+            renderSharedForViewer(viewer, viewerSharedRenderers, sharer.getUniqueId(), color, true);
         }
     }
 
@@ -170,7 +164,7 @@ public class RenderManager {
      *                    (used when the viewer's own selection changed – the sharer's data is stale).
      */
     private void renderSharedForViewer(Player viewer, Map<UUID, RegionRenderer> viewerSharedRenderers,
-                                       UUID sharerId, int colorSlot, boolean forceRender) {
+                                       UUID sharerId, Color sharedColor, boolean forceRender) {
         Player sharerPlayer = Bukkit.getPlayer(sharerId);
         if (sharerPlayer == null || !sharerPlayer.isOnline()) {
             RegionRenderer r = viewerSharedRenderers.remove(sharerId);
@@ -203,8 +197,7 @@ public class RenderManager {
             return;
         }
 
-        Color color = SHARED_COLORS.get(colorSlot % SHARED_COLORS.size());
-        SharedRenderSettings sharedSettings = new SharedRenderSettings(plugin, color);
+        SharedRenderSettings sharedSettings = new SharedRenderSettings(plugin, sharedColor);
 
         if (renderer == null) {
             renderer = createRenderer(viewer, sharerRegion, sharedSettings);
@@ -221,14 +214,83 @@ public class RenderManager {
     }
 
     /**
-     * Computes a stable colour-slot index for a sharer, based on UUID ordering among all
-     * current active-share relationships. Falls back to 0 if ShareManager is unavailable.
+     * Generate a stable, high-variance shared-selection colour from a sharer's UUID.
+     * The hash controls hue, saturation, and brightness so the output space is much larger
+     * than the original fixed palette while remaining deterministic.
      */
-    private int computeSharerSlot(UUID sharerId) {
-        ShareManager sm = plugin.getShareManager();
-        if (sm == null) return 0;
-        // Use a simple deterministic slot based on least-significant UUID bits
-        return (int) Math.abs(sharerId.getLeastSignificantBits() % SHARED_COLORS.size());
+    private Color getOrCreateSharedColor(UUID sharerId) {
+        Color existing = sharedColors.get(sharerId);
+        if (existing != null) {
+            return existing;
+        }
+
+        Color color = sharedColors.computeIfAbsent(sharerId,
+                key -> createSharedColor(key, sharedColors.values()));
+        return color;
+    }
+
+    private Color createSharedColor(UUID sharerId, Collection<Color> existingColors) {
+        long mixed = sharerId.getMostSignificantBits() ^ Long.rotateLeft(sharerId.getLeastSignificantBits(), 32);
+        int hash = (int) (mixed ^ (mixed >>> 32));
+
+        float baseHue = (hash & 0xFFFF) / 65536.0f;
+        float saturation = 0.93f + (((hash >>> 16) & 0x07) / 100.0f);
+        float brightness = 0.97f + (((hash >>> 19) & 0x07) / 200.0f);
+
+        float hue = baseHue;
+        Color bestColor = null;
+        float bestDistance = -1.0f;
+
+        for (int attempt = 0; attempt < SHARED_COLOR_ATTEMPTS; attempt++) {
+            Color candidate = createSharedColor(hue, saturation, brightness);
+            float distance = minimumHueDistance(candidate, existingColors);
+            if (distance > bestDistance) {
+                bestDistance = distance;
+                bestColor = candidate;
+            }
+            if (existingColors.isEmpty() || distance >= SHARED_MIN_HUE_DISTANCE) {
+                return candidate;
+            }
+            hue = wrapHue(hue + SHARED_HUE_STEP);
+        }
+
+        return bestColor != null ? bestColor : createSharedColor(baseHue, saturation, brightness);
+    }
+
+    private Color createSharedColor(float hue, float saturation, float brightness) {
+        int rgb = java.awt.Color.HSBtoRGB(
+                wrapHue(hue),
+                Math.min(saturation, 1.0f),
+                Math.min(brightness, 1.0f));
+        return Color.fromARGB(SHARED_COLOR_ALPHA, (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+    }
+
+    private float minimumHueDistance(Color candidate, Collection<Color> existingColors) {
+        float candidateHue = hueOf(candidate);
+        float minimumDistance = Float.MAX_VALUE;
+
+        for (Color existing : existingColors) {
+            float distance = hueDistance(candidateHue, hueOf(existing));
+            if (distance < minimumDistance) {
+                minimumDistance = distance;
+            }
+        }
+
+        return minimumDistance == Float.MAX_VALUE ? 1.0f : minimumDistance;
+    }
+
+    private float hueOf(Color color) {
+        return java.awt.Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null)[0];
+    }
+
+    private float hueDistance(float first, float second) {
+        float distance = Math.abs(first - second);
+        return Math.min(distance, 1.0f - distance);
+    }
+
+    private float wrapHue(float hue) {
+        float wrapped = hue % 1.0f;
+        return wrapped < 0.0f ? wrapped + 1.0f : wrapped;
     }
 
     /** Clear all shared renderers for a specific viewer. */
@@ -423,6 +485,7 @@ public class RenderManager {
             playerRenderers.clear();
         });
         sharedRenderers.clear();
+        sharedColors.clear();
     }
 
     private RegionRenderer createRenderer(Player player, Region region) {
