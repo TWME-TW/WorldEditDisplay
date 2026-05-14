@@ -41,6 +41,25 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <filters>
+                <!--
+                  Spigot profile only shades adventure-api for the SERIALIZER interfaces
+                  (ComponentSerializer, FlattenerListener, etc.) that packetevents relocates
+                  away. The core adventure classes (Component, TextComponentImpl, etc.) are
+                  intentionally excluded so that both WED and packetevents use the SAME class
+                  loaded by packetevents' classloader, avoiding ClassCastException.
+                  Paper profile: adventure-api is "provided" so this filter has no effect.
+                -->
+                <filter>
+                  <artifact>net.kyori:adventure-api</artifact>
+                  <includes>
+                    <include>net/kyori/adventure/text/serializer/**</include>
+                    <include>net/kyori/adventure/text/flattener/**</include>
+                    <include>net/kyori/adventure/util/Buildable**</include>
+                    <include>net/kyori/adventure/builder/**</include>
+                  </includes>
+                </filter>
+              </filters>
               <relocations>
                 <relocation>
                   <pattern>dev.twme.textdisplayshape</pattern>
@@ -146,12 +165,17 @@
           <version>1.21.4-R0.1-SNAPSHOT</version>
           <scope>provided</scope>
         </dependency>
-        <!-- adventure-api is provided by Spigot 1.18+ server at runtime -->
+        <!-- Spigot's plugin classloader does NOT expose adventure-api to plugins;
+             shade all adventure deps to make the jar self-contained.
+             EXCEPTION: adventure-key, examination-api/string are shaded by packetevents
+             at their original package paths → setting "provided" prevents loading the
+             same interface from two PluginClassLoaders (which causes LinkageError).
+             They are available via packetevents' classloader at runtime. -->
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-api</artifactId>
           <version>4.17.0</version>
-          <scope>provided</scope>
+          <scope>compile</scope>
         </dependency>
         <dependency>
           <groupId>net.kyori</groupId>
