@@ -123,6 +123,7 @@ public class RenderManager {
             if (!sharers.contains(sharerId)) {
                 RegionRenderer r = viewerSharedRenderers.remove(sharerId);
                 if (r != null) r.clear();
+                releaseSharedColorIfUnused(sharerId);
                 return true;
             }
             return false;
@@ -229,6 +230,13 @@ public class RenderManager {
         return color;
     }
 
+    private void releaseSharedColorIfUnused(UUID sharerId) {
+        ShareManager shareManager = plugin.getShareManager();
+        if (shareManager == null) return;
+        if (!shareManager.getActiveViewers(sharerId).isEmpty()) return;
+        sharedColors.remove(sharerId);
+    }
+
     private Color createSharedColor(UUID sharerId, Collection<Color> existingColors) {
         long mixed = sharerId.getMostSignificantBits() ^ Long.rotateLeft(sharerId.getLeastSignificantBits(), 32);
         int hash = (int) (mixed ^ (mixed >>> 32));
@@ -297,17 +305,26 @@ public class RenderManager {
     public void clearSharedRenders(UUID viewerId) {
         Map<UUID, RegionRenderer> map = sharedRenderers.remove(viewerId);
         if (map != null) {
+            Set<UUID> sharerIds = Set.copyOf(map.keySet());
             map.values().forEach(RegionRenderer::clear);
             map.clear();
+            for (UUID sharerId : sharerIds) {
+                releaseSharedColorIfUnused(sharerId);
+            }
         }
     }
 
     /** Clear the shared renderer a specific viewer has for a specific sharer. */
     public void clearSharedRender(UUID viewerId, UUID sharerId) {
         Map<UUID, RegionRenderer> map = sharedRenderers.get(viewerId);
-        if (map == null) return;
-        RegionRenderer r = map.remove(sharerId);
-        if (r != null) r.clear();
+        if (map != null) {
+            RegionRenderer r = map.remove(sharerId);
+            if (r != null) r.clear();
+            if (map.isEmpty()) {
+                sharedRenderers.remove(viewerId);
+            }
+        }
+        releaseSharedColorIfUnused(sharerId);
     }
 
     private void updateMainSelection(Player player, UUID playerId, Region mainSelection) {
