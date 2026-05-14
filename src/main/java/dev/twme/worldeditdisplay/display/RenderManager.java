@@ -11,7 +11,6 @@ import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.SharedRenderSettings;
@@ -30,6 +29,8 @@ import dev.twme.worldeditdisplay.region.PolyhedronRegion;
 import dev.twme.worldeditdisplay.region.Region;
 import dev.twme.worldeditdisplay.share.ShareManager;
 import dev.twme.worldeditdisplay.util.MessageUtil;
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
+import io.github.retrooper.packetevents.util.folia.TaskWrapper;
 
 /**
  * keeps track of player renderers
@@ -52,7 +53,7 @@ public class RenderManager {
     private static final float SHARED_HUE_STEP = 0.61803398875f;
     private static final int SHARED_COLOR_ATTEMPTS = 12;
 
-    private BukkitTask rebaseTask;
+    private TaskWrapper rebaseTask;
 
     public RenderManager(WorldEditDisplay plugin) {
         this.plugin = plugin;
@@ -573,7 +574,7 @@ public class RenderManager {
      * Runs every 10 ticks (0.5 seconds).
      */
     private void startRebaseTask() {
-        rebaseTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        rebaseTask = FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, ignored -> {
             for (RegionRenderer renderer : mainRenderers.values()) {
                 try {
                     renderer.rebaseOriginIfNeeded();
@@ -599,7 +600,7 @@ public class RenderManager {
                     }
                 }
             }
-        }, 10L, 10L);
+        }, 10L, 10L); // initial delay 10 ticks, period 10 ticks
     }
 
     public void refreshPlayerRenderer(Player player) {

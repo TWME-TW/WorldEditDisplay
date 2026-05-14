@@ -1,9 +1,5 @@
 package dev.twme.worldeditdisplay.lang;
 
-import dev.twme.worldeditdisplay.WorldEditDisplay;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +9,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
+
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+
+import dev.twme.worldeditdisplay.WorldEditDisplay;
 
 /**
  * Manages multi-language support.
@@ -138,7 +139,7 @@ public class LanguageManager {
      */
     private String getClientLanguage(Player player) {
         try {
-            String clientLocale = player.locale().toString();
+            String clientLocale = player.getLocale();
             clientLocale = clientLocale.toLowerCase().replace("-", "_");
 
             // check if exact match exists

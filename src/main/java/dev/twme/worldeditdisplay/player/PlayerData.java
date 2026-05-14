@@ -4,14 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.event.CUIEventDispatcher;
 import dev.twme.worldeditdisplay.region.Region;
 import dev.twme.worldeditdisplay.region.RegionType;
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
+import io.github.retrooper.packetevents.util.folia.TaskWrapper;
 
 /**
  * Stores all per-player CUI / WorldEditDisplay state.
@@ -34,7 +34,7 @@ public class PlayerData {
     private UUID currentMultiRegionId; // tracks which multi-region the player is currently editing
 
     // Debounced render task
-    private BukkitTask pendingRenderTask;
+    private TaskWrapper pendingRenderTask;
 
     // Color settings
     private String primaryColor;
@@ -87,8 +87,8 @@ public class PlayerData {
         if (enabled && wasDisabled) {
             WorldEditDisplay plugin = WorldEditDisplay.getPlugin();
             if (plugin != null && plugin.getRenderManager() != null) {
-                Bukkit.getScheduler().runTask(plugin, () ->
-                        plugin.getRenderManager().clearRender(player.getUniqueId()));
+                FoliaScheduler.getEntityScheduler().run(player, plugin,
+                        ignored -> plugin.getRenderManager().clearRender(player.getUniqueId()), null);
             }
         }
     }
@@ -273,12 +273,13 @@ public class PlayerData {
         WorldEditDisplay plugin = WorldEditDisplay.getPlugin();
         if (plugin == null || plugin.getRenderManager() == null) return;
 
-        pendingRenderTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            synchronized (this) {
-                pendingRenderTask = null;
-            }
-            plugin.getRenderManager().updateRender(player);
-        }, 2L);
+        pendingRenderTask = FoliaScheduler.getEntityScheduler().runDelayed(player, plugin,
+                ignored -> {
+                    synchronized (this) {
+                        pendingRenderTask = null;
+                    }
+                    plugin.getRenderManager().updateRender(player);
+                }, null, 2L);
     }
 
     /**
