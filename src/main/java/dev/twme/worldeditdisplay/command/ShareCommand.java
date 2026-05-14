@@ -129,7 +129,7 @@ public class ShareCommand {
         // Immediately render the sharer's selection for this viewer
         if (sharer != null && sharer.isOnline()) {
             plugin.getRenderManager().clearSharedRenders(player.getUniqueId());
-            // Trigger a re-render by updating the sharer – their viewers get updated
+            // Trigger a re-render for the viewer so updateSharedSelections picks up the new sharer
             plugin.getRenderManager().updateRender(player);
         }
     }

@@ -62,7 +62,13 @@ public class PlayerSettingsCommand implements TabExecutor {
             case "lang", "language" -> handleLanguage(player, args);
             case "toggle" -> handleToggle(player);
             case "debug" -> handleDebug(player);
-            case "share" -> shareCommand.handle(player, args);
+            case "share" -> {
+                if (!player.hasPermission("worldeditdisplay.use.share")) {
+                    MessageUtil.sendTranslated(player, "general.no_permission");
+                } else {
+                    shareCommand.handle(player, args);
+                }
+            }
             default -> sendHelp(player);
         }
 

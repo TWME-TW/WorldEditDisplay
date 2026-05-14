@@ -133,10 +133,8 @@ public class RenderManager {
             return false;
         });
 
-        int slot = 0;
         for (UUID sharerId : sharers) {
-            renderSharedForViewer(viewer, viewerSharedRenderers, sharerId, slot);
-            slot++;
+            renderSharedForViewer(viewer, viewerSharedRenderers, sharerId, computeSharerSlot(sharerId), false);
         }
     }
 
@@ -159,13 +157,20 @@ public class RenderManager {
 
             Map<UUID, RegionRenderer> viewerSharedRenderers =
                     sharedRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
-            renderSharedForViewer(viewer, viewerSharedRenderers, sharer.getUniqueId(), slot);
+            renderSharedForViewer(viewer, viewerSharedRenderers, sharer.getUniqueId(), slot, true);
         }
     }
 
-    /** Render the sharer's main selection for the viewer, always (no dirty-check needed here). */
+    /**
+     * Render the sharer's main selection for the viewer.
+     *
+     * @param forceRender when {@code true} the region is rendered unconditionally (used when the
+     *                    sharer's own selection just changed); when {@code false} the render is
+     *                    skipped if the sharer's region is not dirty and a renderer already exists
+     *                    (used when the viewer's own selection changed – the sharer's data is stale).
+     */
     private void renderSharedForViewer(Player viewer, Map<UUID, RegionRenderer> viewerSharedRenderers,
-                                       UUID sharerId, int colorSlot) {
+                                       UUID sharerId, int colorSlot, boolean forceRender) {
         Player sharerPlayer = Bukkit.getPlayer(sharerId);
         if (sharerPlayer == null || !sharerPlayer.isOnline()) {
             RegionRenderer r = viewerSharedRenderers.remove(sharerId);
@@ -191,6 +196,11 @@ public class RenderManager {
             renderer.clear();
             viewerSharedRenderers.remove(sharerId);
             renderer = null;
+        }
+
+        // Skip rendering if the sharer's region hasn't changed and we already have a renderer
+        if (!forceRender && renderer != null && !sharerRegion.isDirty()) {
+            return;
         }
 
         Color color = SHARED_COLORS.get(colorSlot % SHARED_COLORS.size());
