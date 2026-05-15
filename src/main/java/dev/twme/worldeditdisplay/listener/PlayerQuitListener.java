@@ -21,22 +21,27 @@ public class PlayerQuitListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        java.util.UUID playerId = event.getPlayer().getUniqueId();
+
+        // Remove from viewall set
+        plugin.getViewAllPlayers().remove(playerId);
+
         // Clear any rendering data for the player
         if (plugin.getRenderManager() != null) {
-            plugin.getRenderManager().clearRender(event.getPlayer().getUniqueId());
+            plugin.getRenderManager().clearRender(playerId);
         }
 
         // Clean up share-related pending invites for this player
         if (plugin.getShareManager() != null) {
-            plugin.getShareManager().onPlayerQuit(event.getPlayer().getUniqueId());
+            plugin.getShareManager().onPlayerQuit(playerId);
         }
 
         // Remove player language record
         if (plugin.getLanguageManager() != null) {
-            plugin.getLanguageManager().removePlayerLanguage(event.getPlayer().getUniqueId());
+            plugin.getLanguageManager().removePlayerLanguage(playerId);
         }
 
         // Finally, remove player data
-        PlayerData.removePlayerData(event.getPlayer().getUniqueId());
+        PlayerData.removePlayerData(playerId);
     }
 }

@@ -1,5 +1,9 @@
 package dev.twme.worldeditdisplay;
 
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.github.retrooper.packetevents.PacketEvents;
@@ -30,6 +34,7 @@ public final class WorldEditDisplay extends JavaPlugin {
     private PlayerSettingsManager playerSettingsManager;
     private LanguageManager languageManager;
     private ShareManager shareManager;
+    private final Set<UUID> viewAllPlayers = ConcurrentHashMap.newKeySet();
 
     @Override
     public void onLoad() {
@@ -79,6 +84,16 @@ public final class WorldEditDisplay extends JavaPlugin {
         // Initialize share manager
         this.shareManager = new ShareManager(this);
 
+        // Schedule periodic share save and expiry purge
+        int saveIntervalTicks = getConfig().getInt("share.auto_save_interval", 5) * 20 * 60;
+        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
+            if (shareManager != null) shareManager.save();
+        }, saveIntervalTicks, saveIntervalTicks);
+        // Purge expired invites every 10 seconds
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            if (shareManager != null) shareManager.purgeAllExpiredRequests();
+        }, 200L, 200L);
+
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerLocaleChangeListener(this), this);
@@ -127,5 +142,9 @@ public final class WorldEditDisplay extends JavaPlugin {
 
     public ShareManager getShareManager() {
         return shareManager;
+    }
+
+    public Set<UUID> getViewAllPlayers() {
+        return viewAllPlayers;
     }
 }

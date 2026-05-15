@@ -38,6 +38,15 @@ public class PlayerJoinListener implements Listener {
         PlayerData playerData = PlayerData.getPlayerData(player);
         playerData.setRenderingEnabled(player.hasPermission("worldeditdisplay.render.auto-enable"));
 
+        // Initialize viewall/label session defaults from permission nodes
+        if (player.hasPermission("worldeditdisplay.use.view.defaultenable")) {
+            playerData.setViewAllEnabled(true);
+            plugin.getViewAllPlayers().add(player.getUniqueId());
+        }
+        if (player.hasPermission("worldeditdisplay.use.view.label.defaultenable")) {
+            playerData.setShowLabels(true);
+        }
+
         // Delay one second to allow CUI registration first
         FoliaScheduler.getEntityScheduler().execute(player, plugin, () -> {
             if (!player.isOnline()) return; // player left

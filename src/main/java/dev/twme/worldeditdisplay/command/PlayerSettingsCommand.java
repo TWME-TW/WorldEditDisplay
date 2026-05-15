@@ -25,10 +25,12 @@ public class PlayerSettingsCommand implements TabExecutor {
 
     private final WorldEditDisplay plugin;
     private final ShareCommand shareCommand;
+    private final ViewCommand viewCommand;
 
     public PlayerSettingsCommand(WorldEditDisplay plugin) {
         this.plugin = plugin;
         this.shareCommand = new ShareCommand(plugin);
+        this.viewCommand = new ViewCommand(plugin);
     }
 
     @Override
@@ -67,6 +69,15 @@ public class PlayerSettingsCommand implements TabExecutor {
                     MessageUtil.sendTranslated(player, "general.no_permission");
                 } else {
                     shareCommand.handle(player, args);
+                }
+            }
+            case "view" -> {
+                if (!player.hasPermission("worldeditdisplay.use.view")
+                        && !player.hasPermission("worldeditdisplay.use.view.list")
+                        && !player.hasPermission("worldeditdisplay.use.view.label")) {
+                    MessageUtil.sendTranslated(player, "general.no_permission");
+                } else {
+                    viewCommand.handle(player, args);
                 }
             }
             default -> sendHelp(player);
@@ -340,6 +351,10 @@ public class PlayerSettingsCommand implements TabExecutor {
         MessageUtil.sendTranslated(player, "command.wedisplay.help.toggle_desc");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.debug");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.debug_desc");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.share");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.share_desc");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.view");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.view_desc");
     }
 
     private boolean isValidRenderer(String renderer) {
@@ -371,7 +386,7 @@ public class PlayerSettingsCommand implements TabExecutor {
 
     // Tab Completion
     private static final List<String> SUB_COMMANDS = Arrays.asList(
-            "set", "reset", "show", "reloadplayer", "lang", "language", "toggle", "debug", "share");
+            "set", "reset", "show", "reloadplayer", "lang", "language", "toggle", "debug", "share", "view");
 
     // second argument options
     private static final List<String> RENDERERS = Arrays.asList(
@@ -405,6 +420,8 @@ public class PlayerSettingsCommand implements TabExecutor {
                         .collect(Collectors.toList());
             } else if (subCommand.equals("share")) {
                 return shareCommand.tabComplete((Player) sender, args);
+            } else if (subCommand.equals("view")) {
+                return viewCommand.tabComplete((Player) sender, args);
             }
 
         } else if (args.length == 3) {
@@ -418,6 +435,8 @@ public class PlayerSettingsCommand implements TabExecutor {
                         .collect(Collectors.toList());
             } else if (subCommand.equals("share")) {
                 return shareCommand.tabComplete((Player) sender, args);
+            } else if (subCommand.equals("view")) {
+                return viewCommand.tabComplete((Player) sender, args);
             }
 
         } else if (args.length == 4) {

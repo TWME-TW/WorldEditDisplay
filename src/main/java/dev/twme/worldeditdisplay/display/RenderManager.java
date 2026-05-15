@@ -110,16 +110,17 @@ public class RenderManager {
 
     /**
      * Renders the selections of all players that {@code viewer} is watching.
+     * Includes both active-share players and viewall-sourced players.
      */
     private void updateSharedSelections(Player viewer, UUID viewerId) {
         ShareManager shareManager = plugin.getShareManager();
         if (shareManager == null) return;
 
-        Set<UUID> sharers = shareManager.getActiveSharers(viewerId);
+        Set<UUID> sharers = resolveVisibleSharers(viewer, viewerId);
         Map<UUID, RegionRenderer> viewerSharedRenderers =
                 sharedRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
 
-        // Remove renderers for sharers no longer in the active list
+        // Remove renderers for sharers no longer in the visible list
         viewerSharedRenderers.keySet().removeIf(sharerId -> {
             if (!sharers.contains(sharerId)) {
                 RegionRenderer r = viewerSharedRenderers.remove(sharerId);
@@ -131,22 +132,100 @@ public class RenderManager {
         });
 
         for (UUID sharerId : sharers.stream().sorted().toList()) {
+            // Distance-based loading for viewall-sourced players (not for active shares)
+            if (!shareManager.isActiveShare(sharerId, viewerId)) {
+                if (!shouldRenderForViewAll(viewer, sharerId)) continue;
+            }
             Color sharedColor = getOrCreateSharedColor(sharerId);
             renderSharedForViewer(viewer, viewerSharedRenderers, sharerId, sharedColor, false);
         }
     }
 
     /**
-     * When {@code sharer}'s own selection changes, push updates to every active viewer.
+     * Returns the set of sharers whose selection should be rendered for {@code viewer}.
+     * Includes active-share sources always, plus viewall-sourced players when viewall is enabled.
+     */
+    private Set<UUID> resolveVisibleSharers(Player viewer, UUID viewerId) {
+        ShareManager shareManager = plugin.getShareManager();
+        Set<UUID> result = new java.util.HashSet<>(shareManager.getActiveSharers(viewerId));
+
+        PlayerData viewerData = PlayerData.getPlayerData(viewer);
+        if (viewerData != null && viewerData.isViewAllEnabled()
+                && viewer.hasPermission("worldeditdisplay.use.view")) {
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (online.equals(viewer)) continue;
+                if (viewerData.isViewAllHidden(online.getUniqueId())) continue;
+                result.add(online.getUniqueId());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Applies world + distance-based loading filter for viewall renders.
+     * Returns {@code true} if the viewer should see the sharer's selection.
+     *
+     * Logic:
+     *  1. sharer must be online in the same world.
+     *  2. Get the sharer's selection AABB.  If not available, fall back to player position.
+     *  3. If the viewer is INSIDE the AABB → always show.
+     *  4. Otherwise, compute the viewer's distance to the nearest surface of the AABB.
+     *     Show if that distance ≤ effectiveDist,
+     *     where effectiveDist = max(halfDiagonal × sizeMultiplier, minDistance).
+     */
+    private boolean shouldRenderForViewAll(Player viewer, UUID sharerId) {
+        if (!plugin.getConfig().getBoolean("viewall.distance-based-loading.enabled", true)) return true;
+
+        Player sharer = Bukkit.getPlayer(sharerId);
+        if (sharer == null || !sharer.isOnline()) return false;
+        if (!viewer.getWorld().equals(sharer.getWorld())) return false;
+
+        double minDist = plugin.getConfig().getDouble("viewall.distance-based-loading.min-distance", 64.0);
+        double multiplier = plugin.getConfig().getDouble("viewall.distance-based-loading.size-multiplier", 2.0);
+
+        // Try to get the selection bounding box
+        PlayerData sharerData = PlayerData.getPlayerData(sharer);
+        dev.twme.worldeditdisplay.region.BoundingBox box =
+                (sharerData != null && sharerData.getSelection() != null)
+                ? sharerData.getSelection().getBoundingBox()
+                : null;
+
+        if (box == null) {
+            // Fallback: treat sharer position as a point
+            return viewer.getLocation().distance(sharer.getLocation()) <= minDist;
+        }
+
+        dev.twme.worldeditdisplay.region.Vector3 vp =
+                dev.twme.worldeditdisplay.region.Vector3.from(viewer.getLocation());
+
+        // Inside the AABB → always visible
+        if (box.contains(vp)) return true;
+
+        // effectiveDist: at least minDist, but scales with selection size
+        double effectiveDist = Math.max(box.getHalfDiagonal() * multiplier, minDist);
+        return box.distanceTo(vp) <= effectiveDist;
+    }
+
+    /**
+     * When {@code sharer}'s own selection changes, push updates to every active viewer
+     * and to any viewall-enabled viewer who has not hidden this sharer.
      */
     private void notifyViewersOfSharer(Player sharer) {
         ShareManager shareManager = plugin.getShareManager();
         if (shareManager == null) return;
 
+        // Active share viewers
         Set<UUID> viewers = shareManager.getActiveViewers(sharer.getUniqueId());
-        if (viewers.isEmpty()) return;
 
-        for (UUID viewerId : viewers) {
+        // Viewall-enabled viewers (tracked in plugin)
+        Set<UUID> viewAllSet = plugin.getViewAllPlayers();
+
+        Set<UUID> combined = new java.util.HashSet<>(viewers);
+        combined.addAll(viewAllSet);
+
+        if (combined.isEmpty()) return;
+
+        for (UUID viewerId : combined) {
             Player viewer = Bukkit.getPlayer(viewerId);
             if (viewer == null || !viewer.isOnline()) continue;
 
@@ -326,6 +405,36 @@ public class RenderManager {
             }
         }
         releaseSharedColorIfUnused(sharerId);
+    }
+
+    /**
+     * Clear all viewall-only renders for a viewer (i.e. renderers that were added via viewall
+     * mode but NOT backed by an active share relationship).
+     */
+    public void clearViewAllRenders(UUID viewerId) {
+        ShareManager shareManager = plugin.getShareManager();
+        Map<UUID, RegionRenderer> map = sharedRenderers.get(viewerId);
+        if (map == null) return;
+
+        map.entrySet().removeIf(e -> {
+            UUID sharerId = e.getKey();
+            // Keep if there is an active share relationship
+            if (shareManager != null && shareManager.isActiveShare(sharerId, viewerId)) return false;
+            e.getValue().clear();
+            releaseSharedColorIfUnused(sharerId);
+            return true;
+        });
+
+        if (map.isEmpty()) sharedRenderers.remove(viewerId);
+    }
+
+    /**
+     * Clear a single viewall-sourced render. Only clears if NOT an active share.
+     */
+    public void clearViewAllRender(UUID viewerId, UUID sharerId) {
+        ShareManager shareManager = plugin.getShareManager();
+        if (shareManager != null && shareManager.isActiveShare(sharerId, viewerId)) return;
+        clearSharedRender(viewerId, sharerId);
     }
 
     private void updateMainSelection(Player player, UUID playerId, Region mainSelection) {

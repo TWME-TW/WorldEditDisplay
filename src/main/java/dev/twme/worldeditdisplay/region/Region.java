@@ -163,4 +163,13 @@ public abstract class Region {
      * Get a string representation of the region data
      */
     public abstract String getInfo();
+
+    /**
+     * Get the axis-aligned bounding box of this region.
+     * Returns {@code null} if the region is not fully defined.
+     * Non-cuboid shapes are approximated by their AABB.
+     */
+    public BoundingBox getBoundingBox() {
+        return null;
+    }
 }

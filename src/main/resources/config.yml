@@ -1,6 +1,22 @@
 # WorldEditDisplay Configuration File
 # Renderer Settings
 
+# Share Settings
+share:
+  # How long (in seconds) a pending share invitation stays valid before it expires
+  request_timeout: 30
+  # How many items to show per page in share list / view list
+  list_page_size: 8
+  # How often (in minutes) active shares are auto-saved to disk
+  auto_save_interval: 5
+
+# Viewall Distance-Based Loading Settings
+viewall:
+  distance-based-loading:
+    enabled: true                       # Whether to apply distance-based loading in viewall mode
+    min-distance: 256                   # Minimum load distance in blocks
+    size-multiplier: 1.5                # Selection diameter multiplier for dynamic load distance
+
 # Language Settings
 language:
   default: "en_us"                      # Default language (zh_tw, en_us, zh_cn)
