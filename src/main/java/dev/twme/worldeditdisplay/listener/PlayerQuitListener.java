@@ -36,6 +36,12 @@ public class PlayerQuitListener implements Listener {
             plugin.getShareManager().onPlayerQuit(playerId);
         }
 
+        // Save and unload player render settings asynchronously
+        if (plugin.getPlayerSettingsManager() != null) {
+            plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
+                () -> plugin.getPlayerSettingsManager().saveAndUnload(playerId));
+        }
+
         // Remove player language record
         if (plugin.getLanguageManager() != null) {
             plugin.getLanguageManager().removePlayerLanguage(playerId);

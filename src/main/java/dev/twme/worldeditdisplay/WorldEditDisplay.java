@@ -94,6 +94,11 @@ public final class WorldEditDisplay extends JavaPlugin {
             if (shareManager != null) shareManager.purgeAllExpiredRequests();
         }, 200L, 200L);
 
+        // Schedule periodic player settings save every 5 minutes (6000 ticks)
+        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
+            if (playerSettingsManager != null) playerSettingsManager.saveAllDirty();
+        }, 6000L, 6000L);
+
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerLocaleChangeListener(this), this);
@@ -110,6 +115,11 @@ public final class WorldEditDisplay extends JavaPlugin {
         // Save share data
         if (shareManager != null) {
             shareManager.save();
+        }
+
+        // Save any unsaved player render settings
+        if (playerSettingsManager != null) {
+            playerSettingsManager.saveAllDirty();
         }
 
         // Clean up all renders

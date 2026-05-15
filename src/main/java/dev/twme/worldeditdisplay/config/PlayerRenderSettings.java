@@ -19,6 +19,7 @@ public class PlayerRenderSettings {
     private final RenderSettings serverSettings;
     private final File configFile;
     private FileConfiguration config;
+    private volatile boolean dirty = false;
 
     // Cuboid
     private Boolean cuboidSeeThrough;
@@ -327,7 +328,7 @@ public class PlayerRenderSettings {
         if (value instanceof Number && !validateNumericValue(path, ((Number) value).doubleValue())) return false;
 
         config.set(path, value instanceof Color ? ColorUtil.toHexString((Color) value) : value);
-        save();
+        dirty = true;
         load();
         return true;
     }
@@ -353,13 +354,17 @@ public class PlayerRenderSettings {
         return true;
     }
 
-    public void reset(String path) { config.set(path, null); save(); load(); }
+    public void reset(String path) { config.set(path, null); dirty = true; load(); }
 
     public void resetAll() {
-        if (configFile.exists()) configFile.delete();
+        if (configFile != null && configFile.exists()) configFile.delete();
         config = new YamlConfiguration();
+        dirty = false;
         load();
     }
+
+    public boolean isDirty() { return dirty; }
+    public void markClean() { dirty = false; }
 
     // === Cuboid Getters ===
     public boolean isCuboidSeeThrough() { return cuboidSeeThrough != null ? cuboidSeeThrough : serverSettings.isCuboidSeeThrough(); }
