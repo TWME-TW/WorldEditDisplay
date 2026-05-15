@@ -222,6 +222,7 @@ public class RenderManager {
 
         Set<UUID> combined = new java.util.HashSet<>(viewers);
         combined.addAll(viewAllSet);
+        combined.remove(sharer.getUniqueId()); // 玩家不應透過 shared 渲染看到自己的選區
 
         if (combined.isEmpty()) return;
 

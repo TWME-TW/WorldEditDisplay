@@ -329,6 +329,7 @@ public class PlayerRenderSettings {
 
         config.set(path, value instanceof Color ? ColorUtil.toHexString((Color) value) : value);
         dirty = true;
+        save();
         load();
         return true;
     }
@@ -354,7 +355,7 @@ public class PlayerRenderSettings {
         return true;
     }
 
-    public void reset(String path) { config.set(path, null); dirty = true; load(); }
+    public void reset(String path) { config.set(path, null); dirty = true; save(); load(); }
 
     public void resetAll() {
         if (configFile != null && configFile.exists()) configFile.delete();

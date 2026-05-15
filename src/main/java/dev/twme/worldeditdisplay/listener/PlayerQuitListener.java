@@ -6,6 +6,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.player.PlayerData;
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 /**
  * Listens for players disconnecting.
@@ -38,8 +39,8 @@ public class PlayerQuitListener implements Listener {
 
         // Save and unload player render settings asynchronously
         if (plugin.getPlayerSettingsManager() != null) {
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
-                () -> plugin.getPlayerSettingsManager().saveAndUnload(playerId));
+            FoliaScheduler.getAsyncScheduler().runNow(plugin,
+                task -> plugin.getPlayerSettingsManager().saveAndUnload(playerId));
         }
 
         // Remove player language record
