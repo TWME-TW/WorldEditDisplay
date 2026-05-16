@@ -1,10 +1,11 @@
 package dev.twme.worldeditdisplay.listener;
 
-import dev.twme.worldeditdisplay.WorldEditDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLocaleChangeEvent;
+
+import dev.twme.worldeditdisplay.WorldEditDisplay;
 
 /**
  * Listens for players changing client language.
@@ -20,7 +21,7 @@ public class PlayerLocaleChangeListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerLocaleChange(PlayerLocaleChangeEvent event) {
-        String newLocale = event.locale().toString().toLowerCase().replace("-", "_");
+        String newLocale = event.getLocale().toLowerCase().replace("-", "_");
 
         // Update player language
         plugin.getLanguageManager().setPlayerLanguage(

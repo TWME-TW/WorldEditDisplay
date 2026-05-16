@@ -48,6 +48,30 @@ public class BoundingBox {
         return (long) (getWidth() * getHeight() * getLength());
     }
 
+    /** Half-length of the space diagonal: sqrt(w²+h²+l²) / 2 */
+    public double getHalfDiagonal() {
+        double w = getWidth(), h = getHeight(), l = getLength();
+        return Math.sqrt(w * w + h * h + l * l) / 2.0;
+    }
+
+    /** Returns true when the point lies inside (or on the surface of) this box. */
+    public boolean contains(Vector3 p) {
+        return p.getX() >= min.getX() && p.getX() <= max.getX()
+            && p.getY() >= min.getY() && p.getY() <= max.getY()
+            && p.getZ() >= min.getZ() && p.getZ() <= max.getZ();
+    }
+
+    /**
+     * Euclidean distance from point {@code p} to the nearest surface/edge/corner of this box.
+     * Returns 0 if the point is inside.
+     */
+    public double distanceTo(Vector3 p) {
+        double dx = Math.max(0, Math.max(min.getX() - p.getX(), p.getX() - max.getX()));
+        double dy = Math.max(0, Math.max(min.getY() - p.getY(), p.getY() - max.getY()));
+        double dz = Math.max(0, Math.max(min.getZ() - p.getZ(), p.getZ() - max.getZ()));
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
     @Override
     public String toString() {
         return String.format("BoundingBox{min=%s, max=%s}", min, max);

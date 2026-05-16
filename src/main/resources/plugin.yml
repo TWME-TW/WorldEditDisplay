@@ -2,6 +2,7 @@ name: WorldEditDisplay
 version: '${project.version}'
 main: dev.twme.worldeditdisplay.WorldEditDisplay
 api-version: '1.20'
+folia-supported: true
 authors: [ TWME-TW ]
 depend:
   - packetevents
@@ -30,7 +31,40 @@ permissions:
     description: Allow managing personal rendering settings
     default: true
   worldeditdisplay.use.share:
-    description: Allow sharing WorldEdit selections with other players
+    description: General share feature toggle (disabling this blocks all share sub-commands)
+    default: true
+  worldeditdisplay.use.share.invite:
+    description: Allow sending share invitations to other players
+    default: true
+  worldeditdisplay.use.share.accept:
+    description: Allow accepting share invitations from other players
+    default: true
+  worldeditdisplay.use.share.revoke:
+    description: Allow revoking share access you granted to another player
+    default: true
+  worldeditdisplay.use.share.unwatch:
+    description: Allow voluntarily stopping watching another player's selection
+    default: true
+  worldeditdisplay.use.share.list:
+    description: Allow listing current share relationships
+    default: true
+  worldeditdisplay.use.view:
+    description: Allow using /wedisplay view (viewall mode toggle)
+    default: op
+  worldeditdisplay.use.view.defaultenable:
+    description: Automatically enable viewall mode when player joins
+    default: op
+  worldeditdisplay.use.view.hide:
+    description: Allow using /wedisplay view hide/hideall/unhide
+    default: op
+  worldeditdisplay.use.view.list:
+    description: Allow using /wedisplay view list
+    default: true
+  worldeditdisplay.use.view.label:
+    description: Allow toggling name label display for watched selections
+    default: true
+  worldeditdisplay.use.view.label.defaultenable:
+    description: Automatically enable name label display when player joins
     default: true
   worldeditdisplay.reload:
     description: Allow reloading WorldEditDisplay configuration

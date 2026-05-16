@@ -34,6 +34,7 @@ public class CuboidRegion extends Region {
      * Get the bounding box for this cuboid.
      * Returns null if the points are not fully set
      */
+    @Override
     public BoundingBox getBoundingBox() {
         return isDefined() ? BoundingBox.of(point1, point2) : null;
     }

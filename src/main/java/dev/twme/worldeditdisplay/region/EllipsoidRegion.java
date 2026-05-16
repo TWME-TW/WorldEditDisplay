@@ -41,6 +41,18 @@ public class EllipsoidRegion extends Region {
     public Vector3 getRadii() { return radii; }
 
     @Override
+    public BoundingBox getBoundingBox() {
+        if (!isDefined()) return null;
+        Vector3 min = Vector3.at(center.getX() - radii.getX(),
+                                 center.getY() - radii.getY(),
+                                 center.getZ() - radii.getZ());
+        Vector3 max = Vector3.at(center.getX() + radii.getX(),
+                                 center.getY() + radii.getY(),
+                                 center.getZ() + radii.getZ());
+        return new BoundingBox(min, max);
+    }
+
+    @Override
     public boolean isDefined() {
         return center != null && radii != null;
     }

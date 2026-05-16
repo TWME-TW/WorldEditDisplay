@@ -48,6 +48,22 @@ public class PolygonRegion extends Region {
     public int getMaxY() { return maxY; }
 
     @Override
+    public BoundingBox getBoundingBox() {
+        if (!isDefined()) return null;
+        double minX = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
+        double maxX = -Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+        for (Vector2 p : points) {
+            if (p == null) continue;
+            minX = Math.min(minX, p.getX());
+            minZ = Math.min(minZ, p.getZ());
+            maxX = Math.max(maxX, p.getX());
+            maxZ = Math.max(maxZ, p.getZ());
+        }
+        if (minX == Double.MAX_VALUE) return null;
+        return new BoundingBox(Vector3.at(minX, minY, minZ), Vector3.at(maxX, maxY, maxZ));
+    }
+
+    @Override
     public boolean isDefined() {
         return !points.isEmpty() && points.stream().anyMatch(p -> p != null) && maxY >= minY;
     }

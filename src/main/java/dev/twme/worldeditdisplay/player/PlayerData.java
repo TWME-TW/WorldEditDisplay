@@ -1,17 +1,19 @@
 package dev.twme.worldeditdisplay.player;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.event.CUIEventDispatcher;
 import dev.twme.worldeditdisplay.region.Region;
 import dev.twme.worldeditdisplay.region.RegionType;
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
+import io.github.retrooper.packetevents.util.folia.TaskWrapper;
 
 /**
  * Stores all per-player CUI / WorldEditDisplay state.
@@ -34,7 +36,7 @@ public class PlayerData {
     private UUID currentMultiRegionId; // tracks which multi-region the player is currently editing
 
     // Debounced render task
-    private BukkitTask pendingRenderTask;
+    private TaskWrapper pendingRenderTask;
 
     // Color settings
     private String primaryColor;
@@ -43,6 +45,14 @@ public class PlayerData {
     private String backgroundColor;
     private boolean gridEnabled = true;
     private boolean backgroundEnabled = true;
+
+    // ─── Session state (not persisted, reset on each login) ─────────────────
+    /** Whether viewall mode is currently active for this player (requires use.view permission). */
+    private boolean viewAllEnabled = false;
+    /** Set of player UUIDs that are excluded from viewall rendering this session. */
+    private final Set<UUID> viewAllHidden = new HashSet<>();
+    /** Whether name-label display is enabled for watched selections this session. */
+    private boolean showLabels = false;
 
     public PlayerData(Player player) {
         this.player = player;
@@ -87,8 +97,8 @@ public class PlayerData {
         if (enabled && wasDisabled) {
             WorldEditDisplay plugin = WorldEditDisplay.getPlugin();
             if (plugin != null && plugin.getRenderManager() != null) {
-                Bukkit.getScheduler().runTask(plugin, () ->
-                        plugin.getRenderManager().clearRender(player.getUniqueId()));
+                FoliaScheduler.getEntityScheduler().run(player, plugin,
+                        ignored -> plugin.getRenderManager().clearRender(player.getUniqueId()), null);
             }
         }
     }
@@ -273,12 +283,13 @@ public class PlayerData {
         WorldEditDisplay plugin = WorldEditDisplay.getPlugin();
         if (plugin == null || plugin.getRenderManager() == null) return;
 
-        pendingRenderTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            synchronized (this) {
-                pendingRenderTask = null;
-            }
-            plugin.getRenderManager().updateRender(player);
-        }, 2L);
+        pendingRenderTask = FoliaScheduler.getEntityScheduler().runDelayed(player, plugin,
+                ignored -> {
+                    synchronized (this) {
+                        pendingRenderTask = null;
+                    }
+                    plugin.getRenderManager().updateRender(player);
+                }, null, 2L);
     }
 
     /**
@@ -290,4 +301,28 @@ public class PlayerData {
             pendingRenderTask = null;
         }
     }
+
+    // ─── Session state accessors ─────────────────────────────────────────────
+
+    public boolean isViewAllEnabled() { return viewAllEnabled; }
+    public void setViewAllEnabled(boolean enabled) { this.viewAllEnabled = enabled; }
+
+    public boolean isShowLabels() { return showLabels; }
+    public void setShowLabels(boolean showLabels) { this.showLabels = showLabels; }
+
+    public boolean isViewAllHidden(UUID targetId) { return viewAllHidden.contains(targetId); }
+
+    public void addViewAllHidden(UUID targetId) { viewAllHidden.add(targetId); }
+
+    public void removeViewAllHidden(UUID targetId) { viewAllHidden.remove(targetId); }
+
+    public void hideAllOnline() {
+        for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) {
+            if (!p.getUniqueId().equals(player.getUniqueId())) {
+                viewAllHidden.add(p.getUniqueId());
+            }
+        }
+    }
+
+    public Set<UUID> getViewAllHidden() { return java.util.Collections.unmodifiableSet(viewAllHidden); }
 }

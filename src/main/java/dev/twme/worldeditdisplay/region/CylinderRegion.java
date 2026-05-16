@@ -38,6 +38,14 @@ public class CylinderRegion extends Region {
     public int getMaxY() { return maxY; }
 
     @Override
+    public BoundingBox getBoundingBox() {
+        if (!isDefined()) return null;
+        Vector3 min = Vector3.at(center.getX() - radiusX, minY, center.getZ() - radiusZ);
+        Vector3 max = Vector3.at(center.getX() + radiusX, maxY, center.getZ() + radiusZ);
+        return new BoundingBox(min, max);
+    }
+
+    @Override
     public boolean isDefined() {
         return center != null && radiusX > 0 && radiusZ > 0 && maxY > minY;
     }

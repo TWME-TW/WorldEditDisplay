@@ -1,5 +1,10 @@
 package dev.twme.worldeditdisplay;
 
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.github.retrooper.packetevents.PacketEvents;
@@ -19,6 +24,7 @@ import dev.twme.worldeditdisplay.listener.PlayerQuitListener;
 import dev.twme.worldeditdisplay.share.ShareManager;
 import dev.twme.worldeditdisplay.util.MessageUtil;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 import me.tofaa.entitylib.APIConfig;
 import me.tofaa.entitylib.EntityLib;
 import me.tofaa.entitylib.spigot.SpigotEntityLibPlatform;
@@ -30,6 +36,7 @@ public final class WorldEditDisplay extends JavaPlugin {
     private PlayerSettingsManager playerSettingsManager;
     private LanguageManager languageManager;
     private ShareManager shareManager;
+    private final Set<UUID> viewAllPlayers = ConcurrentHashMap.newKeySet();
 
     @Override
     public void onLoad() {
@@ -53,7 +60,6 @@ public final class WorldEditDisplay extends JavaPlugin {
 
         SpigotEntityLibPlatform platform = new SpigotEntityLibPlatform(this);
         APIConfig settings = new APIConfig(PacketEvents.getAPI())
-                .tickTickables()
                 .usePlatformLogger();
         EntityLib.init(platform, settings);
 
@@ -80,6 +86,21 @@ public final class WorldEditDisplay extends JavaPlugin {
         // Initialize share manager
         this.shareManager = new ShareManager(this);
 
+        // Schedule periodic share save and expiry purge
+        int saveIntervalMinutes = Math.max(1, getConfig().getInt("share.auto_save_interval", 5));
+        FoliaScheduler.getAsyncScheduler().runAtFixedRate(this, task -> {
+            if (shareManager != null) shareManager.save();
+        }, saveIntervalMinutes, saveIntervalMinutes, TimeUnit.MINUTES);
+        // Purge expired invites every 10 seconds
+        FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(this, task -> {
+            if (shareManager != null) shareManager.purgeAllExpiredRequests();
+        }, 200L, 200L);
+
+        // Schedule periodic player settings save every 5 minutes
+        FoliaScheduler.getAsyncScheduler().runAtFixedRate(this, task -> {
+            if (playerSettingsManager != null) playerSettingsManager.saveAllDirty();
+        }, 5, 5, TimeUnit.MINUTES);
+
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerLocaleChangeListener(this), this);
@@ -96,6 +117,11 @@ public final class WorldEditDisplay extends JavaPlugin {
         // Save share data
         if (shareManager != null) {
             shareManager.save();
+        }
+
+        // Save any unsaved player render settings
+        if (playerSettingsManager != null) {
+            playerSettingsManager.saveAllDirty();
         }
 
         // Clean up all renders
@@ -128,5 +154,9 @@ public final class WorldEditDisplay extends JavaPlugin {
 
     public ShareManager getShareManager() {
         return shareManager;
+    }
+
+    public Set<UUID> getViewAllPlayers() {
+        return viewAllPlayers;
     }
 }

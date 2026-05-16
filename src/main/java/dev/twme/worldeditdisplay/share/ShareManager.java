@@ -12,9 +12,14 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
+
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
+import dev.twme.worldeditdisplay.util.MessageUtil;
 
 /**
  * Manages selection-sharing relationships between players.
@@ -23,17 +28,21 @@ import dev.twme.worldeditdisplay.WorldEditDisplay;
  *  1. Sharer calls sendRequest(sharer, target)  → target receives pending invite
  *  2. Target calls acceptShare(viewer, sharer)  → relationship becomes active
  *  3. Either side can dissolve:
- *       sharer calls removeShare(sharer, target)  → removes permission + active view
+ *       sharer calls revokeShare(sharer, target)  → removes permission + active view
  *       viewer calls stopViewing(viewer, sharer)  → removes only the view
  *
- * Persistence: saved to <dataFolder>/share_data.yml
+ * Persistence: saved to <dataFolder>/share_data.yml (activeShares only)
+ * pendingRequests are memory-only and cleared on restart.
  */
 public class ShareManager {
 
     private final WorldEditDisplay plugin;
 
-    /** sharer → set of viewers who have a pending (not yet accepted) invite */
-    private final Map<UUID, Set<UUID>> pendingRequests = new ConcurrentHashMap<>();
+    /**
+     * sharer → (viewer → invite-timestamp-ms)
+     * Memory-only; not persisted across restarts.
+     */
+    private final Map<UUID, Map<UUID, Long>> pendingRequests = new ConcurrentHashMap<>();
 
     /** sharer → set of viewers who are actively watching */
     private final Map<UUID, Set<UUID>> activeShares = new ConcurrentHashMap<>();
@@ -50,26 +59,36 @@ public class ShareManager {
 
     /**
      * Player {@code sharer} invites {@code target} to view their selection.
-     * If an active share already exists, does nothing.
-     *
-     * @return {@code true} if a new pending request was created
+     * Returns a {@link RequestResult} describing the outcome.
      */
-    public boolean sendRequest(UUID sharer, UUID target) {
-        if (sharer.equals(target)) return false;
-        if (isActiveShare(sharer, target)) return false;
+    public RequestResult sendRequest(UUID sharer, UUID target) {
+        if (sharer.equals(target)) return RequestResult.SELF;
+        if (isActiveShare(sharer, target)) return RequestResult.ALREADY_ACTIVE;
 
-        pendingRequests.computeIfAbsent(sharer, k -> ConcurrentHashMap.newKeySet()).add(target);
-        return true;
+        purgeExpiredRequests(sharer);
+        if (hasPendingRequest(sharer, target)) return RequestResult.ALREADY_PENDING;
+
+        pendingRequests.computeIfAbsent(sharer, k -> new ConcurrentHashMap<>())
+                .put(target, System.currentTimeMillis());
+        return RequestResult.SENT;
     }
 
     /**
      * Player {@code viewer} accepts the pending invite from {@code sharer}.
      *
-     * @return {@code true} if the invite existed and was accepted
+     * @return {@code true} if the invite existed, was not expired, and was accepted
      */
     public boolean acceptShare(UUID viewer, UUID sharer) {
-        Set<UUID> pending = pendingRequests.get(sharer);
-        if (pending == null || !pending.contains(viewer)) return false;
+        Map<UUID, Long> pending = pendingRequests.get(sharer);
+        if (pending == null || !pending.containsKey(viewer)) return false;
+
+        long ts = pending.get(viewer);
+        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
+        if (System.currentTimeMillis() - ts > timeoutSec * 1000L) {
+            pending.remove(viewer);
+            if (pending.isEmpty()) pendingRequests.remove(sharer);
+            return false;
+        }
 
         pending.remove(viewer);
         if (pending.isEmpty()) pendingRequests.remove(sharer);
@@ -84,10 +103,10 @@ public class ShareManager {
      *
      * @return {@code true} if any state was removed
      */
-    public boolean removeShare(UUID sharer, UUID target) {
+    public boolean revokeShare(UUID sharer, UUID target) {
         boolean changed = false;
-        Set<UUID> pending = pendingRequests.get(sharer);
-        if (pending != null && pending.remove(target)) {
+        Map<UUID, Long> pending = pendingRequests.get(sharer);
+        if (pending != null && pending.remove(target) != null) {
             if (pending.isEmpty()) pendingRequests.remove(sharer);
             changed = true;
         }
@@ -98,6 +117,12 @@ public class ShareManager {
         }
         if (changed) save();
         return changed;
+    }
+
+    /** @deprecated Use {@link #revokeShare(UUID, UUID)} instead. */
+    @Deprecated
+    public boolean removeShare(UUID sharer, UUID target) {
+        return revokeShare(sharer, target);
     }
 
     /**
@@ -121,15 +146,36 @@ public class ShareManager {
         return active != null && active.contains(viewer);
     }
 
-    /** Returns {@code true} if sharer sent a pending invite to target. */
+    /** Returns {@code true} if sharer sent a non-expired pending invite to target. */
     public boolean hasPendingRequest(UUID sharer, UUID target) {
-        Set<UUID> pending = pendingRequests.get(sharer);
-        return pending != null && pending.contains(target);
+        Map<UUID, Long> pending = pendingRequests.get(sharer);
+        if (pending == null || !pending.containsKey(target)) return false;
+        long ts = pending.get(target);
+        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
+        if (System.currentTimeMillis() - ts > timeoutSec * 1000L) {
+            pending.remove(target);
+            if (pending.isEmpty()) pendingRequests.remove(sharer);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns how many seconds remain before the pending invite from {@code sharer} to
+     * {@code target} expires, or -1 if no such invite exists / already expired.
+     */
+    public long getPendingRemainingSeconds(UUID sharer, UUID target) {
+        Map<UUID, Long> pending = pendingRequests.get(sharer);
+        if (pending == null || !pending.containsKey(target)) return -1;
+        long ts = pending.get(target);
+        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
+        long elapsed = (System.currentTimeMillis() - ts) / 1000;
+        long remaining = timeoutSec - elapsed;
+        return remaining > 0 ? remaining : -1;
     }
 
     /**
      * Returns the set of sharer UUIDs that {@code viewer} is actively watching.
-     * (i.e. those who have active shares with viewer as a viewer)
      */
     public Set<UUID> getActiveSharers(UUID viewer) {
         Set<UUID> result = new HashSet<>();
@@ -151,12 +197,15 @@ public class ShareManager {
     }
 
     /**
-     * Returns pending invite UUIDs (sharers who invited {@code target} but haven't been accepted).
+     * Returns sharer UUIDs who sent a pending (non-expired) invite to {@code target}.
      */
     public Set<UUID> getPendingInvitesFor(UUID target) {
         Set<UUID> result = new HashSet<>();
-        for (Map.Entry<UUID, Set<UUID>> entry : pendingRequests.entrySet()) {
-            if (entry.getValue().contains(target)) {
+        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
+        long now = System.currentTimeMillis();
+        for (Map.Entry<UUID, Map<UUID, Long>> entry : pendingRequests.entrySet()) {
+            Long ts = entry.getValue().get(target);
+            if (ts != null && now - ts <= timeoutSec * 1000L) {
                 result.add(entry.getKey());
             }
         }
@@ -164,25 +213,78 @@ public class ShareManager {
     }
 
     /**
-     * Returns the set of players that {@code sharer} has pending invites sent to.
+     * Returns the set of players that {@code sharer} has non-expired pending invites sent to.
      */
     public Set<UUID> getPendingSentBy(UUID sharer) {
-        Set<UUID> pending = pendingRequests.get(sharer);
+        purgeExpiredRequests(sharer);
+        Map<UUID, Long> pending = pendingRequests.get(sharer);
         if (pending == null) return Collections.emptySet();
-        return Collections.unmodifiableSet(pending);
+        return Collections.unmodifiableSet(pending.keySet());
     }
 
     /**
      * Called when a player quits: clears their pending incoming invites from other players
-     * but keeps active shares in memory (they reload on next login).
-     * Active shares are persisted so they survive restarts.
+     * and removes their own outgoing pending invites.
      */
     public void onPlayerQuit(UUID uuid) {
-        // Remove pending invites sent TO this player (they'll re-appear if sharer re-invites)
-        for (Set<UUID> pending : pendingRequests.values()) {
+        // Remove pending invites sent TO this player
+        for (Map<UUID, Long> pending : pendingRequests.values()) {
             pending.remove(uuid);
         }
         pendingRequests.entrySet().removeIf(e -> e.getValue().isEmpty());
+
+        // Remove this player's own outgoing pending invites
+        pendingRequests.remove(uuid);
+    }
+
+    /**
+     * Purge expired requests for a specific sharer.
+     * Expired entries are removed first (data-only), then notifications are dispatched via
+     * per-entity schedulers so they always run on the correct Folia/Paper thread.
+     */
+    public void purgeExpiredRequests(UUID sharer) {
+        Map<UUID, Long> pending = pendingRequests.get(sharer);
+        if (pending == null) return;
+        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
+        long now = System.currentTimeMillis();
+
+        List<UUID> expiredTargets = new ArrayList<>();
+        pending.entrySet().removeIf(e -> {
+            if (now - e.getValue() > timeoutSec * 1000L) {
+                expiredTargets.add(e.getKey());
+                return true;
+            }
+            return false;
+        });
+        if (pending.isEmpty()) pendingRequests.remove(sharer);
+
+        if (expiredTargets.isEmpty()) return;
+
+        String sharerName = getPlayerName(sharer);
+        for (UUID targetId : expiredTargets) {
+            String targetName = getPlayerName(targetId);
+            Player sharerPlayer = Bukkit.getPlayer(sharer);
+            if (sharerPlayer != null) {
+                FoliaScheduler.getEntityScheduler().run(sharerPlayer, plugin,
+                        ignored -> MessageUtil.sendTranslated(sharerPlayer,
+                                "command.wedisplay.share.invite_expired_sharer", targetName), null);
+            }
+            Player targetPlayer = Bukkit.getPlayer(targetId);
+            if (targetPlayer != null) {
+                FoliaScheduler.getEntityScheduler().run(targetPlayer, plugin,
+                        ignored -> MessageUtil.sendTranslated(targetPlayer,
+                                "command.wedisplay.share.invite_expired_target", sharerName), null);
+            }
+        }
+    }
+
+    /**
+     * Purge all expired pending requests across all sharers.
+     */
+    public void purgeAllExpiredRequests() {
+        for (UUID sharer : new HashSet<>(pendingRequests.keySet())) {
+            purgeExpiredRequests(sharer);
+        }
     }
 
     // ─── Persistence ─────────────────────────────────────────────────────────
@@ -221,5 +323,20 @@ public class ShareManager {
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Failed to load share_data.yml", e);
         }
+    }
+
+    private String getPlayerName(UUID uuid) {
+        Player online = Bukkit.getPlayer(uuid);
+        if (online != null) return online.getName();
+        @SuppressWarnings("deprecation")
+        org.bukkit.OfflinePlayer offline = Bukkit.getOfflinePlayer(uuid);
+        String name = offline.getName();
+        return name != null ? name : uuid.toString().substring(0, 8);
+    }
+
+    // ─── Result enum ─────────────────────────────────────────────────────────
+
+    public enum RequestResult {
+        SENT, SELF, ALREADY_ACTIVE, ALREADY_PENDING
     }
 }

@@ -19,6 +19,7 @@ public class PlayerRenderSettings {
     private final RenderSettings serverSettings;
     private final File configFile;
     private FileConfiguration config;
+    private volatile boolean dirty = false;
 
     // Cuboid
     private Boolean cuboidSeeThrough;
@@ -200,7 +201,7 @@ public class PlayerRenderSettings {
         polyhedronVertexThickness = null;
     }
 
-    public void save() {
+    public synchronized void save() {
         try {
             config.save(configFile);
         } catch (IOException ignored) {}
@@ -312,7 +313,7 @@ public class PlayerRenderSettings {
         return section.getBoolean(key);
     }
 
-    public boolean set(String path, Object value) {
+    public synchronized boolean set(String path, Object value) {
         if (value instanceof Color) value = ColorUtil.toHexString((Color) value);
         if (value instanceof String strVal) {
             if (strVal.startsWith("#")) {
@@ -327,6 +328,7 @@ public class PlayerRenderSettings {
         if (value instanceof Number && !validateNumericValue(path, ((Number) value).doubleValue())) return false;
 
         config.set(path, value instanceof Color ? ColorUtil.toHexString((Color) value) : value);
+        dirty = true;
         save();
         load();
         return true;
@@ -353,13 +355,17 @@ public class PlayerRenderSettings {
         return true;
     }
 
-    public void reset(String path) { config.set(path, null); save(); load(); }
+    public void reset(String path) { config.set(path, null); dirty = true; save(); load(); }
 
     public void resetAll() {
-        if (configFile.exists()) configFile.delete();
+        if (configFile != null && configFile.exists()) configFile.delete();
         config = new YamlConfiguration();
+        dirty = false;
         load();
     }
+
+    public synchronized boolean isDirty() { return dirty; }
+    public synchronized void markClean() { dirty = false; }
 
     // === Cuboid Getters ===
     public boolean isCuboidSeeThrough() { return cuboidSeeThrough != null ? cuboidSeeThrough : serverSettings.isCuboidSeeThrough(); }

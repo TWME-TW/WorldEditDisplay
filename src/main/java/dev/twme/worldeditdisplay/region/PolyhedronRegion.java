@@ -54,6 +54,20 @@ public class PolyhedronRegion extends Region {
     }
 
     @Override
+    public BoundingBox getBoundingBox() {
+        if (!isDefined()) return null;
+        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
+        double maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+        for (Vector3 v : vertices) {
+            if (v == null) continue;
+            minX = Math.min(minX, v.getX()); minY = Math.min(minY, v.getY()); minZ = Math.min(minZ, v.getZ());
+            maxX = Math.max(maxX, v.getX()); maxY = Math.max(maxY, v.getY()); maxZ = Math.max(maxZ, v.getZ());
+        }
+        if (minX == Double.MAX_VALUE) return null;
+        return new BoundingBox(Vector3.at(minX, minY, minZ), Vector3.at(maxX, maxY, maxZ));
+    }
+
+    @Override
     public boolean isDefined() {
         return !vertices.isEmpty() && !faces.isEmpty();
     }
