@@ -28,6 +28,7 @@ public class ReloadCommand implements CommandExecutor {
         try {
             plugin.getRenderSettings().reload();
             plugin.getLanguageManager().reload();
+            if (plugin.getShareManager() != null) plugin.getShareManager().reloadConfig();
             MessageUtil.sendTranslated(sender, "general.reload_success");
             return true;
             

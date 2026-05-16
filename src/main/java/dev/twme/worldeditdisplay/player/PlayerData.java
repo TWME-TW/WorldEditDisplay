@@ -1,5 +1,6 @@
 package dev.twme.worldeditdisplay.player;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -230,7 +231,7 @@ public class PlayerData {
      * Get all multi-selection regions
      */
     public Map<UUID, Region> getMultiRegions() {
-        return new HashMap<>(multiRegions);
+        return Collections.unmodifiableMap(new HashMap<>(multiRegions));
     }
 
     /**

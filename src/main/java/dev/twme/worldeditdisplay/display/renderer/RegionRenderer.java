@@ -40,6 +40,8 @@ public abstract class RegionRenderer<T extends Region> {
 
     // tracks where shapes were last spawned/rebased for distance checking
     private Location lastRebaseOrigin;
+    /** Cached origin for the current render pass; reset to null by clear(). */
+    private Location renderOrigin;
 
     private static final double REBASE_DISTANCE_SQUARED = 80.0 * 80.0;
 
@@ -66,6 +68,7 @@ public abstract class RegionRenderer<T extends Region> {
      * Remove all shapes and clear the pool
      */
     public void clear() {
+        renderOrigin = null;
         for (Shape shape : shapes) {
             try {
                 shape.remove();
@@ -86,12 +89,14 @@ public abstract class RegionRenderer<T extends Region> {
      * Yaw and pitch are zeroed to prevent player rotation from skewing shapes.
      */
     protected Location getOrigin() {
+        if (renderOrigin != null) return renderOrigin;
         Location loc = player.getLocation();
         loc.setYaw(0);
         loc.setPitch(0);
         if (lastRebaseOrigin == null) {
             lastRebaseOrigin = loc.clone();
         }
+        renderOrigin = loc;
         return loc;
     }
 

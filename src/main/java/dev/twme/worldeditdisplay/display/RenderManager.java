@@ -17,6 +17,7 @@ import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.util.Vector3f;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
+import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
 import dev.twme.worldeditdisplay.config.SharedRenderSettings;
 import dev.twme.worldeditdisplay.display.renderer.CuboidRenderer;
 import dev.twme.worldeditdisplay.display.renderer.CylinderRenderer;
@@ -58,7 +59,19 @@ public class RenderManager {
     private final Map<UUID, Map<UUID, WrapperEntity>> labelEntities;
     /** sharer → colour: stable shared-selection colour assignments across all viewers */
     private final Map<UUID, Color> sharedColors;
-    private final Map<Class<? extends Region>, Class<? extends RegionRenderer>> rendererTypes;
+    /**
+     * sharerId → last Adventure Component used for label text.
+     * Built from (sharer name + shared colour); reused across all viewers until the name changes.
+     */
+    private final Map<UUID, net.kyori.adventure.text.Component> labelComponentCache;
+    /** sharerId → last player name used to build labelComponentCache entry (invalidation key). */
+    private final Map<UUID, String> labelComponentNames;
+
+    @FunctionalInterface
+    private interface RendererFactory {
+        RegionRenderer create(Player player, PlayerRenderSettings settings);
+    }
+    private final Map<Class<? extends Region>, RendererFactory> rendererFactories;
 
     private static final int SHARED_COLOR_ALPHA = 230;
     private static final float SHARED_MIN_HUE_DISTANCE = 0.12f;
@@ -74,21 +87,23 @@ public class RenderManager {
         this.sharedRenderers = new ConcurrentHashMap<>();
         this.labelEntities = new ConcurrentHashMap<>();
         this.sharedColors = new ConcurrentHashMap<>();
-        this.rendererTypes = new HashMap<>();
+        this.labelComponentCache = new ConcurrentHashMap<>();
+        this.labelComponentNames = new ConcurrentHashMap<>();
+        this.rendererFactories = new HashMap<>();
 
-        registerRendererTypes();
+        registerRendererFactories();
         startRebaseTask();
         plugin.getLogger().info("RenderManager started");
     }
 
-    private void registerRendererTypes() {
-        rendererTypes.put(CuboidRegion.class, CuboidRenderer.class);
-        rendererTypes.put(PolygonRegion.class, PolygonRenderer.class);
-        rendererTypes.put(EllipsoidRegion.class, EllipsoidRenderer.class);
-        rendererTypes.put(CylinderRegion.class, CylinderRenderer.class);
-        rendererTypes.put(PolyhedronRegion.class, PolyhedronRenderer.class);
+    private void registerRendererFactories() {
+        rendererFactories.put(CuboidRegion.class,     (p, s) -> new CuboidRenderer(plugin, p, s));
+        rendererFactories.put(PolygonRegion.class,    (p, s) -> new PolygonRenderer(plugin, p, s));
+        rendererFactories.put(EllipsoidRegion.class,  (p, s) -> new EllipsoidRenderer(plugin, p, s));
+        rendererFactories.put(CylinderRegion.class,   (p, s) -> new CylinderRenderer(plugin, p, s));
+        rendererFactories.put(PolyhedronRegion.class, (p, s) -> new PolyhedronRenderer(plugin, p, s));
 
-        plugin.getLogger().info("renderer types registered: " + rendererTypes.size());
+        plugin.getLogger().info("renderer types registered: " + rendererFactories.size());
     }
 
     /**
@@ -134,20 +149,21 @@ public class RenderManager {
                 sharedRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
 
         // Remove renderers for sharers no longer in the visible list
-        viewerSharedRenderers.keySet().removeIf(sharerId -> {
-            if (!sharers.contains(sharerId)) {
-                RegionRenderer r = viewerSharedRenderers.remove(sharerId);
-                if (r != null) r.clear();
-                releaseSharedColorIfUnused(sharerId);
+        viewerSharedRenderers.entrySet().removeIf(e -> {
+            if (!sharers.contains(e.getKey())) {
+                e.getValue().clear();
+                releaseSharedColorIfUnused(e.getKey());
                 return true;
             }
             return false;
         });
 
-        for (UUID sharerId : sharers.stream().sorted().toList()) {
+        Vector3 viewerPos = null;
+        for (UUID sharerId : sharers) {
             // Distance-based loading for viewall-sourced players (not for active shares)
             if (!shareManager.isActiveShare(sharerId, viewerId)) {
-                if (!shouldRenderForViewAll(viewer, sharerId)) continue;
+                if (viewerPos == null) viewerPos = Vector3.from(viewer.getLocation());
+                if (!shouldRenderForViewAll(viewer, sharerId, viewerPos)) continue;
             }
             Color sharedColor = getOrCreateSharedColor(sharerId);
             renderSharedForViewer(viewer, viewerSharedRenderers, sharerId, sharedColor, false);
@@ -160,7 +176,8 @@ public class RenderManager {
      */
     private Set<UUID> resolveVisibleSharers(Player viewer, UUID viewerId) {
         ShareManager shareManager = plugin.getShareManager();
-        Set<UUID> result = new java.util.HashSet<>(shareManager.getActiveSharers(viewerId));
+        // getActiveSharers already returns a defensive copy – reuse it directly
+        Set<UUID> result = shareManager.getActiveSharers(viewerId);
 
         PlayerData viewerData = PlayerData.getPlayerData(viewer);
         if (viewerData != null && viewerData.isViewAllEnabled()
@@ -186,15 +203,16 @@ public class RenderManager {
      *     Show if that distance ≤ effectiveDist,
      *     where effectiveDist = max(halfDiagonal × sizeMultiplier, minDistance).
      */
-    private boolean shouldRenderForViewAll(Player viewer, UUID sharerId) {
-        if (!plugin.getConfig().getBoolean("viewall.distance-based-loading.enabled", true)) return true;
+    private boolean shouldRenderForViewAll(Player viewer, UUID sharerId, Vector3 viewerPos) {
+        dev.twme.worldeditdisplay.config.RenderSettings rs = plugin.getRenderSettings();
+        if (!rs.isViewAllDistanceBasedEnabled()) return true;
 
         Player sharer = Bukkit.getPlayer(sharerId);
         if (sharer == null || !sharer.isOnline()) return false;
         if (!viewer.getWorld().equals(sharer.getWorld())) return false;
 
-        double minDist = plugin.getConfig().getDouble("viewall.distance-based-loading.min-distance", 64.0);
-        double multiplier = plugin.getConfig().getDouble("viewall.distance-based-loading.size-multiplier", 2.0);
+        double minDist = rs.getViewAllMinDistance();
+        double multiplier = rs.getViewAllSizeMultiplier();
 
         // Try to get the selection bounding box
         PlayerData sharerData = PlayerData.getPlayerData(sharer);
@@ -208,15 +226,12 @@ public class RenderManager {
             return viewer.getLocation().distance(sharer.getLocation()) <= minDist;
         }
 
-        dev.twme.worldeditdisplay.region.Vector3 vp =
-                dev.twme.worldeditdisplay.region.Vector3.from(viewer.getLocation());
-
         // Inside the AABB → always visible
-        if (box.contains(vp)) return true;
+        if (box.contains(viewerPos)) return true;
 
         // effectiveDist: at least minDist, but scales with selection size
         double effectiveDist = Math.max(box.getHalfDiagonal() * multiplier, minDist);
-        return box.distanceTo(vp) <= effectiveDist;
+        return box.distanceTo(viewerPos) <= effectiveDist;
     }
 
     /**
@@ -296,14 +311,14 @@ public class RenderManager {
         // Skip rendering if the sharer's region hasn't changed and we already have a renderer
         if (!forceRender && renderer != null && !sharerRegion.isDirty()) {
             // Still refresh the label so toggling showLabels takes effect immediately
-            updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharerPlayer, sharerRegion);
+            updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharedColor, sharerPlayer, sharerRegion);
             return;
         }
 
         SharedRenderSettings sharedSettings = new SharedRenderSettings(plugin, sharedColor);
 
         // Always refresh the label (handles toggle on/off and position updates)
-        updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharerPlayer, sharerRegion);
+        updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharedColor, sharerPlayer, sharerRegion);
 
         if (renderer == null) {
             renderer = createRenderer(viewer, sharerRegion, sharedSettings);
@@ -325,14 +340,8 @@ public class RenderManager {
      * than the original fixed palette while remaining deterministic.
      */
     private Color getOrCreateSharedColor(UUID sharerId) {
-        Color existing = sharedColors.get(sharerId);
-        if (existing != null) {
-            return existing;
-        }
-
-        Color color = sharedColors.computeIfAbsent(sharerId,
+        return sharedColors.computeIfAbsent(sharerId,
                 key -> createSharedColor(key, sharedColors.values()));
-        return color;
     }
 
     private void releaseSharedColorIfUnused(UUID sharerId) {
@@ -340,6 +349,8 @@ public class RenderManager {
         if (shareManager == null) return;
         if (!shareManager.getActiveViewers(sharerId).isEmpty()) return;
         sharedColors.remove(sharerId);
+        labelComponentCache.remove(sharerId);
+        labelComponentNames.remove(sharerId);
     }
 
     private Color createSharedColor(UUID sharerId, Collection<Color> existingColors) {
@@ -413,7 +424,7 @@ public class RenderManager {
      * {@code viewer}.  If the viewer has {@code showLabels} disabled the label is removed.
      */
     private void updateSharedLabel(Player viewer, UUID viewerId, UUID sharerId,
-                                   Player sharerPlayer, Region sharerRegion) {
+                                   Color sharedColor, Player sharerPlayer, Region sharerRegion) {
         PlayerData viewerData = PlayerData.getPlayerData(viewer);
         if (viewerData == null || !viewerData.isShowLabels()) {
             clearSharedLabel(viewerId, sharerId);
@@ -430,18 +441,31 @@ public class RenderManager {
             labelLoc = sharerPlayer.getLocation();
         }
 
-        Color sharedColor = getOrCreateSharedColor(sharerId);
-        net.kyori.adventure.text.Component nameText = net.kyori.adventure.text.Component
-                .text(sharerPlayer.getName())
-                .color(net.kyori.adventure.text.format.TextColor.color(
-                        sharedColor.getRed(), sharedColor.getGreen(), sharedColor.getBlue()));
+        net.kyori.adventure.text.Component nameText;
+        boolean nameChanged;
+        String sharerName = sharerPlayer.getName();
+        // Re-use the cached component when the sharer's name hasn't changed.
+        // sharedColor is stable per-sharer, so name is the only invalidation key.
+        if (sharerName.equals(labelComponentNames.get(sharerId))
+                && (nameText = labelComponentCache.get(sharerId)) != null) {
+            nameChanged = false;
+        } else {
+            nameText = net.kyori.adventure.text.Component
+                    .text(sharerName)
+                    .color(net.kyori.adventure.text.format.TextColor.color(
+                            sharedColor.getRed(), sharedColor.getGreen(), sharedColor.getBlue()));
+            labelComponentNames.put(sharerId, sharerName);
+            labelComponentCache.put(sharerId, nameText);
+            nameChanged = true;
+        }
 
         Map<UUID, WrapperEntity> viewerLabels =
                 labelEntities.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
         WrapperEntity existingLabel = viewerLabels.get(sharerId);
 
         if (existingLabel != null) {
-            if (existingLabel.getEntityMeta() instanceof TextDisplayMeta meta) {
+            // Only send a metadata packet when the sharer's name was rebuilt this frame.
+            if (nameChanged && existingLabel.getEntityMeta() instanceof TextDisplayMeta meta) {
                 meta.setText(nameText);
             }
             existingLabel.teleport(SpigotConversionUtil.fromBukkitLocation(labelLoc));
@@ -498,6 +522,25 @@ public class RenderManager {
             }
         }
         clearSharedLabels(viewerId);
+    }
+
+    /**
+     * Called when a sharer goes offline. Removes their selection rendering from ALL viewers
+     * and releases associated colour / component cache state.
+     */
+    public void clearSharerRenders(UUID sharerId) {
+        for (Map.Entry<UUID, Map<UUID, RegionRenderer>> entry : sharedRenderers.entrySet()) {
+            UUID viewerId = entry.getKey();
+            Map<UUID, RegionRenderer> viewerMap = entry.getValue();
+            RegionRenderer renderer = viewerMap.remove(sharerId);
+            if (renderer != null) renderer.clear();
+            if (viewerMap.isEmpty()) sharedRenderers.remove(viewerId);
+            clearSharedLabel(viewerId, sharerId);
+        }
+        // The sharer is offline – release colour and component cache unconditionally.
+        sharedColors.remove(sharerId);
+        labelComponentCache.remove(sharerId);
+        labelComponentNames.remove(sharerId);
     }
 
     /** Clear the shared renderer a specific viewer has for a specific sharer. */
@@ -639,8 +682,11 @@ public class RenderManager {
             playerMultiRenderers.clear();
         }
 
-        // Also clear shared renderers this player holds (selections they were watching)
+        // Clear shared renderers this player holds (selections they were watching as a viewer)
         clearSharedRenders(playerId);
+
+        // Clear this player's own selection from all viewers who were watching it
+        clearSharerRenders(playerId);
     }
 
     /**
@@ -731,19 +777,16 @@ public class RenderManager {
     }
 
     private RegionRenderer createRenderer(Player player, Region region,
-                                           dev.twme.worldeditdisplay.config.PlayerRenderSettings settings) {
-        Class<? extends RegionRenderer> rendererClass = rendererTypes.get(region.getClass());
-        if (rendererClass == null) {
+                                           PlayerRenderSettings settings) {
+        RendererFactory factory = rendererFactories.get(region.getClass());
+        if (factory == null) {
             plugin.getLogger().warning("renderer not found: " + region.getClass().getSimpleName());
             return null;
         }
-
         try {
-            return rendererClass
-                    .getConstructor(WorldEditDisplay.class, Player.class, dev.twme.worldeditdisplay.config.PlayerRenderSettings.class)
-                    .newInstance(plugin, player, settings);
+            return factory.create(player, settings);
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "cannot create renderer: " + rendererClass.getSimpleName(), e);
+            plugin.getLogger().log(Level.SEVERE, "cannot create renderer: " + region.getClass().getSimpleName(), e);
             return null;
         }
     }

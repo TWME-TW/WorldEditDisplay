@@ -12,14 +12,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
-import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
-
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.util.MessageUtil;
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 /**
  * Manages selection-sharing relationships between players.
@@ -37,6 +36,7 @@ import dev.twme.worldeditdisplay.util.MessageUtil;
 public class ShareManager {
 
     private final WorldEditDisplay plugin;
+    private volatile int requestTimeoutSec;
 
     /**
      * sharer → (viewer → invite-timestamp-ms)
@@ -46,13 +46,21 @@ public class ShareManager {
 
     /** sharer → set of viewers who are actively watching */
     private final Map<UUID, Set<UUID>> activeShares = new ConcurrentHashMap<>();
+    /** viewer → set of sharers the viewer is actively watching (reverse index of activeShares) */
+    private final Map<UUID, Set<UUID>> viewerToSharers = new ConcurrentHashMap<>();
 
     private final File dataFile;
 
     public ShareManager(WorldEditDisplay plugin) {
         this.plugin = plugin;
         this.dataFile = new File(plugin.getDataFolder(), "share_data.yml");
+        this.requestTimeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
         load();
+    }
+
+    /** Refresh cached config values. Call after a /reload. */
+    public void reloadConfig() {
+        this.requestTimeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
     }
 
     // ─── Public API ──────────────────────────────────────────────────────────
@@ -83,8 +91,7 @@ public class ShareManager {
         if (pending == null || !pending.containsKey(viewer)) return false;
 
         long ts = pending.get(viewer);
-        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
-        if (System.currentTimeMillis() - ts > timeoutSec * 1000L) {
+        if (System.currentTimeMillis() - ts > requestTimeoutSec * 1000L) {
             pending.remove(viewer);
             if (pending.isEmpty()) pendingRequests.remove(sharer);
             return false;
@@ -94,6 +101,7 @@ public class ShareManager {
         if (pending.isEmpty()) pendingRequests.remove(sharer);
 
         activeShares.computeIfAbsent(sharer, k -> ConcurrentHashMap.newKeySet()).add(viewer);
+        viewerToSharers.computeIfAbsent(viewer, k -> ConcurrentHashMap.newKeySet()).add(sharer);
         save();
         return true;
     }
@@ -113,6 +121,11 @@ public class ShareManager {
         Set<UUID> active = activeShares.get(sharer);
         if (active != null && active.remove(target)) {
             if (active.isEmpty()) activeShares.remove(sharer);
+            Set<UUID> targetSharers = viewerToSharers.get(target);
+            if (targetSharers != null) {
+                targetSharers.remove(sharer);
+                if (targetSharers.isEmpty()) viewerToSharers.remove(target);
+            }
             changed = true;
         }
         if (changed) save();
@@ -136,6 +149,11 @@ public class ShareManager {
 
         active.remove(viewer);
         if (active.isEmpty()) activeShares.remove(sharer);
+        Set<UUID> viewerSharers = viewerToSharers.get(viewer);
+        if (viewerSharers != null) {
+            viewerSharers.remove(sharer);
+            if (viewerSharers.isEmpty()) viewerToSharers.remove(viewer);
+        }
         save();
         return true;
     }
@@ -151,8 +169,7 @@ public class ShareManager {
         Map<UUID, Long> pending = pendingRequests.get(sharer);
         if (pending == null || !pending.containsKey(target)) return false;
         long ts = pending.get(target);
-        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
-        if (System.currentTimeMillis() - ts > timeoutSec * 1000L) {
+        if (System.currentTimeMillis() - ts > requestTimeoutSec * 1000L) {
             pending.remove(target);
             if (pending.isEmpty()) pendingRequests.remove(sharer);
             return false;
@@ -168,9 +185,8 @@ public class ShareManager {
         Map<UUID, Long> pending = pendingRequests.get(sharer);
         if (pending == null || !pending.containsKey(target)) return -1;
         long ts = pending.get(target);
-        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
         long elapsed = (System.currentTimeMillis() - ts) / 1000;
-        long remaining = timeoutSec - elapsed;
+        long remaining = requestTimeoutSec - elapsed;
         return remaining > 0 ? remaining : -1;
     }
 
@@ -178,13 +194,9 @@ public class ShareManager {
      * Returns the set of sharer UUIDs that {@code viewer} is actively watching.
      */
     public Set<UUID> getActiveSharers(UUID viewer) {
-        Set<UUID> result = new HashSet<>();
-        for (Map.Entry<UUID, Set<UUID>> entry : activeShares.entrySet()) {
-            if (entry.getValue().contains(viewer)) {
-                result.add(entry.getKey());
-            }
-        }
-        return result;
+        Set<UUID> sharers = viewerToSharers.get(viewer);
+        if (sharers == null || sharers.isEmpty()) return new HashSet<>();
+        return new HashSet<>(sharers);
     }
 
     /**
@@ -201,11 +213,11 @@ public class ShareManager {
      */
     public Set<UUID> getPendingInvitesFor(UUID target) {
         Set<UUID> result = new HashSet<>();
-        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
+        long timeoutMs = requestTimeoutSec * 1000L;
         long now = System.currentTimeMillis();
         for (Map.Entry<UUID, Map<UUID, Long>> entry : pendingRequests.entrySet()) {
             Long ts = entry.getValue().get(target);
-            if (ts != null && now - ts <= timeoutSec * 1000L) {
+            if (ts != null && now - ts <= timeoutMs) {
                 result.add(entry.getKey());
             }
         }
@@ -245,12 +257,12 @@ public class ShareManager {
     public void purgeExpiredRequests(UUID sharer) {
         Map<UUID, Long> pending = pendingRequests.get(sharer);
         if (pending == null) return;
-        int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
+        long timeoutMs = requestTimeoutSec * 1000L;
         long now = System.currentTimeMillis();
 
         List<UUID> expiredTargets = new ArrayList<>();
         pending.entrySet().removeIf(e -> {
-            if (now - e.getValue() > timeoutSec * 1000L) {
+            if (now - e.getValue() > timeoutMs) {
                 expiredTargets.add(e.getKey());
                 return true;
             }
@@ -306,6 +318,7 @@ public class ShareManager {
 
     private void load() {
         activeShares.clear();
+        viewerToSharers.clear();
         if (!dataFile.exists()) return;
         try {
             YamlConfiguration yaml = YamlConfiguration.loadConfiguration(dataFile);
@@ -316,7 +329,11 @@ public class ShareManager {
                 List<String> viewerList = yaml.getStringList("shares." + sharerStr);
                 Set<UUID> viewers = ConcurrentHashMap.newKeySet();
                 for (String vStr : viewerList) {
-                    try { viewers.add(UUID.fromString(vStr)); } catch (IllegalArgumentException ignored) {}
+                    try {
+                        UUID viewerUUID = UUID.fromString(vStr);
+                        viewers.add(viewerUUID);
+                        viewerToSharers.computeIfAbsent(viewerUUID, k -> ConcurrentHashMap.newKeySet()).add(sharer);
+                    } catch (IllegalArgumentException ignored) {}
                 }
                 if (!viewers.isEmpty()) activeShares.put(sharer, viewers);
             }

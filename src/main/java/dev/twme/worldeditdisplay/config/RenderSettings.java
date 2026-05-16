@@ -11,6 +11,11 @@ public class RenderSettings {
     
     private final WorldEditDisplay plugin;
     
+    // === ViewAll 設定 ===
+    private boolean viewAllDistanceBasedEnabled;
+    private double viewAllMinDistance;
+    private double viewAllSizeMultiplier;
+
     // === 玩家設定限制 ===
     private boolean seeThroughAllowed;
     private double thicknessMin;
@@ -196,6 +201,10 @@ public class RenderSettings {
         polyhedronLineThickness = 0.03f;
         polyhedronVertexSize = 1.0f;
         polyhedronVertexThickness = 0.03f;
+
+        viewAllDistanceBasedEnabled = true;
+        viewAllMinDistance = 64.0;
+        viewAllSizeMultiplier = 2.0;
     }
     
     public void reload() {
@@ -209,9 +218,16 @@ public class RenderSettings {
             loadEllipsoidSettings(config.getConfigurationSection("renderer.ellipsoid"));
             loadPolygonSettings(config.getConfigurationSection("renderer.polygon"));
             loadPolyhedronSettings(config.getConfigurationSection("renderer.polyhedron"));
+            loadViewAllSettings(config);
         } catch (Exception e) {
             loadDefaults();
         }
+    }
+
+    private void loadViewAllSettings(FileConfiguration config) {
+        viewAllDistanceBasedEnabled = config.getBoolean("viewall.distance-based-loading.enabled", true);
+        viewAllMinDistance = config.getDouble("viewall.distance-based-loading.min-distance", 64.0);
+        viewAllSizeMultiplier = config.getDouble("viewall.distance-based-loading.size-multiplier", 2.0);
     }
     
     private void loadPlayerLimits(ConfigurationSection section) {
@@ -454,4 +470,9 @@ public class RenderSettings {
     public int getFillGeneratorsMin() { return fillGeneratorsMin; }
     public int getFillGeneratorsMax() { return fillGeneratorsMax; }
     public boolean isSeeThroughAllowed() { return seeThroughAllowed; }
+
+    // === ViewAll Getters ===
+    public boolean isViewAllDistanceBasedEnabled() { return viewAllDistanceBasedEnabled; }
+    public double getViewAllMinDistance() { return viewAllMinDistance; }
+    public double getViewAllSizeMultiplier() { return viewAllSizeMultiplier; }
 }
