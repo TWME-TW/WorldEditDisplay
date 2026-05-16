@@ -36,7 +36,7 @@ import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 public class ShareManager {
 
     private final WorldEditDisplay plugin;
-    private int requestTimeoutSec;
+    private volatile int requestTimeoutSec;
 
     /**
      * sharer → (viewer → invite-timestamp-ms)

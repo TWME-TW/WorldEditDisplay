@@ -446,8 +446,8 @@ public class RenderManager {
         String sharerName = sharerPlayer.getName();
         // Re-use the cached component when the sharer's name hasn't changed.
         // sharedColor is stable per-sharer, so name is the only invalidation key.
-        if (sharerName.equals(labelComponentNames.get(sharerId))) {
-            nameText = labelComponentCache.get(sharerId);
+        if (sharerName.equals(labelComponentNames.get(sharerId))
+                && (nameText = labelComponentCache.get(sharerId)) != null) {
             nameChanged = false;
         } else {
             nameText = net.kyori.adventure.text.Component
@@ -531,8 +531,10 @@ public class RenderManager {
     public void clearSharerRenders(UUID sharerId) {
         for (Map.Entry<UUID, Map<UUID, RegionRenderer>> entry : sharedRenderers.entrySet()) {
             UUID viewerId = entry.getKey();
-            RegionRenderer renderer = entry.getValue().remove(sharerId);
+            Map<UUID, RegionRenderer> viewerMap = entry.getValue();
+            RegionRenderer renderer = viewerMap.remove(sharerId);
             if (renderer != null) renderer.clear();
+            if (viewerMap.isEmpty()) sharedRenderers.remove(viewerId);
             clearSharedLabel(viewerId, sharerId);
         }
         // The sharer is offline – release colour and component cache unconditionally.

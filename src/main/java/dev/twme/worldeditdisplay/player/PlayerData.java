@@ -231,7 +231,7 @@ public class PlayerData {
      * Get all multi-selection regions
      */
     public Map<UUID, Region> getMultiRegions() {
-        return Collections.unmodifiableMap(multiRegions);
+        return Collections.unmodifiableMap(new HashMap<>(multiRegions));
     }
 
     /**
