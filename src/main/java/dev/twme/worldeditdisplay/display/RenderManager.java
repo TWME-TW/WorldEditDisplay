@@ -524,6 +524,23 @@ public class RenderManager {
         clearSharedLabels(viewerId);
     }
 
+    /**
+     * Called when a sharer goes offline. Removes their selection rendering from ALL viewers
+     * and releases associated colour / component cache state.
+     */
+    public void clearSharerRenders(UUID sharerId) {
+        for (Map.Entry<UUID, Map<UUID, RegionRenderer>> entry : sharedRenderers.entrySet()) {
+            UUID viewerId = entry.getKey();
+            RegionRenderer renderer = entry.getValue().remove(sharerId);
+            if (renderer != null) renderer.clear();
+            clearSharedLabel(viewerId, sharerId);
+        }
+        // The sharer is offline – release colour and component cache unconditionally.
+        sharedColors.remove(sharerId);
+        labelComponentCache.remove(sharerId);
+        labelComponentNames.remove(sharerId);
+    }
+
     /** Clear the shared renderer a specific viewer has for a specific sharer. */
     public void clearSharedRender(UUID viewerId, UUID sharerId) {
         Map<UUID, RegionRenderer> map = sharedRenderers.get(viewerId);
@@ -663,8 +680,11 @@ public class RenderManager {
             playerMultiRenderers.clear();
         }
 
-        // Also clear shared renderers this player holds (selections they were watching)
+        // Clear shared renderers this player holds (selections they were watching as a viewer)
         clearSharedRenders(playerId);
+
+        // Clear this player's own selection from all viewers who were watching it
+        clearSharerRenders(playerId);
     }
 
     /**
