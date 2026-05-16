@@ -51,16 +51,27 @@ Players can customize their own rendering preferences:
 - Control grid spacing and density
 - Changes apply immediately
 
+**Selection Sharing**
+- Share your WorldEdit selection with other players in real-time
+- Invite, accept, revoke, and unwatch shares via `/wedisplay share`
+- Each shared selection is displayed in a unique auto-generated color
+- Share relationships persist across server restarts
+
+**View All Mode** *(op-only by default)*
+- Toggle monitoring of all online players' selections via `/wedisplay view`
+- Hide specific players from your view, toggle name labels, and list monitored players
+
 **Configuration System**
 - Server-wide defaults in `config.yml`
 - Per-player overrides in `player_config/*.yml`
 - Hot reload without server restart
+
 ### Requirements
 
-- Minecraft 1.20 ~ 1.21.x (Paper)
+- Minecraft 1.20 ~ 1.21.x (Paper / Folia / Spigot)
 - Java 21 or higher
 - Required plugins:
-  - [PacketEvents](https://github.com/retrooper/packetevents) 2.10.1+
+  - [PacketEvents](https://github.com/retrooper/packetevents) 2.11.1+
 
 ### Installation
 
@@ -102,13 +113,48 @@ Players can customize their own rendering preferences:
 - Example: `/wedisplay lang en_us`
 - Supported: zh_tw, en_us
 
+`/wedisplay share invite <player>` - Invite a player to view your selection
+- Permission: `worldeditdisplay.use.share.invite`
+
+`/wedisplay share accept <player>` - Accept a pending share invitation
+- Permission: `worldeditdisplay.use.share.accept`
+
+`/wedisplay share revoke <player>` - Revoke a share you previously granted
+- Permission: `worldeditdisplay.use.share.revoke`
+
+`/wedisplay share unwatch <player>` - Stop watching another player's selection
+- Permission: `worldeditdisplay.use.share.unwatch`
+
+`/wedisplay share list [page]` - List current share relationships
+- Permission: `worldeditdisplay.use.share.list`
+
+**View All Sub-commands** *(op-only by default)*
+
+`/wedisplay view` - Toggle view-all mode (see all online players' selections)
+- Permission: `worldeditdisplay.use.view`
+
+`/wedisplay view hide <player>` - Exclude a player from your view-all mode
+- Permission: `worldeditdisplay.use.view.hide`
+
+`/wedisplay view hideall` - Exclude all online players from view-all mode
+- Permission: `worldeditdisplay.use.view.hide`
+
+`/wedisplay view unhide <player>` - Remove exclusion for a player
+- Permission: `worldeditdisplay.use.view.hide`
+
+`/wedisplay view label` - Toggle name label display for watched selections
+- Permission: `worldeditdisplay.use.view.label`
+
+`/wedisplay view list [page]` - Show view-all monitoring status
+- Permission: `worldeditdisplay.use.view.list`
+
 ### Configuration
 
 The main configuration file is `config.yml`:
 
 ```yaml
 language:
-  default: "zh_tw"              # Default language
+  default: "en-us"              # Default language
   auto_detect: true             # Auto-detect player's client language
   allow_player_change: true     # Allow players to change language manually
 
@@ -163,10 +209,22 @@ The plugin uses Minecraft's Display Entity system:
 ### Permissions
 
 ```yaml
-worldeditdisplay.use:              # Use visualization features (default: true)
-worldeditdisplay.use.settings:     # Manage personal settings (default: true)
-worldeditdisplay.reload:           # Reload configuration (default: op)
-worldeditdisplay.render.auto-enable: # Automatically enable rendering on join (default: true)
+worldeditdisplay.use:                    # Use visualization features (default: true)
+worldeditdisplay.use.settings:           # Manage personal rendering settings (default: true)
+worldeditdisplay.use.share:              # General share feature toggle (default: true)
+worldeditdisplay.use.share.invite:       # Send share invitations (default: true)
+worldeditdisplay.use.share.accept:       # Accept share invitations (default: true)
+worldeditdisplay.use.share.revoke:       # Revoke granted shares (default: true)
+worldeditdisplay.use.share.unwatch:      # Stop watching a shared selection (default: true)
+worldeditdisplay.use.share.list:         # List share relationships (default: true)
+worldeditdisplay.use.view:               # Toggle view-all mode (default: op)
+worldeditdisplay.use.view.defaultenable: # Auto-enable view-all on join (default: op)
+worldeditdisplay.use.view.hide:          # Hide players from view-all (default: op)
+worldeditdisplay.use.view.list:          # List view-all monitoring status (default: true)
+worldeditdisplay.use.view.label:         # Toggle name label display (default: true)
+worldeditdisplay.use.view.label.defaultenable: # Auto-enable labels on join (default: true)
+worldeditdisplay.reload:                 # Reload configuration (default: op)
+worldeditdisplay.render.auto-enable:     # Automatically enable rendering on join (default: true)
 ```
 
 **About Auto-Enable Permission**
@@ -215,7 +273,7 @@ To build the plugin from source:
 mvn clean package
 ```
 
-The compiled jar will be in `target/WorldEditDisplay-1.0.5.jar`
+The compiled jar will be in `target/WorldEditDisplay-version-platform.jar`
 
 **Project Structure**
 ```
@@ -288,6 +346,16 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 - 控制網格間距和密度
 - 變更後立即生效
 
+**選區分享**
+- 即時與其他玩家分享你的 WorldEdit 選區
+- 透過 `/wedisplay share` 進行邀請、接受、撤銷及停止觀看等操作
+- 每個共享選區會自動分配一個獨特的顯示顏色
+- 分享關係在伺服器重啟後仍會保持
+
+**全覽模式** *（預設僅 op）*
+- 透過 `/wedisplay view` 切換監看所有線上玩家選區的模式
+- 可隱藏特定玩家的選區、切換名稱標籤，以及查看監看清單
+
 **配置系統**
 - 伺服器預設值設定在 `config.yml`
 - 玩家個人覆寫設定在 `player_config/*.yml`
@@ -295,10 +363,10 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 
 ### 需求
 
-- Minecraft 1.20 ~ 1.21.x（Paper）
+- Minecraft 1.20 ~ 1.21.x（Paper / Folia / Spigot）
 - Java 21 或更高版本
 - 必要插件：
-  - [PacketEvents](https://github.com/retrooper/packetevents) 2.10.1+
+  - [PacketEvents](https://github.com/retrooper/packetevents) 2.11.1+
 
 ### 安裝
 
@@ -339,6 +407,41 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 `/wedisplay lang <language>` - 設定介面語言
 - 範例：`/wedisplay lang en_us`
 - 可用語言：zh_tw, en_us
+
+`/wedisplay share invite <player>` - 邀請玩家觀看你的選區
+- 權限：`worldeditdisplay.use.share.invite`
+
+`/wedisplay share accept <player>` - 接受待處理的分享邀請
+- 權限：`worldeditdisplay.use.share.accept`
+
+`/wedisplay share revoke <player>` - 撤銷你已授予的分享
+- 權限：`worldeditdisplay.use.share.revoke`
+
+`/wedisplay share unwatch <player>` - 停止觀看另一位玩家的選區
+- 權限：`worldeditdisplay.use.share.unwatch`
+
+`/wedisplay share list [page]` - 列出目前的分享關係
+- 權限：`worldeditdisplay.use.share.list`
+
+**全覽子指令** *（預設僅 op）*
+
+`/wedisplay view` - 切換全覽模式（查看所有線上玩家的選區）
+- 權限：`worldeditdisplay.use.view`
+
+`/wedisplay view hide <player>` - 從全覽模式中排除特定玩家
+- 權限：`worldeditdisplay.use.view.hide`
+
+`/wedisplay view hideall` - 從全覽模式中排除所有線上玩家
+- 權限：`worldeditdisplay.use.view.hide`
+
+`/wedisplay view unhide <player>` - 移除玩家的排除設定
+- 權限：`worldeditdisplay.use.view.hide`
+
+`/wedisplay view label` - 切換被觀看選區的名稱標籤顯示
+- 權限：`worldeditdisplay.use.view.label`
+
+`/wedisplay view list [page]` - 顯示全覽監看狀態
+- 權限：`worldeditdisplay.use.view.list`
 
 ### 配置
 
@@ -401,10 +504,22 @@ player_limits:
 ### 權限
 
 ```yaml
-worldeditdisplay.use:              # 使用視覺化功能（預設：true）
-worldeditdisplay.use.settings:     # 管理個人設定（預設：true）
-worldeditdisplay.reload:           # 重新載入配置（預設：op）
-worldeditdisplay.render.auto-enable: # 登入時自動啟用渲染（預設：true）
+worldeditdisplay.use:                    # 使用視覺化功能（預設：true）
+worldeditdisplay.use.settings:           # 管理個人渲染設定（預設：true）
+worldeditdisplay.use.share:              # 分享功能總開關（預設：true）
+worldeditdisplay.use.share.invite:       # 發送分享邀請（預設：true）
+worldeditdisplay.use.share.accept:       # 接受分享邀請（預設：true）
+worldeditdisplay.use.share.revoke:       # 撤銷已授予的分享（預設：true）
+worldeditdisplay.use.share.unwatch:      # 停止觀看共享選區（預設：true）
+worldeditdisplay.use.share.list:         # 列出分享關係（預設：true）
+worldeditdisplay.use.view:               # 切換全覽模式（預設：op）
+worldeditdisplay.use.view.defaultenable: # 登入時自動啟用全覽模式（預設：op）
+worldeditdisplay.use.view.hide:          # 從全覽模式隱藏玩家（預設：op）
+worldeditdisplay.use.view.list:          # 列出全覽監看狀態（預設：true）
+worldeditdisplay.use.view.label:         # 切換名稱標籤顯示（預設：true）
+worldeditdisplay.use.view.label.defaultenable: # 登入時自動啟用名稱標籤（預設：true）
+worldeditdisplay.reload:                 # 重新載入配置（預設：op）
+worldeditdisplay.render.auto-enable:     # 登入時自動啟用渲染（預設：true）
 ```
 
 **關於自動啟用權限**
@@ -453,7 +568,7 @@ worldeditdisplay.render.auto-enable: # 登入時自動啟用渲染（預設：tr
 mvn clean package
 ```
 
-編譯後的 jar 檔會在 `target/WorldEditDisplay-1.0.5.jar`
+編譯後的 jar 檔會在 `target/WorldEditDisplay-version-platform.jar`
 
 **專案結構**
 ```
