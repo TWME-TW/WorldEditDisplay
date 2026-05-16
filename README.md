@@ -176,15 +176,15 @@ player_limits:
 
 Each renderer type has its own configuration section:
 - **cuboid**
-<img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/954498b1-cbe6-4475-8ff7-2bd49c3e6fd2" />
+<img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/5d72f189305f54de130e3cd1918a82f06dbbee53.png" />
 - **polygon**
-<img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/77465ba8-ebbb-458d-9ad4-d4375fb24a43" />
+<img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/1f5ff5afe4a2ec302268a2d5ac65e80fadd02c8e.png" />
 - **ellipsoid**
-<img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/79f27921-64eb-4839-a648-e9168c4ef43d" />
+<img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/2641d5fc53d19b7bbeb8e3ac82266648c60c1bc2.png" />
 - **cylinder**
-<img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/d864832e-ade1-4851-818c-c140377c2fc5" />
+<img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/8dad5d894ce5b09282311ea3fd61227c8603672b.png" />
 - **polyhedron**
-<img width="2879" height="1750" alt="image" src="https://github.com/user-attachments/assets/33d98e90-d8e6-4f7d-8c24-ee2531cb473d" />
+<img width="2879" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/b902289ee7020086b93f6591fd3f8f30d29bf156.png" />
 
 ### How It Works
 
@@ -471,15 +471,15 @@ player_limits:
 
 每種渲染器類型都有自己的配置區段：
 - **cuboid**
-<img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/954498b1-cbe6-4475-8ff7-2bd49c3e6fd2" />
+<img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/5d72f189305f54de130e3cd1918a82f06dbbee53.png" />
 - **polygon**
-<img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/77465ba8-ebbb-458d-9ad4-d4375fb24a43" />
+<img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/1f5ff5afe4a2ec302268a2d5ac65e80fadd02c8e.png" />
 - **ellipsoid**
-<img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/79f27921-64eb-4839-a648-e9168c4ef43d" />
+<img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/2641d5fc53d19b7bbeb8e3ac82266648c60c1bc2.png" />
 - **cylinder**
-<img width="2880" height="1750" alt="image" src="https://github.com/user-attachments/assets/d864832e-ade1-4851-818c-c140377c2fc5" />
+<img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/8dad5d894ce5b09282311ea3fd61227c8603672b.png" />
 - **polyhedron**
-<img width="2879" height="1750" alt="image" src="https://github.com/user-attachments/assets/33d98e90-d8e6-4f7d-8c24-ee2531cb473d" />
+<img width="2879" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/b902289ee7020086b93f6591fd3f8f30d29bf156.png" />
 
 ### 運作原理
 
