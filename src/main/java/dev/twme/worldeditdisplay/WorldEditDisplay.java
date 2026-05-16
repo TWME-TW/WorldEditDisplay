@@ -87,7 +87,7 @@ public final class WorldEditDisplay extends JavaPlugin {
         this.shareManager = new ShareManager(this);
 
         // Schedule periodic share save and expiry purge
-        int saveIntervalMinutes = getConfig().getInt("share.auto_save_interval", 5);
+        int saveIntervalMinutes = Math.max(1, getConfig().getInt("share.auto_save_interval", 5));
         FoliaScheduler.getAsyncScheduler().runAtFixedRate(this, task -> {
             if (shareManager != null) shareManager.save();
         }, saveIntervalMinutes, saveIntervalMinutes, TimeUnit.MINUTES);

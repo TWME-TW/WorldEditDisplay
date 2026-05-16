@@ -12,6 +12,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
+
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -222,8 +224,7 @@ public class ShareManager {
 
     /**
      * Called when a player quits: clears their pending incoming invites from other players
-     * but keeps active shares in memory (they reload on next login).
-     * Also notifies all viewers of the sharer to clear their renders.
+     * and removes their own outgoing pending invites.
      */
     public void onPlayerQuit(UUID uuid) {
         // Remove pending invites sent TO this player
@@ -238,28 +239,43 @@ public class ShareManager {
 
     /**
      * Purge expired requests for a specific sharer.
+     * Expired entries are removed first (data-only), then notifications are dispatched via
+     * per-entity schedulers so they always run on the correct Folia/Paper thread.
      */
     public void purgeExpiredRequests(UUID sharer) {
         Map<UUID, Long> pending = pendingRequests.get(sharer);
         if (pending == null) return;
         int timeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
         long now = System.currentTimeMillis();
+
+        List<UUID> expiredTargets = new ArrayList<>();
         pending.entrySet().removeIf(e -> {
             if (now - e.getValue() > timeoutSec * 1000L) {
-                // Notify both sides about expiry
-                Player sharerPlayer = Bukkit.getPlayer(sharer);
-                Player targetPlayer = Bukkit.getPlayer(e.getKey());
-                if (sharerPlayer != null)
-                    MessageUtil.sendTranslated(sharerPlayer, "command.wedisplay.share.invite_expired_sharer",
-                            getPlayerName(e.getKey()));
-                if (targetPlayer != null)
-                    MessageUtil.sendTranslated(targetPlayer, "command.wedisplay.share.invite_expired_target",
-                            getPlayerName(sharer));
+                expiredTargets.add(e.getKey());
                 return true;
             }
             return false;
         });
         if (pending.isEmpty()) pendingRequests.remove(sharer);
+
+        if (expiredTargets.isEmpty()) return;
+
+        String sharerName = getPlayerName(sharer);
+        for (UUID targetId : expiredTargets) {
+            String targetName = getPlayerName(targetId);
+            Player sharerPlayer = Bukkit.getPlayer(sharer);
+            if (sharerPlayer != null) {
+                FoliaScheduler.getEntityScheduler().run(sharerPlayer, plugin,
+                        ignored -> MessageUtil.sendTranslated(sharerPlayer,
+                                "command.wedisplay.share.invite_expired_sharer", targetName), null);
+            }
+            Player targetPlayer = Bukkit.getPlayer(targetId);
+            if (targetPlayer != null) {
+                FoliaScheduler.getEntityScheduler().run(targetPlayer, plugin,
+                        ignored -> MessageUtil.sendTranslated(targetPlayer,
+                                "command.wedisplay.share.invite_expired_target", sharerName), null);
+            }
+        }
     }
 
     /**

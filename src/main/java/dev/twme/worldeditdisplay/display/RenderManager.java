@@ -10,7 +10,10 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.SharedRenderSettings;
@@ -21,16 +24,22 @@ import dev.twme.worldeditdisplay.display.renderer.PolygonRenderer;
 import dev.twme.worldeditdisplay.display.renderer.PolyhedronRenderer;
 import dev.twme.worldeditdisplay.display.renderer.RegionRenderer;
 import dev.twme.worldeditdisplay.player.PlayerData;
+import dev.twme.worldeditdisplay.region.BoundingBox;
 import dev.twme.worldeditdisplay.region.CuboidRegion;
 import dev.twme.worldeditdisplay.region.CylinderRegion;
 import dev.twme.worldeditdisplay.region.EllipsoidRegion;
 import dev.twme.worldeditdisplay.region.PolygonRegion;
 import dev.twme.worldeditdisplay.region.PolyhedronRegion;
 import dev.twme.worldeditdisplay.region.Region;
+import dev.twme.worldeditdisplay.region.Vector3;
 import dev.twme.worldeditdisplay.share.ShareManager;
 import dev.twme.worldeditdisplay.util.MessageUtil;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 import io.github.retrooper.packetevents.util.folia.TaskWrapper;
+import me.tofaa.entitylib.meta.display.AbstractDisplayMeta;
+import me.tofaa.entitylib.meta.display.TextDisplayMeta;
+import me.tofaa.entitylib.wrapper.WrapperEntity;
 
 /**
  * keeps track of player renderers
@@ -44,6 +53,8 @@ public class RenderManager {
     private final Map<UUID, Map<UUID, RegionRenderer>> multiRenderers;
     /** viewer → (sharer → renderer): renderers for other players' shared selections */
     private final Map<UUID, Map<UUID, RegionRenderer>> sharedRenderers;
+    /** viewer → (sharer → label entity): name-tag labels shown above shared selections */
+    private final Map<UUID, Map<UUID, WrapperEntity>> labelEntities;
     /** sharer → colour: stable shared-selection colour assignments across all viewers */
     private final Map<UUID, Color> sharedColors;
     private final Map<Class<? extends Region>, Class<? extends RegionRenderer>> rendererTypes;
@@ -60,6 +71,7 @@ public class RenderManager {
         this.mainRenderers = new ConcurrentHashMap<>();
         this.multiRenderers = new ConcurrentHashMap<>();
         this.sharedRenderers = new ConcurrentHashMap<>();
+        this.labelEntities = new ConcurrentHashMap<>();
         this.sharedColors = new ConcurrentHashMap<>();
         this.rendererTypes = new HashMap<>();
 
@@ -230,6 +242,12 @@ public class RenderManager {
             Player viewer = Bukkit.getPlayer(viewerId);
             if (viewer == null || !viewer.isOnline()) continue;
 
+            // For viewall-only viewers (not active share), check the hidden list
+            if (!shareManager.isActiveShare(sharer.getUniqueId(), viewerId)) {
+                PlayerData viewerData = PlayerData.getPlayerData(viewer);
+                if (viewerData != null && viewerData.isViewAllHidden(sharer.getUniqueId())) continue;
+            }
+
             Map<UUID, RegionRenderer> viewerSharedRenderers =
                     sharedRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
             Color color = getOrCreateSharedColor(sharer.getUniqueId());
@@ -276,10 +294,15 @@ public class RenderManager {
 
         // Skip rendering if the sharer's region hasn't changed and we already have a renderer
         if (!forceRender && renderer != null && !sharerRegion.isDirty()) {
+            // Still refresh the label so toggling showLabels takes effect immediately
+            updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharerPlayer, sharerRegion);
             return;
         }
 
         SharedRenderSettings sharedSettings = new SharedRenderSettings(plugin, sharedColor);
+
+        // Always refresh the label (handles toggle on/off and position updates)
+        updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharerPlayer, sharerRegion);
 
         if (renderer == null) {
             renderer = createRenderer(viewer, sharerRegion, sharedSettings);
@@ -382,6 +405,79 @@ public class RenderManager {
         return wrapped < 0.0f ? wrapped + 1.0f : wrapped;
     }
 
+    // ─── Label management ─────────────────────────────────────────────────────
+
+    /**
+     * Creates or updates a floating name-tag label above {@code sharerRegion} visible only to
+     * {@code viewer}.  If the viewer has {@code showLabels} disabled the label is removed.
+     */
+    private void updateSharedLabel(Player viewer, UUID viewerId, UUID sharerId,
+                                   Player sharerPlayer, Region sharerRegion) {
+        PlayerData viewerData = PlayerData.getPlayerData(viewer);
+        if (viewerData == null || !viewerData.isShowLabels()) {
+            clearSharedLabel(viewerId, sharerId);
+            return;
+        }
+
+        BoundingBox box = sharerRegion.getBoundingBox();
+        Location labelLoc;
+        if (box != null) {
+            Vector3 center = box.getCenter();
+            labelLoc = new Location(sharerPlayer.getWorld(),
+                    center.getX(), box.getMax().getY() + 1.0, center.getZ());
+        } else {
+            labelLoc = sharerPlayer.getLocation().add(0, 2.5, 0);
+        }
+
+        Color sharedColor = getOrCreateSharedColor(sharerId);
+        net.kyori.adventure.text.Component nameText = net.kyori.adventure.text.Component
+                .text(sharerPlayer.getName())
+                .color(net.kyori.adventure.text.format.TextColor.color(
+                        sharedColor.getRed(), sharedColor.getGreen(), sharedColor.getBlue()));
+
+        Map<UUID, WrapperEntity> viewerLabels =
+                labelEntities.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
+        WrapperEntity existingLabel = viewerLabels.get(sharerId);
+
+        if (existingLabel != null) {
+            if (existingLabel.getEntityMeta() instanceof TextDisplayMeta meta) {
+                meta.setText(nameText);
+            }
+            existingLabel.teleport(SpigotConversionUtil.fromBukkitLocation(labelLoc));
+            return;
+        }
+
+        WrapperEntity label = new WrapperEntity(EntityTypes.TEXT_DISPLAY);
+        label.spawn(SpigotConversionUtil.fromBukkitLocation(labelLoc));
+        if (label.getEntityMeta() instanceof TextDisplayMeta meta) {
+            meta.setText(nameText);
+            meta.setBillboardConstraints(AbstractDisplayMeta.BillboardConstraints.CENTER);
+            meta.setViewRange(64.0f);
+            meta.setBrightnessOverride(15 << 4 | 15 << 20);
+            meta.setBackgroundColor(0x40000000);
+        }
+        label.addViewer(viewerId);
+        viewerLabels.put(sharerId, label);
+    }
+
+    /** Remove the label entity a specific viewer has for a specific sharer. */
+    private void clearSharedLabel(UUID viewerId, UUID sharerId) {
+        Map<UUID, WrapperEntity> viewerLabels = labelEntities.get(viewerId);
+        if (viewerLabels == null) return;
+        WrapperEntity label = viewerLabels.remove(sharerId);
+        if (label != null) label.remove();
+        if (viewerLabels.isEmpty()) labelEntities.remove(viewerId);
+    }
+
+    /** Remove all label entities for a specific viewer. */
+    public void clearSharedLabels(UUID viewerId) {
+        Map<UUID, WrapperEntity> viewerLabels = labelEntities.remove(viewerId);
+        if (viewerLabels != null) {
+            viewerLabels.values().forEach(WrapperEntity::remove);
+            viewerLabels.clear();
+        }
+    }
+
     /** Clear all shared renderers for a specific viewer. */
     public void clearSharedRenders(UUID viewerId) {
         Map<UUID, RegionRenderer> map = sharedRenderers.remove(viewerId);
@@ -393,6 +489,7 @@ public class RenderManager {
                 releaseSharedColorIfUnused(sharerId);
             }
         }
+        clearSharedLabels(viewerId);
     }
 
     /** Clear the shared renderer a specific viewer has for a specific sharer. */
@@ -406,6 +503,7 @@ public class RenderManager {
             }
         }
         releaseSharedColorIfUnused(sharerId);
+        clearSharedLabel(viewerId, sharerId);
     }
 
     /**
@@ -423,6 +521,7 @@ public class RenderManager {
             if (shareManager != null && shareManager.isActiveShare(sharerId, viewerId)) return false;
             e.getValue().clear();
             releaseSharedColorIfUnused(sharerId);
+            clearSharedLabel(viewerId, sharerId);
             return true;
         });
 
@@ -614,6 +713,9 @@ public class RenderManager {
         });
         sharedRenderers.clear();
         sharedColors.clear();
+
+        labelEntities.values().forEach(m -> m.values().forEach(WrapperEntity::remove));
+        labelEntities.clear();
     }
 
     private RegionRenderer createRenderer(Player player, Region region) {

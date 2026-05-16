@@ -201,7 +201,7 @@ public class PlayerRenderSettings {
         polyhedronVertexThickness = null;
     }
 
-    public void save() {
+    public synchronized void save() {
         try {
             config.save(configFile);
         } catch (IOException ignored) {}
@@ -313,7 +313,7 @@ public class PlayerRenderSettings {
         return section.getBoolean(key);
     }
 
-    public boolean set(String path, Object value) {
+    public synchronized boolean set(String path, Object value) {
         if (value instanceof Color) value = ColorUtil.toHexString((Color) value);
         if (value instanceof String strVal) {
             if (strVal.startsWith("#")) {
@@ -364,8 +364,8 @@ public class PlayerRenderSettings {
         load();
     }
 
-    public boolean isDirty() { return dirty; }
-    public void markClean() { dirty = false; }
+    public synchronized boolean isDirty() { return dirty; }
+    public synchronized void markClean() { dirty = false; }
 
     // === Cuboid Getters ===
     public boolean isCuboidSeeThrough() { return cuboidSeeThrough != null ? cuboidSeeThrough : serverSettings.isCuboidSeeThrough(); }

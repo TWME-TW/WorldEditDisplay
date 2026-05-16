@@ -139,9 +139,11 @@ public class PlayerSettingsManager {
      */
     public void saveAllDirty() {
         for (PlayerRenderSettings settings : settingsCache.values()) {
-            if (settings.isDirty()) {
-                settings.save();
-                settings.markClean();
+            synchronized (settings) {
+                if (settings.isDirty()) {
+                    settings.save();
+                    settings.markClean();
+                }
             }
         }
     }

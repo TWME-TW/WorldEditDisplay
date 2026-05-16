@@ -102,6 +102,7 @@ command:
       no_invite_from: "<red>没有来自 %s 的待处理邀请。"
       accept_success: "<green>你现在正在查看 %s 的选区。"
       viewer_accepted: "<green>%s 现在正在查看你的选区。"
+      invite_usage: "<red>用法：/wedisplay share invite <玩家>"
       revoke_usage: "<red>用法：/wedisplay share revoke <玩家>"
       not_sharing_with: "<red>你没有和 %s 共享选区。"
       revoked: "<yellow>已撤销与 %s 的共享。"

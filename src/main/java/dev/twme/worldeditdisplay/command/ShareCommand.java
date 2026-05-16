@@ -44,6 +44,7 @@ public class ShareCommand {
 
         String sub = args[1].toLowerCase();
         switch (sub) {
+            case "invite"  -> handleInvite(player, args);
             case "accept"  -> handleAccept(player, args);
             case "revoke"  -> handleRevoke(player, args);
             case "unwatch" -> handleUnwatch(player, args);
@@ -54,7 +55,7 @@ public class ShareCommand {
                 }
                 handleList(player, page);
             }
-            default -> handleInvite(player, args);
+            default -> MessageUtil.sendTranslated(player, "command.wedisplay.share.invite_usage");
         }
     }
 
@@ -64,7 +65,12 @@ public class ShareCommand {
             return;
         }
 
-        String targetName = args[1];
+        if (args.length < 3) {
+            MessageUtil.sendTranslated(player, "command.wedisplay.share.invite_usage");
+            return;
+        }
+
+        String targetName = args[2];
         Player target = Bukkit.getPlayerExact(targetName);
 
         if (target == null) {
@@ -273,10 +279,7 @@ public class ShareCommand {
 
     public List<String> tabComplete(Player player, String[] args) {
         if (args.length == 2) {
-            List<String> options = new ArrayList<>(List.of("accept", "revoke", "unwatch", "list"));
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (!p.equals(player)) options.add(p.getName());
-            }
+            List<String> options = new ArrayList<>(List.of("invite", "accept", "revoke", "unwatch", "list"));
             return options.stream()
                     .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
                     .collect(Collectors.toList());
@@ -284,6 +287,13 @@ public class ShareCommand {
         if (args.length == 3) {
             String sub = args[1].toLowerCase();
             return switch (sub) {
+                case "invite" -> {
+                    yield Bukkit.getOnlinePlayers().stream()
+                            .filter(p -> !p.equals(player))
+                            .map(Player::getName)
+                            .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
+                            .collect(Collectors.toList());
+                }
                 case "accept" -> {
                     Set<UUID> pending = plugin.getShareManager().getPendingInvitesFor(player.getUniqueId());
                     yield pending.stream()

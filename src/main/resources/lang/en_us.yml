@@ -102,6 +102,7 @@ command:
       no_invite_from: "<red>No pending invitation from %s."
       accept_success: "<green>You are now viewing %s's selection."
       viewer_accepted: "<green>%s is now viewing your selection."
+      invite_usage: "<red>Usage: /wedisplay share invite <player>"
       revoke_usage: "<red>Usage: /wedisplay share revoke <player>"
       not_sharing_with: "<red>You are not sharing with %s."
       revoked: "<yellow>Revoked share with %s."
