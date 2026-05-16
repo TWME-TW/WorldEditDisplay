@@ -17,6 +17,7 @@ import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.util.Vector3f;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
+import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
 import dev.twme.worldeditdisplay.config.SharedRenderSettings;
 import dev.twme.worldeditdisplay.display.renderer.CuboidRenderer;
 import dev.twme.worldeditdisplay.display.renderer.CylinderRenderer;
@@ -58,7 +59,12 @@ public class RenderManager {
     private final Map<UUID, Map<UUID, WrapperEntity>> labelEntities;
     /** sharer → colour: stable shared-selection colour assignments across all viewers */
     private final Map<UUID, Color> sharedColors;
-    private final Map<Class<? extends Region>, Class<? extends RegionRenderer>> rendererTypes;
+
+    @FunctionalInterface
+    private interface RendererFactory {
+        RegionRenderer create(Player player, PlayerRenderSettings settings);
+    }
+    private final Map<Class<? extends Region>, RendererFactory> rendererFactories;
 
     private static final int SHARED_COLOR_ALPHA = 230;
     private static final float SHARED_MIN_HUE_DISTANCE = 0.12f;
@@ -74,21 +80,21 @@ public class RenderManager {
         this.sharedRenderers = new ConcurrentHashMap<>();
         this.labelEntities = new ConcurrentHashMap<>();
         this.sharedColors = new ConcurrentHashMap<>();
-        this.rendererTypes = new HashMap<>();
+        this.rendererFactories = new HashMap<>();
 
-        registerRendererTypes();
+        registerRendererFactories();
         startRebaseTask();
         plugin.getLogger().info("RenderManager started");
     }
 
-    private void registerRendererTypes() {
-        rendererTypes.put(CuboidRegion.class, CuboidRenderer.class);
-        rendererTypes.put(PolygonRegion.class, PolygonRenderer.class);
-        rendererTypes.put(EllipsoidRegion.class, EllipsoidRenderer.class);
-        rendererTypes.put(CylinderRegion.class, CylinderRenderer.class);
-        rendererTypes.put(PolyhedronRegion.class, PolyhedronRenderer.class);
+    private void registerRendererFactories() {
+        rendererFactories.put(CuboidRegion.class,     (p, s) -> new CuboidRenderer(plugin, p, s));
+        rendererFactories.put(PolygonRegion.class,    (p, s) -> new PolygonRenderer(plugin, p, s));
+        rendererFactories.put(EllipsoidRegion.class,  (p, s) -> new EllipsoidRenderer(plugin, p, s));
+        rendererFactories.put(CylinderRegion.class,   (p, s) -> new CylinderRenderer(plugin, p, s));
+        rendererFactories.put(PolyhedronRegion.class, (p, s) -> new PolyhedronRenderer(plugin, p, s));
 
-        plugin.getLogger().info("renderer types registered: " + rendererTypes.size());
+        plugin.getLogger().info("renderer types registered: " + rendererFactories.size());
     }
 
     /**
@@ -134,20 +140,21 @@ public class RenderManager {
                 sharedRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
 
         // Remove renderers for sharers no longer in the visible list
-        viewerSharedRenderers.keySet().removeIf(sharerId -> {
-            if (!sharers.contains(sharerId)) {
-                RegionRenderer r = viewerSharedRenderers.remove(sharerId);
-                if (r != null) r.clear();
-                releaseSharedColorIfUnused(sharerId);
+        viewerSharedRenderers.entrySet().removeIf(e -> {
+            if (!sharers.contains(e.getKey())) {
+                e.getValue().clear();
+                releaseSharedColorIfUnused(e.getKey());
                 return true;
             }
             return false;
         });
 
+        Vector3 viewerPos = null;
         for (UUID sharerId : sharers) {
             // Distance-based loading for viewall-sourced players (not for active shares)
             if (!shareManager.isActiveShare(sharerId, viewerId)) {
-                if (!shouldRenderForViewAll(viewer, sharerId)) continue;
+                if (viewerPos == null) viewerPos = Vector3.from(viewer.getLocation());
+                if (!shouldRenderForViewAll(viewer, sharerId, viewerPos)) continue;
             }
             Color sharedColor = getOrCreateSharedColor(sharerId);
             renderSharedForViewer(viewer, viewerSharedRenderers, sharerId, sharedColor, false);
@@ -186,7 +193,7 @@ public class RenderManager {
      *     Show if that distance ≤ effectiveDist,
      *     where effectiveDist = max(halfDiagonal × sizeMultiplier, minDistance).
      */
-    private boolean shouldRenderForViewAll(Player viewer, UUID sharerId) {
+    private boolean shouldRenderForViewAll(Player viewer, UUID sharerId, Vector3 viewerPos) {
         dev.twme.worldeditdisplay.config.RenderSettings rs = plugin.getRenderSettings();
         if (!rs.isViewAllDistanceBasedEnabled()) return true;
 
@@ -209,15 +216,12 @@ public class RenderManager {
             return viewer.getLocation().distance(sharer.getLocation()) <= minDist;
         }
 
-        dev.twme.worldeditdisplay.region.Vector3 vp =
-                dev.twme.worldeditdisplay.region.Vector3.from(viewer.getLocation());
-
         // Inside the AABB → always visible
-        if (box.contains(vp)) return true;
+        if (box.contains(viewerPos)) return true;
 
         // effectiveDist: at least minDist, but scales with selection size
         double effectiveDist = Math.max(box.getHalfDiagonal() * multiplier, minDist);
-        return box.distanceTo(vp) <= effectiveDist;
+        return box.distanceTo(viewerPos) <= effectiveDist;
     }
 
     /**
@@ -731,19 +735,16 @@ public class RenderManager {
     }
 
     private RegionRenderer createRenderer(Player player, Region region,
-                                           dev.twme.worldeditdisplay.config.PlayerRenderSettings settings) {
-        Class<? extends RegionRenderer> rendererClass = rendererTypes.get(region.getClass());
-        if (rendererClass == null) {
+                                           PlayerRenderSettings settings) {
+        RendererFactory factory = rendererFactories.get(region.getClass());
+        if (factory == null) {
             plugin.getLogger().warning("renderer not found: " + region.getClass().getSimpleName());
             return null;
         }
-
         try {
-            return rendererClass
-                    .getConstructor(WorldEditDisplay.class, Player.class, dev.twme.worldeditdisplay.config.PlayerRenderSettings.class)
-                    .newInstance(plugin, player, settings);
+            return factory.create(player, settings);
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "cannot create renderer: " + rendererClass.getSimpleName(), e);
+            plugin.getLogger().log(Level.SEVERE, "cannot create renderer: " + region.getClass().getSimpleName(), e);
             return null;
         }
     }

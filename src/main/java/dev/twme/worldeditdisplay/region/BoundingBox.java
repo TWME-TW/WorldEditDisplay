@@ -6,10 +6,20 @@ package dev.twme.worldeditdisplay.region;
 public class BoundingBox {
     private final Vector3 min;
     private final Vector3 max;
+    private final Vector3 center;
+    private final double halfDiagonal;
 
     public BoundingBox(Vector3 min, Vector3 max) {
         this.min = min;
         this.max = max;
+        this.center = new Vector3(
+                (min.getX() + max.getX()) / 2,
+                (min.getY() + max.getY()) / 2,
+                (min.getZ() + max.getZ()) / 2);
+        double w = max.getX() - min.getX();
+        double h = max.getY() - min.getY();
+        double l = max.getZ() - min.getZ();
+        this.halfDiagonal = Math.sqrt(w * w + h * h + l * l) / 2.0;
     }
 
     public static BoundingBox of(Vector3 pos1, Vector3 pos2) {
@@ -37,11 +47,7 @@ public class BoundingBox {
     }
 
     public Vector3 getCenter() {
-        return new Vector3(
-                (min.getX() + max.getX()) / 2,
-                (min.getY() + max.getY()) / 2,
-                (min.getZ() + max.getZ()) / 2
-        );
+        return center;
     }
 
     public long getVolume() {
@@ -50,8 +56,7 @@ public class BoundingBox {
 
     /** Half-length of the space diagonal: sqrt(w²+h²+l²) / 2 */
     public double getHalfDiagonal() {
-        double w = getWidth(), h = getHeight(), l = getLength();
-        return Math.sqrt(w * w + h * h + l * l) / 2.0;
+        return halfDiagonal;
     }
 
     /** Returns true when the point lies inside (or on the surface of) this box. */
