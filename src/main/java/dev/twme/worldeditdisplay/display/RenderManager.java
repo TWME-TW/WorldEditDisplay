@@ -807,6 +807,16 @@ public class RenderManager {
         return mainCount + multiCount;
     }
 
+    /**
+     * Returns a read-only view of the main (primary-selection) renderer map.
+     * The underlying map is a {@link java.util.concurrent.ConcurrentHashMap}, so
+     * iterating its {@code values()} is safe from any thread (e.g. the bStats
+     * async scheduler) without additional locking.
+     */
+    public java.util.Map<UUID, RegionRenderer> getMainRenderers() {
+        return java.util.Collections.unmodifiableMap(mainRenderers);
+    }
+
     public int getPlayerEntityCount(UUID playerId) {
         int count = 0;
         RegionRenderer mainRenderer = mainRenderers.get(playerId);

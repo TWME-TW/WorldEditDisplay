@@ -53,6 +53,8 @@ public final class WorldEditDisplay extends JavaPlugin {
     @Override
     public void onEnable() {
 
+        new BStatsManager(this);
+
         PacketEvents.getAPI().init();
 
         PacketEvents.getAPI().getEventManager().registerListener(new InboundPacketListener(), PacketListenerPriority.NORMAL);
