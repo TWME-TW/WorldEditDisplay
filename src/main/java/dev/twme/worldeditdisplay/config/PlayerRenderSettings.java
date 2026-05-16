@@ -341,7 +341,7 @@ public class PlayerRenderSettings {
 
         config.set(path, value instanceof Color ? ColorUtil.toHexString((Color) value) : value);
         dirty = true;
-        save();
+        // save() removed — deferred to the 5-min periodic scheduler, disconnect handler, or shutdown
         reloadFields(); // refresh in-memory fields without re-reading from disk
         return true;
     }
@@ -367,7 +367,14 @@ public class PlayerRenderSettings {
         return true;
     }
 
-    public void reset(String path) { config.set(path, null); dirty = true; save(); load(); }
+    public void reset(String path) {
+        config.set(path, null);
+        dirty = true;
+        // Refresh in-memory parsed fields from the updated in-memory config.
+        // Do NOT call load() here — that would re-read the old file from disk
+        // before the deferred save has written the null value.
+        reloadFields();
+    }
 
     public void resetAll() {
         if (configFile != null && configFile.exists()) configFile.delete();
