@@ -144,7 +144,7 @@ public class RenderManager {
             return false;
         });
 
-        for (UUID sharerId : sharers.stream().sorted().toList()) {
+        for (UUID sharerId : sharers) {
             // Distance-based loading for viewall-sourced players (not for active shares)
             if (!shareManager.isActiveShare(sharerId, viewerId)) {
                 if (!shouldRenderForViewAll(viewer, sharerId)) continue;
@@ -187,14 +187,15 @@ public class RenderManager {
      *     where effectiveDist = max(halfDiagonal × sizeMultiplier, minDistance).
      */
     private boolean shouldRenderForViewAll(Player viewer, UUID sharerId) {
-        if (!plugin.getConfig().getBoolean("viewall.distance-based-loading.enabled", true)) return true;
+        dev.twme.worldeditdisplay.config.RenderSettings rs = plugin.getRenderSettings();
+        if (!rs.isViewAllDistanceBasedEnabled()) return true;
 
         Player sharer = Bukkit.getPlayer(sharerId);
         if (sharer == null || !sharer.isOnline()) return false;
         if (!viewer.getWorld().equals(sharer.getWorld())) return false;
 
-        double minDist = plugin.getConfig().getDouble("viewall.distance-based-loading.min-distance", 64.0);
-        double multiplier = plugin.getConfig().getDouble("viewall.distance-based-loading.size-multiplier", 2.0);
+        double minDist = rs.getViewAllMinDistance();
+        double multiplier = rs.getViewAllSizeMultiplier();
 
         // Try to get the selection bounding box
         PlayerData sharerData = PlayerData.getPlayerData(sharer);
@@ -296,14 +297,14 @@ public class RenderManager {
         // Skip rendering if the sharer's region hasn't changed and we already have a renderer
         if (!forceRender && renderer != null && !sharerRegion.isDirty()) {
             // Still refresh the label so toggling showLabels takes effect immediately
-            updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharerPlayer, sharerRegion);
+            updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharedColor, sharerPlayer, sharerRegion);
             return;
         }
 
         SharedRenderSettings sharedSettings = new SharedRenderSettings(plugin, sharedColor);
 
         // Always refresh the label (handles toggle on/off and position updates)
-        updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharerPlayer, sharerRegion);
+        updateSharedLabel(viewer, viewer.getUniqueId(), sharerId, sharedColor, sharerPlayer, sharerRegion);
 
         if (renderer == null) {
             renderer = createRenderer(viewer, sharerRegion, sharedSettings);
@@ -413,7 +414,7 @@ public class RenderManager {
      * {@code viewer}.  If the viewer has {@code showLabels} disabled the label is removed.
      */
     private void updateSharedLabel(Player viewer, UUID viewerId, UUID sharerId,
-                                   Player sharerPlayer, Region sharerRegion) {
+                                   Color sharedColor, Player sharerPlayer, Region sharerRegion) {
         PlayerData viewerData = PlayerData.getPlayerData(viewer);
         if (viewerData == null || !viewerData.isShowLabels()) {
             clearSharedLabel(viewerId, sharerId);
@@ -430,7 +431,6 @@ public class RenderManager {
             labelLoc = sharerPlayer.getLocation();
         }
 
-        Color sharedColor = getOrCreateSharedColor(sharerId);
         net.kyori.adventure.text.Component nameText = net.kyori.adventure.text.Component
                 .text(sharerPlayer.getName())
                 .color(net.kyori.adventure.text.format.TextColor.color(

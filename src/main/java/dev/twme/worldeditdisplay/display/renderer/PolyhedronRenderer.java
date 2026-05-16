@@ -73,7 +73,7 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
     }
 
     private void renderFaceEdges(List<Vector3> vertices, List<int[]> faces, Color color) {
-        Set<String> renderedEdges = new HashSet<>();
+        Set<Long> renderedEdges = new HashSet<>();
 
         for (int[] face : faces) {
             if (face == null || face.length < 2) continue;
@@ -85,7 +85,7 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
                 if (v1 < 0 || v1 >= vertices.size() || v2 < 0 || v2 >= vertices.size()) continue;
                 if (vertices.get(v1) == null || vertices.get(v2) == null) continue;
 
-                String edgeKey = getEdgeKey(v1, v2);
+                long edgeKey = getEdgeKey(v1, v2);
                 if (renderedEdges.contains(edgeKey)) continue;
 
                 renderEdge(vertices.get(v1), vertices.get(v2), color);
@@ -133,10 +133,10 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
         return new Vector3f((float) (v.getX() + 0.5), (float) (v.getY() + 0.5), (float) (v.getZ() + 0.5));
     }
 
-    private String getEdgeKey(int i1, int i2) {
+    private long getEdgeKey(int i1, int i2) {
         int min = Math.min(i1, i2);
         int max = Math.max(i1, i2);
-        return min + "-" + max;
+        return ((long) min << 32) | (max & 0xFFFFFFFFL);
     }
 
     @Override

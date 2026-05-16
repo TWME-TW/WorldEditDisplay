@@ -66,22 +66,23 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
 
         int height = maxY - minY + 1;
         int stepY = calculateGridStep(height);
+        int circleSegments = calculateCircleSegments(radiusX, radiusZ);
 
         // Render circles for each layer
         for (int y = minY; y <= maxY + 1; y += stepY) {
             if (y == center.getY() || y == center.getY() + 1) continue;
-            renderCircle(cxCircle, y, czCircle, radiusX, radiusZ, circleMat, settings.getCylinderCircleThickness());
+            renderCircle(cxCircle, y, czCircle, radiusX, radiusZ, circleSegments, circleMat, settings.getCylinderCircleThickness());
         }
 
         // Ensure top layer is rendered
         if ((maxY + 1 - minY) % stepY != 0) {
-            renderCircle(cxCircle, maxY + 1, czCircle, radiusX, radiusZ, circleMat, settings.getCylinderCircleThickness());
+            renderCircle(cxCircle, maxY + 1, czCircle, radiusX, radiusZ, circleSegments, circleMat, settings.getCylinderCircleThickness());
         }
 
         // Render center circle lines
-        renderCircle(cxCircle, center.getY(), czCircle, radiusX, radiusZ, centerLineMat, settings.getCylinderCenterLineThickness());
+        renderCircle(cxCircle, center.getY(), czCircle, radiusX, radiusZ, circleSegments, centerLineMat, settings.getCylinderCenterLineThickness());
         if (center.getY() + 1 != center.getY()) {
-            renderCircle(cxCircle, center.getY() + 1, czCircle, radiusX, radiusZ, centerLineMat, settings.getCylinderCenterLineThickness());
+            renderCircle(cxCircle, center.getY() + 1, czCircle, radiusX, radiusZ, circleSegments, centerLineMat, settings.getCylinderCenterLineThickness());
         }
 
         // Render vertical grid lines
@@ -173,9 +174,8 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
     }
 
     private void renderCircle(double cx, double y, double cz,
-                              double radiusX, double radiusZ,
+                              double radiusX, double radiusZ, int segments,
                               Color mat, float thickness) {
-        int segments = calculateCircleSegments(radiusX, radiusZ);
         Vector3f[] points = new Vector3f[segments];
         double twoPi = Math.PI * 2;
 

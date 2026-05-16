@@ -119,7 +119,9 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
 
     private void renderXZPlane(double x1, double y, double z1, double x2, double z2,
                                double spacingX, double spacingZ, Color color) {
-        List<Line> lines = new ArrayList<>();
+        int countZ = (int) Math.ceil((z2 - z1) / spacingZ) + 1;
+        int countX = (int) Math.ceil((x2 - x1) / spacingX) + 1;
+        List<Line> lines = new ArrayList<>(countZ + countX);
         for (double z = z1; z <= z2; z += spacingZ) {
             if (z > z1 && z2 - z < SKIP_THRESHOLD) continue;
             lines.add(new Line(new Vector3f((float) x1, (float) y, (float) z),
@@ -135,7 +137,9 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
 
     private void renderXYPlane(double x1, double y1, double z, double x2, double y2,
                                double spacingX, double spacingY, Color color) {
-        List<Line> lines = new ArrayList<>();
+        int countY = (int) Math.ceil((y2 - y1) / spacingY) + 1;
+        int countX = (int) Math.ceil((x2 - x1) / spacingX) + 1;
+        List<Line> lines = new ArrayList<>(countY + countX);
         for (double y = y1; y <= y2; y += spacingY) {
             if (y > y1 && y2 - y < SKIP_THRESHOLD) continue;
             lines.add(new Line(new Vector3f((float) x1, (float) y, (float) z),
@@ -151,7 +155,9 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
 
     private void renderYZPlane(double x, double y1, double z1, double y2, double z2,
                                double spacingY, double spacingZ, Color color) {
-        List<Line> lines = new ArrayList<>();
+        int countZ = (int) Math.ceil((z2 - z1) / spacingZ) + 1;
+        int countY = (int) Math.ceil((y2 - y1) / spacingY) + 1;
+        List<Line> lines = new ArrayList<>(countZ + countY);
         for (double z = z1; z <= z2; z += spacingZ) {
             if (z > z1 && z2 - z < SKIP_THRESHOLD) continue;
             lines.add(new Line(new Vector3f((float) x, (float) y1, (float) z),

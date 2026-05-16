@@ -124,14 +124,19 @@ public class PlayerRenderSettings {
 
         try {
             config = YamlConfiguration.loadConfiguration(configFile);
-            loadCuboidSettings(config.getConfigurationSection("renderer.cuboid"));
-            loadCylinderSettings(config.getConfigurationSection("renderer.cylinder"));
-            loadEllipsoidSettings(config.getConfigurationSection("renderer.ellipsoid"));
-            loadPolygonSettings(config.getConfigurationSection("renderer.polygon"));
-            loadPolyhedronSettings(config.getConfigurationSection("renderer.polyhedron"));
+            reloadFields();
         } catch (Exception e) {
             config = new YamlConfiguration();
         }
+    }
+
+    /** Refreshes all parsed fields from the current in-memory config object without re-reading disk. */
+    private void reloadFields() {
+        loadCuboidSettings(config.getConfigurationSection("renderer.cuboid"));
+        loadCylinderSettings(config.getConfigurationSection("renderer.cylinder"));
+        loadEllipsoidSettings(config.getConfigurationSection("renderer.ellipsoid"));
+        loadPolygonSettings(config.getConfigurationSection("renderer.polygon"));
+        loadPolyhedronSettings(config.getConfigurationSection("renderer.polyhedron"));
     }
 
     private void clearFields() {
@@ -330,7 +335,7 @@ public class PlayerRenderSettings {
         config.set(path, value instanceof Color ? ColorUtil.toHexString((Color) value) : value);
         dirty = true;
         save();
-        load();
+        reloadFields(); // refresh in-memory fields without re-reading from disk
         return true;
     }
 
