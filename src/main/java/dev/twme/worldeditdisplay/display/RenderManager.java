@@ -14,6 +14,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.util.Vector3f;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.SharedRenderSettings;
@@ -347,7 +348,7 @@ public class RenderManager {
 
         float baseHue = (hash & 0xFFFF) / 65536.0f;
         float saturation = 0.93f + (((hash >>> 16) & 0x07) / 100.0f);
-        float brightness = 0.97f + (((hash >>> 19) & 0x07) / 200.0f);
+        float brightness = 0.75f + (((hash >>> 19) & 0x07) / 200.0f);
 
         float hue = baseHue;
         Color bestColor = null;
@@ -424,9 +425,9 @@ public class RenderManager {
         if (box != null) {
             Vector3 center = box.getCenter();
             labelLoc = new Location(sharerPlayer.getWorld(),
-                    center.getX(), box.getMax().getY() + 1.0, center.getZ());
+                    center.getX(), center.getY(), center.getZ());
         } else {
-            labelLoc = sharerPlayer.getLocation().add(0, 2.5, 0);
+            labelLoc = sharerPlayer.getLocation();
         }
 
         Color sharedColor = getOrCreateSharedColor(sharerId);
@@ -450,11 +451,18 @@ public class RenderManager {
         WrapperEntity label = new WrapperEntity(EntityTypes.TEXT_DISPLAY);
         label.spawn(SpigotConversionUtil.fromBukkitLocation(labelLoc));
         if (label.getEntityMeta() instanceof TextDisplayMeta meta) {
+            // Derive a dark, semi-opaque background from the sharer's shared colour
+            int bgColor = (0xC0 << 24)
+                    | ((int) (sharedColor.getRed()   * 0.25) << 16)
+                    | ((int) (sharedColor.getGreen() * 0.25) <<  8)
+                    |  (int) (sharedColor.getBlue()  * 0.25);
             meta.setText(nameText);
             meta.setBillboardConstraints(AbstractDisplayMeta.BillboardConstraints.CENTER);
+            meta.setScale(new Vector3f(2.0f, 2.0f, 2.0f));
+            meta.setSeeThrough(true);
             meta.setViewRange(64.0f);
             meta.setBrightnessOverride(15 << 4 | 15 << 20);
-            meta.setBackgroundColor(0x40000000);
+            meta.setBackgroundColor(bgColor);
         }
         label.addViewer(viewerId);
         viewerLabels.put(sharerId, label);
