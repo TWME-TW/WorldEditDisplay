@@ -59,6 +59,13 @@ public class RenderManager {
     private final Map<UUID, Map<UUID, WrapperEntity>> labelEntities;
     /** sharer → colour: stable shared-selection colour assignments across all viewers */
     private final Map<UUID, Color> sharedColors;
+    /**
+     * sharerId → last Adventure Component used for label text.
+     * Built from (sharer name + shared colour); reused across all viewers until the name changes.
+     */
+    private final Map<UUID, net.kyori.adventure.text.Component> labelComponentCache;
+    /** sharerId → last player name used to build labelComponentCache entry (invalidation key). */
+    private final Map<UUID, String> labelComponentNames;
 
     @FunctionalInterface
     private interface RendererFactory {
@@ -80,6 +87,8 @@ public class RenderManager {
         this.sharedRenderers = new ConcurrentHashMap<>();
         this.labelEntities = new ConcurrentHashMap<>();
         this.sharedColors = new ConcurrentHashMap<>();
+        this.labelComponentCache = new ConcurrentHashMap<>();
+        this.labelComponentNames = new ConcurrentHashMap<>();
         this.rendererFactories = new HashMap<>();
 
         registerRendererFactories();
@@ -167,7 +176,8 @@ public class RenderManager {
      */
     private Set<UUID> resolveVisibleSharers(Player viewer, UUID viewerId) {
         ShareManager shareManager = plugin.getShareManager();
-        Set<UUID> result = new java.util.HashSet<>(shareManager.getActiveSharers(viewerId));
+        // getActiveSharers already returns a defensive copy – reuse it directly
+        Set<UUID> result = shareManager.getActiveSharers(viewerId);
 
         PlayerData viewerData = PlayerData.getPlayerData(viewer);
         if (viewerData != null && viewerData.isViewAllEnabled()
@@ -330,14 +340,8 @@ public class RenderManager {
      * than the original fixed palette while remaining deterministic.
      */
     private Color getOrCreateSharedColor(UUID sharerId) {
-        Color existing = sharedColors.get(sharerId);
-        if (existing != null) {
-            return existing;
-        }
-
-        Color color = sharedColors.computeIfAbsent(sharerId,
+        return sharedColors.computeIfAbsent(sharerId,
                 key -> createSharedColor(key, sharedColors.values()));
-        return color;
     }
 
     private void releaseSharedColorIfUnused(UUID sharerId) {
@@ -345,6 +349,8 @@ public class RenderManager {
         if (shareManager == null) return;
         if (!shareManager.getActiveViewers(sharerId).isEmpty()) return;
         sharedColors.remove(sharerId);
+        labelComponentCache.remove(sharerId);
+        labelComponentNames.remove(sharerId);
     }
 
     private Color createSharedColor(UUID sharerId, Collection<Color> existingColors) {
@@ -435,17 +441,31 @@ public class RenderManager {
             labelLoc = sharerPlayer.getLocation();
         }
 
-        net.kyori.adventure.text.Component nameText = net.kyori.adventure.text.Component
-                .text(sharerPlayer.getName())
-                .color(net.kyori.adventure.text.format.TextColor.color(
-                        sharedColor.getRed(), sharedColor.getGreen(), sharedColor.getBlue()));
+        net.kyori.adventure.text.Component nameText;
+        boolean nameChanged;
+        String sharerName = sharerPlayer.getName();
+        // Re-use the cached component when the sharer's name hasn't changed.
+        // sharedColor is stable per-sharer, so name is the only invalidation key.
+        if (sharerName.equals(labelComponentNames.get(sharerId))) {
+            nameText = labelComponentCache.get(sharerId);
+            nameChanged = false;
+        } else {
+            nameText = net.kyori.adventure.text.Component
+                    .text(sharerName)
+                    .color(net.kyori.adventure.text.format.TextColor.color(
+                            sharedColor.getRed(), sharedColor.getGreen(), sharedColor.getBlue()));
+            labelComponentNames.put(sharerId, sharerName);
+            labelComponentCache.put(sharerId, nameText);
+            nameChanged = true;
+        }
 
         Map<UUID, WrapperEntity> viewerLabels =
                 labelEntities.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
         WrapperEntity existingLabel = viewerLabels.get(sharerId);
 
         if (existingLabel != null) {
-            if (existingLabel.getEntityMeta() instanceof TextDisplayMeta meta) {
+            // Only send a metadata packet when the sharer's name was rebuilt this frame.
+            if (nameChanged && existingLabel.getEntityMeta() instanceof TextDisplayMeta meta) {
                 meta.setText(nameText);
             }
             existingLabel.teleport(SpigotConversionUtil.fromBukkitLocation(labelLoc));

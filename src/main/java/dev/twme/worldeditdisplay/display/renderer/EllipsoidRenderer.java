@@ -1,6 +1,7 @@
 package dev.twme.worldeditdisplay.display.renderer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.bukkit.Color;
@@ -16,6 +17,13 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
 
     private static final double TAU = Math.PI * 2.0;
 
+    /**
+     * Cache for calculateEllipseSegments within a single render() call.
+     * Key encodes (r1*100 as int) in upper 32 bits and (r2*100 as int) in lower 32 bits.
+     * Cleared at the start of each render pass.
+     */
+    private final HashMap<Long, Integer> segmentCache = new HashMap<>();
+
     public EllipsoidRenderer(WorldEditDisplay plugin, Player player, PlayerRenderSettings settings) {
         super(plugin, player, settings);
     }
@@ -28,6 +36,7 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
     @Override
     public void render(EllipsoidRegion region) {
         clear();
+        segmentCache.clear();
 
         if (!region.isDefined()) return;
 
@@ -70,6 +79,11 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
     }
 
     private int calculateEllipseSegments(double r1, double r2) {
+        // Quantize to 2 decimal places so nearly-identical rings share a cache entry
+        long key = ((long) (int) (r1 * 100) << 32) | ((int) (r2 * 100) & 0xFFFFFFFFL);
+        Integer cached = segmentCache.get(key);
+        if (cached != null) return cached;
+
         double a = Math.max(r1, r2);
         double b = Math.min(r1, r2);
         double h = Math.pow((a - b) / (a + b), 2);
@@ -79,7 +93,9 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
         int segByRadius = (int) (settings.getEllipsoidMinSegments() + settings.getEllipsoidSqrtScaleFactor() * Math.sqrt((r1 + r2) / 2));
 
         int seg = Math.max(segByLength, segByRadius);
-        return Math.max(settings.getEllipsoidMinSegments(), Math.min(seg, settings.getEllipsoidMaxSegments()));
+        int result = Math.max(settings.getEllipsoidMinSegments(), Math.min(seg, settings.getEllipsoidMaxSegments()));
+        segmentCache.put(key, result);
+        return result;
     }
 
     private void renderXZPlane(Vector3f center, Vector3 radii, int step, Color mat, Color centerLine) {

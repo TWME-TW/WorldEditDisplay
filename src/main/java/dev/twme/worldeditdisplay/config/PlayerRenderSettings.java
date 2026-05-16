@@ -206,9 +206,16 @@ public class PlayerRenderSettings {
         polyhedronVertexThickness = null;
     }
 
-    public synchronized void save() {
+    public void save() {
+        // Snapshot the YAML string inside the monitor, then write to disk outside
+        // to avoid holding the lock during I/O.
+        String content;
+        synchronized (this) {
+            content = config.saveToString();
+        }
         try {
-            config.save(configFile);
+            java.nio.file.Files.writeString(configFile.toPath(), content,
+                    java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException ignored) {}
     }
 

@@ -1,5 +1,6 @@
 package dev.twme.worldeditdisplay.display.renderer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Color;
@@ -30,9 +31,11 @@ public class PolygonRenderer extends RegionRenderer<PolygonRegion> {
 
         boolean multi = isMultiSelection(region);
 
-        List<Vector2> points = region.getPoints().stream()
-                .filter(p -> p != null)
-                .toList();
+        List<Vector2> rawPoints = region.getPoints();
+        List<Vector2> points = new ArrayList<>(rawPoints.size());
+        for (Vector2 p : rawPoints) {
+            if (p != null) points.add(p);
+        }
         if (points.isEmpty()) return;
 
         int minY = region.getMinY();
