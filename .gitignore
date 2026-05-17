@@ -117,3 +117,6 @@ run/
 
 # IDE settings
 .settings/
+.classpath
+.project
+bin/
