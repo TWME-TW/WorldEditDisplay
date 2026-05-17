@@ -432,14 +432,13 @@ public class RenderManager {
         }
 
         BoundingBox box = sharerRegion.getBoundingBox();
-        Location labelLoc;
-        if (box != null) {
-            Vector3 center = box.getCenter();
-            labelLoc = new Location(sharerPlayer.getWorld(),
-                    center.getX(), center.getY(), center.getZ());
-        } else {
-            labelLoc = sharerPlayer.getLocation();
+        if (box == null) {
+            clearSharedLabel(viewerId, sharerId);
+            return;
         }
+        Vector3 center = box.getCenter();
+        Location labelLoc = new Location(sharerPlayer.getWorld(),
+                center.getX(), center.getY(), center.getZ());
 
         net.kyori.adventure.text.Component nameText;
         boolean nameChanged;
