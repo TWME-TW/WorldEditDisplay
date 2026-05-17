@@ -114,3 +114,9 @@ run/
 
 # AI Agents
 .agents/
+
+# IDE settings
+.settings/
+.classpath
+.project
+bin/
