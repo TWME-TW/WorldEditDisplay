@@ -18,6 +18,7 @@ import dev.twme.worldeditdisplay.display.RenderManager;
 import dev.twme.worldeditdisplay.lang.LanguageManager;
 import dev.twme.worldeditdisplay.listener.InboundPacketListener;
 import dev.twme.worldeditdisplay.listener.OutboundPacketListener;
+import dev.twme.worldeditdisplay.listener.PlayerChangedWorldListener;
 import dev.twme.worldeditdisplay.listener.PlayerJoinListener;
 import dev.twme.worldeditdisplay.listener.PlayerLocaleChangeListener;
 import dev.twme.worldeditdisplay.listener.PlayerQuitListener;
@@ -106,6 +107,7 @@ public final class WorldEditDisplay extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerLocaleChangeListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerChangedWorldListener(this), this);
         
         // Register commands
         getCommand("wedisplayreload").setExecutor(new ReloadCommand(this));
