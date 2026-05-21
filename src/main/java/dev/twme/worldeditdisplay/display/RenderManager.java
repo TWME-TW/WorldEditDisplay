@@ -16,6 +16,7 @@ import org.bukkit.entity.Player;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.util.Vector3f;
 
+import dev.twme.worldeditdisplay.AxiomIntegration;
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
 import dev.twme.worldeditdisplay.config.SharedRenderSettings;
@@ -488,6 +489,7 @@ public class RenderManager {
             meta.setBackgroundColor(bgColor);
         }
         label.addViewer(viewerId);
+        AxiomIntegration.hideEntity(label, label.getUuid());
         viewerLabels.put(sharerId, label);
     }
 

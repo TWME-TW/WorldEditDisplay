@@ -56,6 +56,8 @@ public final class WorldEditDisplay extends JavaPlugin {
 
         new BStatsManager(this);
 
+        AxiomIntegration.init(this);
+
         PacketEvents.getAPI().init();
 
         PacketEvents.getAPI().getEventManager().registerListener(new InboundPacketListener(), PacketListenerPriority.NORMAL);

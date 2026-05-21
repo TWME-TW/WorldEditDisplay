@@ -12,6 +12,7 @@ import org.joml.Vector3f;
 
 import dev.twme.textdisplayshape.packet.PacketShapeFactory;
 import dev.twme.textdisplayshape.shape.Shape;
+import dev.twme.worldeditdisplay.AxiomIntegration;
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
 import dev.twme.worldeditdisplay.region.Region;
@@ -35,6 +36,8 @@ public abstract class RegionRenderer<T extends Region> {
 
     // pool of shapes
     protected final List<Shape> shapes;
+    // strong-reference keys used to keep Axiom hide entries alive in its WeakHashMap
+    private final List<Object> axiomHideKeys = new ArrayList<>();
 
     protected RenderConfig config;
 
@@ -77,6 +80,7 @@ public abstract class RegionRenderer<T extends Region> {
             }
         }
         shapes.clear();
+        axiomHideKeys.clear();
         lastRebaseOrigin = null;
     }
 
@@ -150,6 +154,7 @@ public abstract class RegionRenderer<T extends Region> {
         shape.addViewer(player.getUniqueId());
         shape.spawn();
         shapes.add(shape);
+        AxiomIntegration.hideShape(axiomHideKeys, shape);
     }
 
     /**
@@ -228,6 +233,7 @@ public abstract class RegionRenderer<T extends Region> {
         shape.addViewer(player.getUniqueId());
         shape.spawn();
         shapes.add(shape);
+        AxiomIntegration.hideShape(axiomHideKeys, shape);
     }
 
     /**
@@ -247,6 +253,7 @@ public abstract class RegionRenderer<T extends Region> {
         shape.addViewer(player.getUniqueId());
         shape.spawn();
         shapes.add(shape);
+        AxiomIntegration.hideShape(axiomHideKeys, shape);
     }
 
     public void setConfig(RenderConfig config) {

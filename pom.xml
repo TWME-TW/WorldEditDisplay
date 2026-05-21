@@ -159,6 +159,12 @@
           <version>4.3.4</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>com.moulberry.axiom</groupId>
+          <artifactId>AxiomPaper</artifactId>
+          <version>5.0.4+1.21.11</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
     </profile>
 
