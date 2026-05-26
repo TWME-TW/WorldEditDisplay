@@ -13,6 +13,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.common.Constants;
 import dev.twme.worldeditdisplay.player.PlayerData;
+import dev.twme.worldeditdisplay.util.FloodgateUtil;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 /**
@@ -37,6 +38,11 @@ public class PlayerJoinListener implements Listener {
         // Set auto-rendering based on permissions
         PlayerData playerData = PlayerData.getPlayerData(player);
         playerData.setRenderingEnabled(player.hasPermission("worldeditdisplay.render.auto-enable"));
+
+        // Detect Floodgate Bedrock players and disable CUI for them
+        if (FloodgateUtil.isBedrockPlayer(player)) {
+            playerData.setBedrockPlayer(true);
+        }
 
         // Initialize viewall/label session defaults from permission nodes
         if (player.hasPermission("worldeditdisplay.use.view.defaultenable")) {

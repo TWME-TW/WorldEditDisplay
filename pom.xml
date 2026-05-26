@@ -109,6 +109,10 @@
       <name>TWME Repository</name>
       <url>https://repo.twme.dev/snapshots</url>
     </repository>
+    <repository>
+      <id>opencollab-snapshot</id>
+      <url>https://repo.opencollab.dev/main/</url>
+    </repository>
   </repositories>
 
   <dependencies>
@@ -135,6 +139,12 @@
       <artifactId>bstats-bukkit</artifactId>
       <version>3.2.1</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geysermc.floodgate</groupId>
+      <artifactId>api</artifactId>
+      <version>2.2.5-SNAPSHOT</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 

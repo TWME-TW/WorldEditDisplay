@@ -6,6 +6,8 @@ folia-supported: true
 authors: [ TWME-TW ]
 depend:
   - packetevents
+softdepend:
+  - floodgate
 
 commands:
   wedisplayreload:
