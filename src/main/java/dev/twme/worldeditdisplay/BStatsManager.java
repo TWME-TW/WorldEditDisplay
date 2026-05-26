@@ -7,6 +7,7 @@ import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import dev.twme.worldeditdisplay.config.RenderSettings;
 import dev.twme.worldeditdisplay.display.RenderManager;
@@ -16,6 +17,7 @@ import dev.twme.worldeditdisplay.display.renderer.EllipsoidRenderer;
 import dev.twme.worldeditdisplay.display.renderer.PolygonRenderer;
 import dev.twme.worldeditdisplay.display.renderer.PolyhedronRenderer;
 import dev.twme.worldeditdisplay.display.renderer.RegionRenderer;
+import dev.twme.worldeditdisplay.player.PlayerData;
 
 /**
  * Manages bStats custom chart registration for WorldEditDisplay.
@@ -49,6 +51,7 @@ public final class BStatsManager {
         registerWorldEditVariant(metrics);
         registerFillEnabledPerType(metrics);
         registerSeeThroughAllowed(metrics);
+        registerDisplayMethodDistribution(metrics);
     }
 
     // -------------------------------------------------------------------------
@@ -151,6 +154,35 @@ public final class BStatsManager {
             RenderSettings rs = plugin.getRenderSettings();
             if (rs == null) return "Unknown";
             return rs.isSeeThroughAllowed() ? "Allowed" : "Disabled";
+        }));
+    }
+
+    // -------------------------------------------------------------------------
+    // Chart 5 – How many online players are using CUI vs built-in display
+    // -------------------------------------------------------------------------
+
+    /**
+     * AdvancedPie: "display_method_distribution"
+     *
+     * <p>Reports how many online players are currently receiving selections
+     * through WorldEditCUI (client mod) versus the built-in WorldEditDisplay
+     * renderer. Players with both CUI disabled and rendering disabled are
+     * counted as "Disabled".
+     */
+    private void registerDisplayMethodDistribution(Metrics metrics) {
+        metrics.addCustomChart(new AdvancedPie("display_method_distribution", () -> {
+            Map<String, Integer> counts = new HashMap<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                PlayerData data = PlayerData.getPlayerData(player);
+                if (data.isCuiEnabled()) {
+                    counts.merge("WorldEditCUI", 1, Integer::sum);
+                } else if (data.isRenderingEnabled()) {
+                    counts.merge("WorldEditDisplay", 1, Integer::sum);
+                } else {
+                    counts.merge("Disabled", 1, Integer::sum);
+                }
+            }
+            return counts.isEmpty() ? null : counts;
         }));
     }
 }
