@@ -28,6 +28,7 @@ public class PlayerData {
     private boolean isCuiEnabled = false;
     private boolean renderingEnabled = false; // default off; will enable on login if player has permission
     private boolean debugEnabled = false;
+    private boolean bedrockPlayer = false; // true if joined via Floodgate (GeyserMC)
 
     // Current single selection
     private Region currentRegion;
@@ -116,6 +117,20 @@ public class PlayerData {
      */
     public void setRenderingEnabled(boolean enabled) {
         this.renderingEnabled = enabled;
+    }
+
+    /**
+     * Check if this player is a Bedrock (Floodgate) player.
+     */
+    public boolean isBedrockPlayer() {
+        return bedrockPlayer;
+    }
+
+    /**
+     * Set whether this player is a Bedrock (Floodgate) player.
+     */
+    public void setBedrockPlayer(boolean bedrockPlayer) {
+        this.bedrockPlayer = bedrockPlayer;
     }
 
     /**

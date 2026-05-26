@@ -40,6 +40,12 @@ public class OutboundPacketListener implements PacketListener {
 
         PlayerData playerData = PlayerData.getPlayerData(player);
 
+        // Do not send CUI messages to Bedrock (Floodgate) players
+        if (playerData.isBedrockPlayer()) {
+            event.setCancelled(true);
+            return;
+        }
+
         // If debug mode, show the received WECUI message
         if (playerData.isDebugEnabled()) {
             MessageUtil.sendTranslated(player, "command.wedisplay.debug.cui_message", message);
