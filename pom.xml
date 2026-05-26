@@ -214,7 +214,7 @@
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-text-serializer-legacy</artifactId>
-          <version>4.17.0</version>
+          <version>5.1.1</version>
           <scope>compile</scope>
         </dependency>
         <!-- BungeeCord serializer: converts Adventure Component → BaseComponent[] to preserve click events -->
