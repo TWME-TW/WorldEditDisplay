@@ -1,8 +1,13 @@
 package dev.twme.worldeditdisplay.config;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
 import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.util.ColorUtil;
@@ -223,7 +228,52 @@ public class RenderSettings {
         viewAllSizeMultiplier = 2.0;
     }
     
+    /**
+     * Merges any keys present in the bundled default config.yml that are
+     * missing from the on-disk config.yml. This ensures that when new config
+     * options are added in future releases, they are automatically added to
+     * existing installations without requiring manual edits.
+     * <p>
+     * Existing user values are never overwritten.
+     */
+    private void mergeMissingDefaults() {
+        // 1. Load the bundled config.yml from the JAR
+        YamlConfiguration jarDefaults = new YamlConfiguration();
+        try (InputStream in = plugin.getResource("config.yml")) {
+            if (in == null) return;
+            jarDefaults.load(new InputStreamReader(in, StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to load bundled config.yml for merge: " + e.getMessage());
+            return;
+        }
+
+        // 2. Load the current on-disk config
+        plugin.reloadConfig();
+        FileConfiguration current = plugin.getConfig();
+
+        // 3. Construct the full set of keys present in the bundled config,
+        //    then iterate only the leaf values (actual settings, not sections)
+        //    and copy those missing from disk.
+        boolean changed = false;
+        for (String key : jarDefaults.getKeys(true)) {
+            if (jarDefaults.isConfigurationSection(key)) continue; // skip sections
+            if (!current.isSet(key)) {
+                Object value = jarDefaults.get(key);
+                current.set(key, value);
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            plugin.saveConfig();
+            plugin.getLogger().info("Auto-merged new configuration keys from bundled config.yml");
+        }
+    }
+
     public void reload() {
+        // Auto-add any new default keys introduced by plugin updates
+        mergeMissingDefaults();
+
         plugin.reloadConfig();
         FileConfiguration config = plugin.getConfig();
         
