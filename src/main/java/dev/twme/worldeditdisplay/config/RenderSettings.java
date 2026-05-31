@@ -124,6 +124,9 @@ public class RenderSettings {
     private Color particlePoint1Color;
     private Color particlePoint2Color;
 
+    // === bStats 設定 ===
+    private boolean bStatsEnabled;
+
     public RenderSettings(WorldEditDisplay plugin) {
         this.plugin = plugin;
         loadDefaults();
@@ -223,6 +226,9 @@ public class RenderSettings {
         particlePoint1Color = ColorUtil.parseHexColor("#33CC33CC");
         particlePoint2Color = ColorUtil.parseHexColor("#3333CCCC");
 
+        // bStats defaults
+        bStatsEnabled = true;
+
         viewAllDistanceBasedEnabled = true;
         viewAllMinDistance = 64.0;
         viewAllSizeMultiplier = 2.0;
@@ -285,6 +291,7 @@ public class RenderSettings {
             loadPolygonSettings(config.getConfigurationSection("renderer.polygon"));
             loadPolyhedronSettings(config.getConfigurationSection("renderer.polyhedron"));
             loadParticleFallbackSettings(config.getConfigurationSection("particle_fallback"));
+            loadBStatsSettings(config);
             loadViewAllSettings(config);
         } catch (Exception e) {
             loadDefaults();
@@ -454,6 +461,16 @@ public class RenderSettings {
     public double getParticleEdgeDensity() { return particleEdgeDensity; }
     public Color getParticlePoint1Color() { return particlePoint1Color; }
     public Color getParticlePoint2Color() { return particlePoint2Color; }
+
+    // ─── bStats settings ───────────────────────────────────────────────────
+
+    private void loadBStatsSettings(FileConfiguration config) {
+        bStatsEnabled = config.getBoolean("bstats.enabled", bStatsEnabled);
+    }
+
+    // ─── bStats getters ────────────────────────────────────────────────────
+
+    public boolean isBStatsEnabled() { return bStatsEnabled; }
 
     private Color getColor(ConfigurationSection section, String key, Color defaultValue) {
         String colorStr = section.getString(key);

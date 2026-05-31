@@ -54,8 +54,6 @@ public final class WorldEditDisplay extends JavaPlugin {
     @Override
     public void onEnable() {
 
-        new BStatsManager(this);
-
         PacketEvents.getAPI().init();
 
         PacketEvents.getAPI().getEventManager().registerListener(new InboundPacketListener(), PacketListenerPriority.NORMAL);
@@ -79,6 +77,13 @@ public final class WorldEditDisplay extends JavaPlugin {
         // Initialize render settings manager
         this.renderSettings = new RenderSettings(this);
         this.renderSettings.reload();
+        
+        // Initialize bStats metrics if enabled in config (default: true)
+        if (this.renderSettings.isBStatsEnabled()) {
+            new BStatsManager(this);
+        } else {
+            getLogger().info("bStats is disabled in configuration.");
+        }
         
         // Initialize player settings manager
         this.playerSettingsManager = new PlayerSettingsManager(this);

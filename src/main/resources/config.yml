@@ -1,6 +1,10 @@
 # WorldEditDisplay Configuration File
 # Renderer Settings
 
+# bStats Settings
+bstats:
+  enabled: true                         # Whether to enable bStats anonymous statistics (default: true)
+
 # Share Settings
 share:
   # How long (in seconds) a pending share invitation stays valid before it expires
