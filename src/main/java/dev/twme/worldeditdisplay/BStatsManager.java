@@ -52,6 +52,7 @@ public final class BStatsManager {
         registerFillEnabledPerType(metrics);
         registerSeeThroughAllowed(metrics);
         registerDisplayMethodDistribution(metrics);
+        registerRenderModePreference(metrics);
     }
 
     // -------------------------------------------------------------------------
@@ -166,8 +167,9 @@ public final class BStatsManager {
      *
      * <p>Reports how many online players are currently receiving selections
      * through WorldEditCUI (client mod) versus the built-in WorldEditDisplay
-     * renderer. Players with both CUI disabled and rendering disabled are
-     * counted as "Disabled".
+     * renderer, further split into TextDisplay and particle fallback.
+     * Players with both CUI disabled and rendering disabled are counted as
+     * "Disabled".
      */
     private void registerDisplayMethodDistribution(Metrics metrics) {
         metrics.addCustomChart(new AdvancedPie("display_method_distribution", () -> {
@@ -177,10 +179,35 @@ public final class BStatsManager {
                 if (data.isCuiEnabled()) {
                     counts.merge("WorldEditCUI", 1, Integer::sum);
                 } else if (data.isRenderingEnabled()) {
-                    counts.merge("WorldEditDisplay", 1, Integer::sum);
+                    if (data.isParticleFallback()) {
+                        counts.merge("Particle", 1, Integer::sum);
+                    } else {
+                        counts.merge("TextDisplay", 1, Integer::sum);
+                    }
                 } else {
                     counts.merge("Disabled", 1, Integer::sum);
                 }
+            }
+            return counts.isEmpty() ? null : counts;
+        }));
+    }
+
+    // -------------------------------------------------------------------------
+    // Chart 6 – Render mode preference distribution
+    // -------------------------------------------------------------------------
+
+    /**
+     * AdvancedPie: "render_mode_preference"
+     *
+     * <p>Reports the distribution of player render mode preferences:
+     * AUTO, TEXT_DISPLAY, or PARTICLE.
+     */
+    private void registerRenderModePreference(Metrics metrics) {
+        metrics.addCustomChart(new AdvancedPie("render_mode_preference", () -> {
+            Map<String, Integer> counts = new HashMap<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                PlayerData data = PlayerData.getPlayerData(player);
+                counts.merge(data.getRenderMode().name(), 1, Integer::sum);
             }
             return counts.isEmpty() ? null : counts;
         }));
