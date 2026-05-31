@@ -64,6 +64,7 @@ public class PlayerSettingsCommand implements TabExecutor {
             case "lang", "language" -> handleLanguage(player, args);
             case "toggle" -> handleToggle(player);
             case "debug" -> handleDebug(player);
+            case "render" -> handleRender(player, args);
             case "share" -> {
                 if (!player.hasPermission("worldeditdisplay.use.share")) {
                     MessageUtil.sendTranslated(player, "general.no_permission");
@@ -245,6 +246,62 @@ public class PlayerSettingsCommand implements TabExecutor {
         return true;
     }
 
+    private boolean handleRender(Player player, String[] args) {
+        if (!player.hasPermission("worldeditdisplay.use.render")) {
+            MessageUtil.sendTranslated(player, "general.no_permission");
+            return true;
+        }
+
+        PlayerData data = PlayerData.getPlayerData(player);
+
+        if (args.length < 2) {
+            // Show current mode
+            PlayerData.RenderMode current = data.getRenderMode();
+            String modeName = switch (current) {
+                case AUTO -> MessageUtil.getTranslated(player, "command.wedisplay.render.mode_auto");
+                case TEXT_DISPLAY -> MessageUtil.getTranslated(player, "command.wedisplay.render.mode_text");
+                case PARTICLE -> MessageUtil.getTranslated(player, "command.wedisplay.render.mode_particle");
+            };
+            MessageUtil.sendTranslated(player, "command.wedisplay.render.current", modeName);
+            MessageUtil.sendTranslated(player, "command.wedisplay.render.usage");
+            return true;
+        }
+
+        String modeArg = args[1].toLowerCase();
+        PlayerData.RenderMode newMode;
+
+        switch (modeArg) {
+            case "auto" -> newMode = PlayerData.RenderMode.AUTO;
+            case "text", "textdisplay" -> newMode = PlayerData.RenderMode.TEXT_DISPLAY;
+            case "particle", "particles" -> newMode = PlayerData.RenderMode.PARTICLE;
+            case "toggle" -> {
+                // Cycle: AUTO → PARTICLE → TEXT_DISPLAY → AUTO
+                newMode = switch (data.getRenderMode()) {
+                    case AUTO -> PlayerData.RenderMode.PARTICLE;
+                    case PARTICLE -> PlayerData.RenderMode.TEXT_DISPLAY;
+                    case TEXT_DISPLAY -> PlayerData.RenderMode.AUTO;
+                };
+            }
+            default -> {
+                MessageUtil.sendTranslated(player, "command.wedisplay.render.usage");
+                return true;
+            }
+        }
+
+        data.setRenderMode(newMode);
+
+        String modeName = switch (newMode) {
+            case AUTO -> MessageUtil.getTranslated(player, "command.wedisplay.render.mode_auto");
+            case TEXT_DISPLAY -> MessageUtil.getTranslated(player, "command.wedisplay.render.mode_text");
+            case PARTICLE -> MessageUtil.getTranslated(player, "command.wedisplay.render.mode_particle");
+        };
+        MessageUtil.sendTranslated(player, "command.wedisplay.render.set", modeName);
+
+        // Refresh renderer so the change takes effect immediately
+        plugin.getRenderManager().refreshPlayerRenderer(player);
+        return true;
+    }
+
     // helpers
     private void showRendererSettings(Player player, String renderer, PlayerRenderSettings settings, @Nullable String highlightedSetting) {
         MessageUtil.sendTranslated(player, "command.wedisplay.show.renderer_title", renderer.toUpperCase());
@@ -351,6 +408,8 @@ public class PlayerSettingsCommand implements TabExecutor {
         MessageUtil.sendTranslated(player, "command.wedisplay.help.toggle_desc");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.debug");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.debug_desc");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.render");
+        MessageUtil.sendTranslated(player, "command.wedisplay.help.render_desc");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.share");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.share_desc");
         MessageUtil.sendTranslated(player, "command.wedisplay.help.view");
@@ -386,7 +445,7 @@ public class PlayerSettingsCommand implements TabExecutor {
 
     // Tab Completion
     private static final List<String> SUB_COMMANDS = Arrays.asList(
-            "set", "reset", "show", "reloadplayer", "lang", "language", "toggle", "debug", "share", "view");
+            "set", "reset", "show", "reloadplayer", "lang", "language", "toggle", "debug", "render", "share", "view");
 
     // second argument options
     private static final List<String> RENDERERS = Arrays.asList(
@@ -403,6 +462,8 @@ public class PlayerSettingsCommand implements TabExecutor {
             // first arg: subcommand
             completions = SUB_COMMANDS.stream()
                     .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
+                    .filter(cmd -> !cmd.equals("render")
+                            || sender.hasPermission("worldeditdisplay.use.render"))
                     .collect(Collectors.toList());
 
         } else if (args.length == 2) {
@@ -417,6 +478,11 @@ public class PlayerSettingsCommand implements TabExecutor {
                 // second arg: language code
                 completions = plugin.getLanguageManager().getAvailableLanguages().stream()
                         .filter(lang -> lang.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            } else if (subCommand.equals("render")) {
+                // second arg: render mode
+                completions = Arrays.asList("auto", "text", "particle", "toggle").stream()
+                        .filter(m -> m.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
             } else if (subCommand.equals("share")) {
                 return shareCommand.tabComplete((Player) sender, args);

@@ -23,6 +23,7 @@ commands:
       /wedisplay show [renderer] - Show current settings
       /wedisplay reloadplayer - Reload personal settings
       /wedisplay toggle - Toggle rendering on/off
+      /wedisplay render [auto|text|particle|toggle] - Switch render mode
     aliases: [worldeditdisplay]
 
 permissions:
@@ -70,6 +71,9 @@ permissions:
     default: true
   worldeditdisplay.reload:
     description: Allow reloading WorldEditDisplay configuration
+    default: op
+  worldeditdisplay.use.render:
+    description: Allow using /wedisplay render to switch between TextDisplay and particle fallback rendering
     default: op
   worldeditdisplay.render.auto-enable:
     description: Automatically enable rendering when player joins server

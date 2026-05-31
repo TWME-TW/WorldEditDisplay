@@ -111,6 +111,14 @@ public class RenderSettings {
     private float polyhedronVertexSize;
     private float polyhedronVertexThickness;
     
+    // === Particle Fallback 設定 ===
+    private boolean particleFallbackEnabled;
+    private int particleUpdateInterval;
+    private int particleMaxRenderDistance;
+    private double particleEdgeDensity;
+    private Color particlePoint1Color;
+    private Color particlePoint2Color;
+
     public RenderSettings(WorldEditDisplay plugin) {
         this.plugin = plugin;
         loadDefaults();
@@ -202,6 +210,14 @@ public class RenderSettings {
         polyhedronVertexSize = 1.0f;
         polyhedronVertexThickness = 0.03f;
 
+        // Particle fallback defaults
+        particleFallbackEnabled = true;
+        particleUpdateInterval = 10;
+        particleMaxRenderDistance = 64;
+        particleEdgeDensity = 2.0;
+        particlePoint1Color = ColorUtil.parseHexColor("#33CC33CC");
+        particlePoint2Color = ColorUtil.parseHexColor("#3333CCCC");
+
         viewAllDistanceBasedEnabled = true;
         viewAllMinDistance = 64.0;
         viewAllSizeMultiplier = 2.0;
@@ -218,6 +234,7 @@ public class RenderSettings {
             loadEllipsoidSettings(config.getConfigurationSection("renderer.ellipsoid"));
             loadPolygonSettings(config.getConfigurationSection("renderer.polygon"));
             loadPolyhedronSettings(config.getConfigurationSection("renderer.polyhedron"));
+            loadParticleFallbackSettings(config.getConfigurationSection("particle_fallback"));
             loadViewAllSettings(config);
         } catch (Exception e) {
             loadDefaults();
@@ -369,13 +386,32 @@ public class RenderSettings {
         polyhedronVertexThickness = (float) section.getDouble("vertex_thickness", polyhedronVertexThickness);
     }
     
+    private void loadParticleFallbackSettings(ConfigurationSection section) {
+        if (section == null) return;
+        particleFallbackEnabled = section.getBoolean("enabled", particleFallbackEnabled);
+        particleUpdateInterval = section.getInt("update_interval", particleUpdateInterval);
+        particleMaxRenderDistance = section.getInt("max_render_distance", particleMaxRenderDistance);
+        particleEdgeDensity = Math.max(0.25, Math.min(section.getDouble("edge_density", particleEdgeDensity), 4.0));
+        particlePoint1Color = getColor(section, "point1_color", particlePoint1Color);
+        particlePoint2Color = getColor(section, "point2_color", particlePoint2Color);
+    }
+
+    // ─── Particle fallback getters ──────────────────────────────────────────
+
+    public boolean isParticleFallbackEnabled() { return particleFallbackEnabled; }
+    public int getParticleUpdateInterval() { return particleUpdateInterval; }
+    public int getParticleMaxRenderDistance() { return particleMaxRenderDistance; }
+    public double getParticleEdgeDensity() { return particleEdgeDensity; }
+    public Color getParticlePoint1Color() { return particlePoint1Color; }
+    public Color getParticlePoint2Color() { return particlePoint2Color; }
+
     private Color getColor(ConfigurationSection section, String key, Color defaultValue) {
         String colorStr = section.getString(key);
         if (colorStr == null || colorStr.isEmpty()) return defaultValue;
         Color parsed = ColorUtil.parseHexColor(colorStr);
         return parsed != null ? parsed : defaultValue;
     }
-    
+
     // === Cuboid Getters ===
     public boolean isCuboidSeeThrough() { return cuboidSeeThrough; }
     public Color getCuboidEdgeColor() { return cuboidEdgeColor; }

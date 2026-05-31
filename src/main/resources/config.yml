@@ -199,3 +199,17 @@ renderer:
     vertex_size: 1.0                    # Vertex marker size
     vertex_thickness: 0.06              # Vertex marker cube thickness
 
+# Particle Fallback Settings (for clients < 1.19.4 that do not support TextDisplay entities)
+particle_fallback:
+  # Whether to enable particle fallback
+  enabled: true
+  # How often to re-send particles (in ticks, 20 ticks = 1 second)
+  update_interval: 20
+  # Maximum distance (blocks) for particles to be visible to a viewer
+  max_render_distance: 64
+  # Edge particle density (particles per block of edge length, range 0.25 – 4.0)
+  edge_density: 1.0
+  # Point marker colours (#RRGGBBAA format)
+  point1_color: "#33CC33CC"
+  point2_color: "#3333CCCC"
+
