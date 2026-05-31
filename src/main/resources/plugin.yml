@@ -8,6 +8,7 @@ depend:
   - packetevents
 softdepend:
   - floodgate
+  - ViaVersion
 
 commands:
   wedisplayreload:
