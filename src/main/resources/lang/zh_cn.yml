@@ -64,8 +64,17 @@ command:
       enabled: "<green>已开启调试模式！每次渲染时将显示实体数量。"
       disabled: "<#E8C96D>已关闭调试模式！"
       entity_count: "<#C2C7D3>[调试] 当前显示实体数量：<white>%d"
+      particle_count: "<#C2C7D3>[调试] 当前粒子点数量：<white>%d"
       cui_message: "<#C2C7D3>[调试] 收到 WECUI 消息：<white>%s"
-    
+
+    render:
+      current: "<#C2C7D3>当前渲染模式：<white>%s"
+      set: "<green>渲染模式已设为：<white>%s"
+      usage: "<#CE5F4E>用法：<#D1968C>/wedisplay render <auto|text|particle|toggle>"
+      mode_auto: "<#C2C7D3>自动（根据客户端版本检测）"
+      mode_text: "<green>TextDisplay"
+      mode_particle: "<#E8C96D>粒子（回退）"
+
     help:
       title: "<#478FC6>\u2014\u2014 <white>WorldEditDisplay 指令说明 <#478FC6>\u2014\u2014"
       set: "<#478FC6>/wedisplay set <renderer> <setting> <value>"
@@ -81,11 +90,9 @@ command:
       toggle: "<#478FC6>/wedisplay toggle"
       toggle_desc: "<#C2C7D3>  \u21b3 开启或关闭选区可视化显示"
       debug: "<#478FC6>/wedisplay debug"
-      debug_desc: "<#C2C7D3>  \u21b3 切换调试覆盖层（实时显示每次渲染的实体数量）"
-      share: "<#478FC6>/wedisplay share [invite|accept|revoke|unwatch|list]"
-      share_desc: "<#C2C7D3>  \u21b3 将你的选区视图共享给另一位在线玩家"
-      view: "<#478FC6>/wedisplay view [hide|hideall|unhide|label|list]"
-      view_desc: "<#C2C7D3>  \u21b3 观察所有玩家的选区并管理可见性（管理员工具）"
+      debug_desc: "<#C2C7D3>  \u21b3 切换调试覆盖层（实时显示每次渲染的实体/粒子数量）"
+      render: "<#478FC6>/wedisplay render [auto|text|particle|toggle]"
+      render_desc: "<#C2C7D3>  \u21b3 切换 TextDisplay 与粒子回退渲染模式"
 
     share:
       player_not_found: "<#CE5F4E>找不到玩家「<white>%s<#CE5F4E>」或玩家不在线！"

@@ -23,12 +23,28 @@ import io.github.retrooper.packetevents.util.folia.TaskWrapper;
 public class PlayerData {
     private static final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
 
+    /**
+     * Render mode preference for the particle-fallback feature.
+     * <ul>
+     *   <li>{@link #AUTO} — uses ViaVersion client detection (< 1.19.4 → particles)</li>
+     *   <li>{@link #TEXT_DISPLAY} — always use TextDisplay entities</li>
+     *   <li>{@link #PARTICLE} — always use particle fallback</li>
+     * </ul>
+     */
+    public enum RenderMode {
+        AUTO,
+        TEXT_DISPLAY,
+        PARTICLE
+    }
+
     private final Player player;
     private final CUIEventDispatcher dispatcher;
     private boolean isCuiEnabled = false;
     private boolean renderingEnabled = false; // default off; will enable on login if player has permission
     private boolean debugEnabled = false;
     private boolean bedrockPlayer = false; // true if joined via Floodgate (GeyserMC)
+    private boolean particleFallback = false; // true if player's client is < 1.19.4 (TextDisplay unsupported)
+    private RenderMode renderMode = RenderMode.AUTO; // user preference, defaults to AUTO
 
     // Current single selection
     private Region currentRegion;
@@ -131,6 +147,52 @@ public class PlayerData {
      */
     public void setBedrockPlayer(boolean bedrockPlayer) {
         this.bedrockPlayer = bedrockPlayer;
+    }
+
+    /**
+     * Check if this player needs particle fallback (client < 1.19.4, no TextDisplay support).
+     * <p>
+     * Considers the player's {@link RenderMode} preference:
+     * <ul>
+     *   <li>{@link RenderMode#TEXT_DISPLAY} — always returns {@code false}</li>
+     *   <li>{@link RenderMode#PARTICLE} — always returns {@code true}</li>
+     *   <li>{@link RenderMode#AUTO} — returns the auto-detected value</li>
+     * </ul>
+     * <p>
+     * Bedrock (Floodgate) players are always forced to particle fallback
+     * since they do not support TextDisplay entities.
+     */
+    public boolean isParticleFallback() {
+        if (isBedrockPlayer()) return true;
+        return switch (renderMode) {
+            case TEXT_DISPLAY -> false;
+            case PARTICLE -> true;
+            case AUTO -> particleFallback;
+        };
+    }
+
+    /**
+     * Set the auto-detected fallback flag (called by PlayerJoinListener).
+     */
+    public void setParticleFallback(boolean particleFallback) {
+        this.particleFallback = particleFallback;
+    }
+
+    /**
+     * Get the current render mode preference.
+     */
+    public RenderMode getRenderMode() {
+        return renderMode;
+    }
+
+    /**
+     * Set the render mode preference.
+     *
+     * @param mode the desired mode ({@link RenderMode#AUTO}, {@link RenderMode#TEXT_DISPLAY},
+     *             or {@link RenderMode#PARTICLE})
+     */
+    public void setRenderMode(RenderMode mode) {
+        this.renderMode = mode != null ? mode : RenderMode.AUTO;
     }
 
     /**

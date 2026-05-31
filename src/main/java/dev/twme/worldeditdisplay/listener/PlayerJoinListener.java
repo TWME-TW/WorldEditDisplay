@@ -14,6 +14,7 @@ import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.common.Constants;
 import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.util.FloodgateUtil;
+import dev.twme.worldeditdisplay.util.VersionChecker;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 /**
@@ -42,6 +43,11 @@ public class PlayerJoinListener implements Listener {
         // Detect Floodgate Bedrock players and disable CUI for them
         if (FloodgateUtil.isBedrockPlayer(player)) {
             playerData.setBedrockPlayer(true);
+        }
+
+        // Detect client version: < 1.19.4 players use particle fallback (no TextDisplay support)
+        if (VersionChecker.isViaVersionAvailable()) {
+            playerData.setParticleFallback(VersionChecker.needsParticleFallback(player));
         }
 
         // Initialize viewall/label session defaults from permission nodes
