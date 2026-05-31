@@ -43,12 +43,12 @@
             <configuration>
               <filters>
                 <!--
-                  Spigot profile only shades adventure-api for the SERIALIZER interfaces
-                  (ComponentSerializer, FlattenerListener, etc.) that packetevents relocates
-                  away. The core adventure classes (Component, TextComponentImpl, etc.) are
-                  intentionally excluded so that both WED and packetevents use the SAME class
-                  loaded by packetevents' classloader, avoiding ClassCastException.
-                  Paper profile: adventure-api is "provided" so this filter has no effect.
+                  Share core adventure-api classes from packetevents' classloader to
+                  avoid ClassCastException when EntityLib passes Component objects to
+                  packetevents APIs (e.g. EntityDataType.write()).
+                  Only serializer/flattener/builder classes are shaded into WED.
+                  Both use adventure 4.x so there is no API mismatch.
+                  Paper profile: adventure-api is "provided" so this filter is a no-op.
                 -->
                 <filter>
                   <artifact>net.kyori:adventure-api</artifact>
@@ -197,20 +197,21 @@
         </dependency>
         <!-- Spigot's plugin classloader does NOT expose adventure-api to plugins;
              shade all adventure deps to make the jar self-contained.
-             EXCEPTION: adventure-key, examination-api/string are shaded by packetevents
-             at their original package paths → setting "provided" prevents loading the
-             same interface from two PluginClassLoaders (which causes LinkageError).
-             They are available via packetevents' classloader at runtime. -->
+             Core adventure-api classes (Component, etc.) are filtered out so they
+             are shared from packetevents' classloader, preventing ClassCastException
+             when EntityLib passes Component objects to packetevents APIs.
+             Both WED and packetevents use adventure 4.x → binary compatible.
+             adventure-key, examination-api/string are provided by packetevents. -->
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-api</artifactId>
-          <version>5.1.1</version>
+          <version>4.17.0</version>
           <scope>compile</scope>
         </dependency>
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-key</artifactId>
-          <version>5.1.1</version>
+          <version>4.17.0</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
@@ -228,13 +229,13 @@
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-text-minimessage</artifactId>
-          <version>5.1.1</version>
+          <version>4.17.0</version>
           <scope>compile</scope>
         </dependency>
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-text-serializer-legacy</artifactId>
-          <version>5.1.1</version>
+          <version>4.17.0</version>
           <scope>compile</scope>
         </dependency>
         <!-- BungeeCord serializer: converts Adventure Component → BaseComponent[] to preserve click events -->
