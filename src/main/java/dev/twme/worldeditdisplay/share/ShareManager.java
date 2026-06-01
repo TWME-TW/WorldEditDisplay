@@ -235,8 +235,8 @@ public class ShareManager {
     }
 
     /**
-     * Called when a player quits: clears their pending incoming invites from other players
-     * and removes their own outgoing pending invites.
+     * Called when a player quits: clears their pending invites, active shares,
+     * and viewer-to-sharer mappings to prevent memory leaks.
      */
     public void onPlayerQuit(UUID uuid) {
         // Remove pending invites sent TO this player
@@ -247,6 +247,30 @@ public class ShareManager {
 
         // Remove this player's own outgoing pending invites
         pendingRequests.remove(uuid);
+
+        // Remove this player as a sharer — revoke all active views on them
+        Set<UUID> viewers = activeShares.remove(uuid);
+        if (viewers != null) {
+            for (UUID viewerId : viewers) {
+                Set<UUID> sharers = viewerToSharers.get(viewerId);
+                if (sharers != null) {
+                    sharers.remove(uuid);
+                    if (sharers.isEmpty()) viewerToSharers.remove(viewerId);
+                }
+            }
+        }
+
+        // Remove this player as a viewer — stop watching all sharers
+        Set<UUID> sharers = viewerToSharers.remove(uuid);
+        if (sharers != null) {
+            for (UUID sharerId : sharers) {
+                Set<UUID> activeViewers = activeShares.get(sharerId);
+                if (activeViewers != null) {
+                    activeViewers.remove(uuid);
+                    if (activeViewers.isEmpty()) activeShares.remove(sharerId);
+                }
+            }
+        }
     }
 
     /**
