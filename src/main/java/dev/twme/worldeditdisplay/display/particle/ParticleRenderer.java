@@ -177,6 +177,7 @@ public abstract class ParticleRenderer<T extends Region> {
         edgePoints.clear();
         coloredEdgePoints.clear();
         markerPoints.clear();
+        viewers.clear();
         pointsDirty = true;
     }
 

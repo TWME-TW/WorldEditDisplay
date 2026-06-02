@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.entity.Player;
 
@@ -21,7 +22,7 @@ import io.github.retrooper.packetevents.util.folia.TaskWrapper;
  * Tracks current region selection(s), colors, rendering, and mode.
  */
 public class PlayerData {
-    private static final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
+    private static final Map<UUID, PlayerData> playerDataMap = new ConcurrentHashMap<>();
 
     /**
      * Render mode preference for the particle-fallback feature.

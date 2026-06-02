@@ -26,6 +26,7 @@ import dev.twme.worldeditdisplay.share.ShareManager;
 import dev.twme.worldeditdisplay.util.MessageUtil;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
+import io.github.retrooper.packetevents.util.folia.TaskWrapper;
 import me.tofaa.entitylib.APIConfig;
 import me.tofaa.entitylib.EntityLib;
 import me.tofaa.entitylib.spigot.SpigotEntityLibPlatform;
@@ -38,6 +39,15 @@ public final class WorldEditDisplay extends JavaPlugin {
     private LanguageManager languageManager;
     private ShareManager shareManager;
     private final Set<UUID> viewAllPlayers = ConcurrentHashMap.newKeySet();
+
+    // Packet listener references (kept for clean unregistration on disable)
+    private com.github.retrooper.packetevents.event.PacketListenerCommon inboundPacketListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon outboundPacketListener;
+
+    // Folia scheduled task references (cancelled on disable to prevent leaks)
+    private TaskWrapper shareSaveTask;
+    private TaskWrapper expiryPurgeTask;
+    private TaskWrapper playerSettingsSaveTask;
 
     @Override
     public void onLoad() {
@@ -56,8 +66,8 @@ public final class WorldEditDisplay extends JavaPlugin {
 
         PacketEvents.getAPI().init();
 
-        PacketEvents.getAPI().getEventManager().registerListener(new InboundPacketListener(), PacketListenerPriority.NORMAL);
-        PacketEvents.getAPI().getEventManager().registerListener(new OutboundPacketListener(), PacketListenerPriority.NORMAL);
+        inboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(new InboundPacketListener(), PacketListenerPriority.NORMAL);
+        outboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(new OutboundPacketListener(), PacketListenerPriority.NORMAL);
 
         SpigotEntityLibPlatform platform = new SpigotEntityLibPlatform(this);
         APIConfig settings = new APIConfig(PacketEvents.getAPI())
@@ -96,16 +106,16 @@ public final class WorldEditDisplay extends JavaPlugin {
 
         // Schedule periodic share save and expiry purge
         int saveIntervalMinutes = Math.max(1, getConfig().getInt("share.auto_save_interval", 5));
-        FoliaScheduler.getAsyncScheduler().runAtFixedRate(this, task -> {
+        shareSaveTask = FoliaScheduler.getAsyncScheduler().runAtFixedRate(this, task -> {
             if (shareManager != null) shareManager.save();
         }, saveIntervalMinutes, saveIntervalMinutes, TimeUnit.MINUTES);
         // Purge expired invites every 10 seconds
-        FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(this, task -> {
+        expiryPurgeTask = FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(this, task -> {
             if (shareManager != null) shareManager.purgeAllExpiredRequests();
         }, 200L, 200L);
 
         // Schedule periodic player settings save every 5 minutes
-        FoliaScheduler.getAsyncScheduler().runAtFixedRate(this, task -> {
+        playerSettingsSaveTask = FoliaScheduler.getAsyncScheduler().runAtFixedRate(this, task -> {
             if (playerSettingsManager != null) playerSettingsManager.saveAllDirty();
         }, 5, 5, TimeUnit.MINUTES);
 
@@ -123,6 +133,20 @@ public final class WorldEditDisplay extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Cancel scheduled tasks to prevent dangling references
+        if (shareSaveTask != null) {
+            shareSaveTask.cancel();
+            shareSaveTask = null;
+        }
+        if (expiryPurgeTask != null) {
+            expiryPurgeTask.cancel();
+            expiryPurgeTask = null;
+        }
+        if (playerSettingsSaveTask != null) {
+            playerSettingsSaveTask.cancel();
+            playerSettingsSaveTask = null;
+        }
+
         // Save share data
         if (shareManager != null) {
             shareManager.save();
@@ -137,7 +161,17 @@ public final class WorldEditDisplay extends JavaPlugin {
         if (renderManager != null) {
             renderManager.shutdown();
         }
-        
+
+        // Unregister PacketEvents listeners to prevent duplicate registrations on reload
+        if (inboundPacketListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(inboundPacketListener);
+            inboundPacketListener = null;
+        }
+        if (outboundPacketListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(outboundPacketListener);
+            outboundPacketListener = null;
+        }
+
         getLogger().info("WorldEditDisplay disabled");
     }
 
