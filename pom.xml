@@ -153,7 +153,7 @@
     <dependency>
       <groupId>com.viaversion</groupId>
       <artifactId>viaversion-api</artifactId>
-      <version>5.0.0</version>
+      <version>5.9.1</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
