@@ -44,6 +44,11 @@ public final class WorldEditDisplay extends JavaPlugin {
     private com.github.retrooper.packetevents.event.PacketListenerCommon inboundPacketListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon outboundPacketListener;
 
+    // Direct references to the listener instances — used for deactivation
+    // before unregistration to close the classloader-zip race window.
+    private InboundPacketListener inboundListenerInstance;
+    private OutboundPacketListener outboundListenerInstance;
+
     // Folia scheduled task references (cancelled on disable to prevent leaks)
     private TaskWrapper shareSaveTask;
     private TaskWrapper expiryPurgeTask;
@@ -66,8 +71,10 @@ public final class WorldEditDisplay extends JavaPlugin {
 
         PacketEvents.getAPI().init();
 
-        inboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(new InboundPacketListener(), PacketListenerPriority.NORMAL);
-        outboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(new OutboundPacketListener(), PacketListenerPriority.NORMAL);
+        inboundListenerInstance = new InboundPacketListener();
+        inboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(inboundListenerInstance, PacketListenerPriority.NORMAL);
+        outboundListenerInstance = new OutboundPacketListener();
+        outboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(outboundListenerInstance, PacketListenerPriority.NORMAL);
 
         SpigotEntityLibPlatform platform = new SpigotEntityLibPlatform(this);
         APIConfig settings = new APIConfig(PacketEvents.getAPI())
@@ -162,7 +169,18 @@ public final class WorldEditDisplay extends JavaPlugin {
             renderManager.shutdown();
         }
 
-        // Unregister PacketEvents listeners to prevent duplicate registrations on reload
+        // STEP 1 — Deactivate listener flags FIRST, so any in-flight
+        // Netty dispatch that hasn't yet entered the listener method
+        // will bail out at the `!active` guard before triggering any
+        // lazy plugin class loading.
+        if (inboundListenerInstance != null) {
+            inboundListenerInstance.deactivate();
+        }
+        if (outboundListenerInstance != null) {
+            outboundListenerInstance.deactivate();
+        }
+
+        // STEP 2 — Then unregister from PacketEvents (future dispatches).
         if (inboundPacketListener != null) {
             PacketEvents.getAPI().getEventManager().unregisterListener(inboundPacketListener);
             inboundPacketListener = null;

@@ -18,8 +18,23 @@ import dev.twme.worldeditdisplay.player.PlayerData;
  */
 public class InboundPacketListener implements PacketListener {
 
+    /**
+     * Guard flag: set to {@code false} by {@link #deactivate()} during
+     * {@code onDisable()} so that in-flight Netty dispatches bail out
+     * at the earliest possible point — before any plugin class loading
+     * that would hit the already-closed PluginClassLoader ZipFile.
+     */
+    private volatile boolean active = true;
+
+    /** Called from onDisable to prevent the classloader-zip-closed race. */
+    public void deactivate() {
+        this.active = false;
+    }
+
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
+        if (!active) return;
+
         if (event.getPacketType() != PacketType.Play.Client.PLUGIN_MESSAGE) return;
 
         // Catch exceptions for oversized packets (e.g., mods like Axiom)
