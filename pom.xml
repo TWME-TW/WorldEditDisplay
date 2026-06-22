@@ -59,6 +59,16 @@
                     <include>net/kyori/adventure/builder/**</include>
                   </includes>
                 </filter>
+                <!--
+                  textdisplayshape-packet bundles its own EntityLib classes.
+                  Exclude them so our direct (fixed) EntityLib dependency takes precedence.
+                -->
+                <filter>
+                  <artifact>dev.twme:textdisplayshape-packet</artifact>
+                  <excludes>
+                    <exclude>me/tofaa/entitylib/**</exclude>
+                  </excludes>
+                </filter>
               </filters>
               <relocations>
                 <relocation>
@@ -129,7 +139,7 @@
     <dependency>
       <groupId>dev.twme</groupId>
       <artifactId>textdisplayshape-packet</artifactId>
-      <version>2.0.1-SNAPSHOT</version>
+      <version>2.0.2-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
