@@ -42,6 +42,8 @@ public abstract class RegionRenderer<T extends Region> {
     protected final List<Shape> shapes;
     private final Map<LineKey, Shape> retainedLineShapes;
     private Set<LineKey> retainedLinePassKeys;
+    private RetainedLineStats currentRetainedLineStats = RetainedLineStats.empty();
+    private RetainedLineStats lastRetainedLineStats = RetainedLineStats.empty();
 
     protected RenderConfig config;
 
@@ -87,11 +89,14 @@ public abstract class RegionRenderer<T extends Region> {
         shapes.clear();
         retainedLineShapes.clear();
         retainedLinePassKeys = null;
+        currentRetainedLineStats = RetainedLineStats.empty();
+        lastRetainedLineStats = RetainedLineStats.empty();
         lastRebaseOrigin = null;
     }
 
     protected void beginRetainedLineRender() {
         renderOrigin = null;
+        currentRetainedLineStats = RetainedLineStats.empty();
         removeNonRetainedShapes();
         retainedLinePassKeys = new HashSet<>();
     }
@@ -109,6 +114,7 @@ public abstract class RegionRenderer<T extends Region> {
                 plugin.getLogger().log(Level.WARNING, "Failed to remove transient shape", e);
             }
             iterator.remove();
+            currentRetainedLineStats = currentRetainedLineStats.withTransientRemoved();
         }
     }
 
@@ -128,9 +134,11 @@ public abstract class RegionRenderer<T extends Region> {
             }
             shapes.remove(shape);
             iterator.remove();
+            currentRetainedLineStats = currentRetainedLineStats.withRemovedLine();
         }
 
         retainedLinePassKeys = null;
+        lastRetainedLineStats = currentRetainedLineStats;
     }
 
     protected Location toLocation(double x, double y, double z) {
@@ -197,11 +205,15 @@ public abstract class RegionRenderer<T extends Region> {
             LineKey key = LineKey.of(line, color, thickness, isSeeThrough());
             retainedLinePassKeys.add(key);
             Shape existing = retainedLineShapes.get(key);
-            if (existing != null) return;
+            if (existing != null) {
+                currentRetainedLineStats = currentRetainedLineStats.withReusedLine();
+                return;
+            }
 
             Shape shape = createLineShape(line, color, thickness);
             retainedLineShapes.put(key, shape);
             shapes.add(shape);
+            currentRetainedLineStats = currentRetainedLineStats.withSpawnedLine();
             return;
         }
 
@@ -222,7 +234,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .build();
         shape.addViewer(player.getUniqueId());
         shape.spawn();
-            return shape;
+        return shape;
     }
 
     /**
@@ -334,6 +346,14 @@ public abstract class RegionRenderer<T extends Region> {
         return retainedLineShapes.size();
     }
 
+    public int getRetainedLineEntityCount() {
+        return retainedLineShapes.values().stream().mapToInt(s -> s.getEntityUUIDs().size()).sum();
+    }
+
+    public RetainedLineStats getLastRetainedLineStats() {
+        return lastRetainedLineStats;
+    }
+
     public Player getPlayer() {
         return player;
     }
@@ -372,6 +392,28 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     protected record Line(Vector3f start, Vector3f end){};
+
+    public record RetainedLineStats(int reusedLines, int spawnedLines, int removedLines, int removedTransientShapes) {
+        public static RetainedLineStats empty() {
+            return new RetainedLineStats(0, 0, 0, 0);
+        }
+
+        private RetainedLineStats withReusedLine() {
+            return new RetainedLineStats(reusedLines + 1, spawnedLines, removedLines, removedTransientShapes);
+        }
+
+        private RetainedLineStats withSpawnedLine() {
+            return new RetainedLineStats(reusedLines, spawnedLines + 1, removedLines, removedTransientShapes);
+        }
+
+        private RetainedLineStats withRemovedLine() {
+            return new RetainedLineStats(reusedLines, spawnedLines, removedLines + 1, removedTransientShapes);
+        }
+
+        private RetainedLineStats withTransientRemoved() {
+            return new RetainedLineStats(reusedLines, spawnedLines, removedLines, removedTransientShapes + 1);
+        }
+    }
 
     private record LineKey(float startX, float startY, float startZ,
                            float endX, float endY, float endZ,

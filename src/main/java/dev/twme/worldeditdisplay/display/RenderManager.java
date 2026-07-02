@@ -31,6 +31,7 @@ import dev.twme.worldeditdisplay.display.renderer.EllipsoidRenderer;
 import dev.twme.worldeditdisplay.display.renderer.PolygonRenderer;
 import dev.twme.worldeditdisplay.display.renderer.PolyhedronRenderer;
 import dev.twme.worldeditdisplay.display.renderer.RegionRenderer;
+import dev.twme.worldeditdisplay.display.renderer.RegionRenderer.RetainedLineStats;
 import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.region.BoundingBox;
 import dev.twme.worldeditdisplay.region.CuboidRegion;
@@ -180,7 +181,11 @@ public class RenderManager {
                 int entityCount = getPlayerEntityCount(playerId);
                 MessageUtil.sendTranslated(player, "command.wedisplay.debug.entity_count", entityCount);
                 int retainedLineCount = getPlayerRetainedLineCount(playerId);
-                MessageUtil.sendTranslated(player, "command.wedisplay.debug.retained_line_count", retainedLineCount);
+                int retainedLineEntityCount = getPlayerRetainedLineEntityCount(playerId);
+                MessageUtil.sendTranslated(player, "command.wedisplay.debug.retained_line_count", retainedLineCount, retainedLineEntityCount);
+                RetainedLineStats retainedLineStats = getPlayerRetainedLineStats(playerId);
+                MessageUtil.sendTranslated(player, "command.wedisplay.debug.retained_line_pass",
+                        retainedLineStats.reusedLines(), retainedLineStats.spawnedLines(), retainedLineStats.removedLines());
             }
         }
     }
@@ -1273,6 +1278,44 @@ public class RenderManager {
             }
         }
         return count;
+    }
+
+    public int getPlayerRetainedLineEntityCount(UUID playerId) {
+        int count = 0;
+        RegionRenderer mainRenderer = mainRenderers.get(playerId);
+        if (mainRenderer != null) {
+            count += mainRenderer.getRetainedLineEntityCount();
+        }
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.get(playerId);
+        if (playerMultiRenderers != null) {
+            for (RegionRenderer renderer : playerMultiRenderers.values()) {
+                count += renderer.getRetainedLineEntityCount();
+            }
+        }
+        return count;
+    }
+
+    public RetainedLineStats getPlayerRetainedLineStats(UUID playerId) {
+        RetainedLineStats total = RetainedLineStats.empty();
+        RegionRenderer mainRenderer = mainRenderers.get(playerId);
+        if (mainRenderer != null) {
+            total = addRetainedLineStats(total, mainRenderer.getLastRetainedLineStats());
+        }
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.get(playerId);
+        if (playerMultiRenderers != null) {
+            for (RegionRenderer renderer : playerMultiRenderers.values()) {
+                total = addRetainedLineStats(total, renderer.getLastRetainedLineStats());
+            }
+        }
+        return total;
+    }
+
+    private RetainedLineStats addRetainedLineStats(RetainedLineStats first, RetainedLineStats second) {
+        return new RetainedLineStats(
+                first.reusedLines() + second.reusedLines(),
+                first.spawnedLines() + second.spawnedLines(),
+                first.removedLines() + second.removedLines(),
+                first.removedTransientShapes() + second.removedTransientShapes());
     }
 
     public void shutdown() {
