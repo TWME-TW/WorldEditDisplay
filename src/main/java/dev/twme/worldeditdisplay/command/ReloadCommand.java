@@ -5,6 +5,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.logging.Level;
+
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.util.MessageUtil;
 
@@ -33,6 +35,7 @@ public class ReloadCommand implements CommandExecutor {
             return true;
             
         } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to reload WorldEditDisplay", e);
             MessageUtil.sendTranslated(sender, "general.reload_failed");
             return true;
         }

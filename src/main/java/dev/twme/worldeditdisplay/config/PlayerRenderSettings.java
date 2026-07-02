@@ -3,6 +3,7 @@ package dev.twme.worldeditdisplay.config;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
@@ -110,7 +111,7 @@ public class PlayerRenderSettings {
     protected PlayerRenderSettings(WorldEditDisplay plugin) {
         this.plugin = plugin;
         this.playerUUID = null;
-        this.serverSettings = plugin.getRenderSettings();
+        this.serverSettings = plugin != null ? plugin.getRenderSettings() : null;
         this.configFile = null;
         this.config = new org.bukkit.configuration.file.YamlConfiguration();
     }
@@ -206,7 +207,7 @@ public class PlayerRenderSettings {
         polyhedronVertexThickness = null;
     }
 
-    public void save() {
+    public boolean save() {
         // Snapshot the YAML string inside the monitor, then write to disk outside
         // to avoid holding the lock during I/O.
         String content;
@@ -216,7 +217,12 @@ public class PlayerRenderSettings {
         try {
             java.nio.file.Files.writeString(configFile.toPath(), content,
                     java.nio.charset.StandardCharsets.UTF_8);
-        } catch (IOException ignored) {}
+            return true;
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.WARNING,
+                    "Failed to save player render settings: " + configFile.getAbsolutePath(), e);
+            return false;
+        }
     }
 
     private void loadCuboidSettings(ConfigurationSection section) {

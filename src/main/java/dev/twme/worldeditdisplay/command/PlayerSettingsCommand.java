@@ -44,11 +44,6 @@ public class PlayerSettingsCommand implements TabExecutor {
 
         Player player = (Player) sender;
 
-        if (!player.hasPermission("worldeditdisplay.use.settings")) {
-            MessageUtil.sendTranslated(player, "general.no_permission");
-            return true;
-        }
-
         if (args.length == 0) {
             sendHelp(player);
             return true;
@@ -56,13 +51,24 @@ public class PlayerSettingsCommand implements TabExecutor {
 
         String subCommand = args[0].toLowerCase();
 
+        if (requiresSettingsPermission(subCommand) && !player.hasPermission("worldeditdisplay.use.settings")) {
+            MessageUtil.sendTranslated(player, "general.no_permission");
+            return true;
+        }
+
         switch (subCommand) {
             case "set" -> handleSet(player, args);
             case "reset" -> handleReset(player, args);
             case "show" -> handleShow(player, args);
             case "reloadplayer" -> handleReload(player);
             case "lang", "language" -> handleLanguage(player, args);
-            case "toggle" -> handleToggle(player);
+            case "toggle" -> {
+                if (!player.hasPermission("worldeditdisplay.use")) {
+                    MessageUtil.sendTranslated(player, "general.no_permission");
+                } else {
+                    handleToggle(player);
+                }
+            }
             case "debug" -> handleDebug(player);
             case "render" -> handleRender(player, args);
             case "share" -> {
@@ -87,6 +93,13 @@ public class PlayerSettingsCommand implements TabExecutor {
         return true;
     }
 
+    private boolean requiresSettingsPermission(String subCommand) {
+        return switch (subCommand) {
+            case "set", "reset", "show", "reloadplayer", "lang", "language", "debug" -> true;
+            default -> false;
+        };
+    }
+
     // command handlers
     private boolean handleSet(Player player, String[] args) {
         if (args.length < 4) {
@@ -102,6 +115,12 @@ public class PlayerSettingsCommand implements TabExecutor {
         if (!isValidRenderer(renderer)) {
             MessageUtil.sendTranslated(player, "command.wedisplay.set.invalid_renderer");
             MessageUtil.sendTranslated(player, "command.wedisplay.set.available_renderers");
+            return true;
+        }
+
+        if (!isValidSetting(renderer, setting)) {
+            MessageUtil.sendTranslated(player, "command.wedisplay.set.failed");
+            MessageUtil.sendTranslated(player, "command.wedisplay.set.failed_hint");
             return true;
         }
 
@@ -147,6 +166,11 @@ public class PlayerSettingsCommand implements TabExecutor {
         if (args.length >= 3) {
             // reset one setting
             String setting = args[2].toLowerCase();
+            if (!isValidSetting(renderer, setting)) {
+                MessageUtil.sendTranslated(player, "command.wedisplay.set.failed");
+                MessageUtil.sendTranslated(player, "command.wedisplay.set.failed_hint");
+                return true;
+            }
             settings.reset("renderer." + renderer + "." + setting);
             MessageUtil.sendTranslated(player, "command.wedisplay.reset.success_setting", renderer, setting);
         } else {
@@ -422,6 +446,10 @@ public class PlayerSettingsCommand implements TabExecutor {
                 renderer.equals("polyhedron");
     }
 
+    private boolean isValidSetting(String renderer, String setting) {
+        return getSettingKeys(renderer).contains(setting);
+    }
+
     private Object parseValue(String setting, String value) {
         if (setting.contains("color")) {
             if (!value.startsWith("#")) {
@@ -432,7 +460,9 @@ public class PlayerSettingsCommand implements TabExecutor {
             }
             return null;
         } else if (setting.contains("enabled") || setting.contains("see_through")) {
-            return Boolean.parseBoolean(value);
+            if (value.equalsIgnoreCase("true")) return true;
+            if (value.equalsIgnoreCase("false")) return false;
+            return null;
         } else if (setting.contains("thickness") || setting.contains("size") ||
                 setting.contains("length") || setting.contains("factor")) {
             try { return Double.parseDouble(value); }

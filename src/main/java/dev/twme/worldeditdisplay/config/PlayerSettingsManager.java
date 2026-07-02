@@ -141,8 +141,9 @@ public class PlayerSettingsManager {
         for (PlayerRenderSettings settings : settingsCache.values()) {
             synchronized (settings) {
                 if (settings.isDirty()) {
-                    settings.save();
-                    settings.markClean();
+                    if (settings.save()) {
+                        settings.markClean();
+                    }
                 }
             }
         }

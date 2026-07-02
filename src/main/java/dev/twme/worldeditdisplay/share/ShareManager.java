@@ -58,6 +58,13 @@ public class ShareManager {
         load();
     }
 
+    ShareManager(File dataFile, int requestTimeoutSec) {
+        this.plugin = null;
+        this.dataFile = dataFile;
+        this.requestTimeoutSec = requestTimeoutSec;
+        load();
+    }
+
     /** Refresh cached config values. Call after a /reload. */
     public void reloadConfig() {
         this.requestTimeoutSec = plugin.getConfig().getInt("share.request_timeout", 30);
@@ -235,8 +242,8 @@ public class ShareManager {
     }
 
     /**
-     * Called when a player quits: clears their pending invites, active shares,
-     * and viewer-to-sharer mappings to prevent memory leaks.
+     * Called when a player quits: clears only memory-only pending invites.
+     * Accepted shares are persisted and remain active until revoked or unwatched.
      */
     public void onPlayerQuit(UUID uuid) {
         // Remove pending invites sent TO this player
@@ -247,30 +254,6 @@ public class ShareManager {
 
         // Remove this player's own outgoing pending invites
         pendingRequests.remove(uuid);
-
-        // Remove this player as a sharer — revoke all active views on them
-        Set<UUID> viewers = activeShares.remove(uuid);
-        if (viewers != null) {
-            for (UUID viewerId : viewers) {
-                Set<UUID> sharers = viewerToSharers.get(viewerId);
-                if (sharers != null) {
-                    sharers.remove(uuid);
-                    if (sharers.isEmpty()) viewerToSharers.remove(viewerId);
-                }
-            }
-        }
-
-        // Remove this player as a viewer — stop watching all sharers
-        Set<UUID> sharers = viewerToSharers.remove(uuid);
-        if (sharers != null) {
-            for (UUID sharerId : sharers) {
-                Set<UUID> activeViewers = activeShares.get(sharerId);
-                if (activeViewers != null) {
-                    activeViewers.remove(uuid);
-                    if (activeViewers.isEmpty()) activeShares.remove(sharerId);
-                }
-            }
-        }
     }
 
     /**
@@ -336,7 +319,9 @@ public class ShareManager {
         try {
             yaml.save(dataFile);
         } catch (IOException e) {
-            plugin.getLogger().log(Level.WARNING, "Failed to save share_data.yml", e);
+            if (plugin != null) {
+                plugin.getLogger().log(Level.WARNING, "Failed to save share_data.yml", e);
+            }
         }
     }
 
@@ -362,7 +347,9 @@ public class ShareManager {
                 if (!viewers.isEmpty()) activeShares.put(sharer, viewers);
             }
         } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Failed to load share_data.yml", e);
+            if (plugin != null) {
+                plugin.getLogger().log(Level.WARNING, "Failed to load share_data.yml", e);
+            }
         }
     }
 
