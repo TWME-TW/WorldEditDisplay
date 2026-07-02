@@ -1,7 +1,12 @@
 package dev.twme.worldeditdisplay.display.renderer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -35,6 +40,8 @@ public abstract class RegionRenderer<T extends Region> {
 
     // pool of shapes
     protected final List<Shape> shapes;
+    private final Map<LineKey, Shape> retainedLineShapes;
+    private Set<LineKey> retainedLinePassKeys;
 
     protected RenderConfig config;
 
@@ -51,6 +58,7 @@ public abstract class RegionRenderer<T extends Region> {
         this.playerUUID = player.getUniqueId();
         this.settings = settings;
         this.shapes = new ArrayList<>();
+        this.retainedLineShapes = new HashMap<>();
         this.config = RenderConfig.getDefault();
     }
 
@@ -77,7 +85,52 @@ public abstract class RegionRenderer<T extends Region> {
             }
         }
         shapes.clear();
+        retainedLineShapes.clear();
+        retainedLinePassKeys = null;
         lastRebaseOrigin = null;
+    }
+
+    protected void beginRetainedLineRender() {
+        renderOrigin = null;
+        removeNonRetainedShapes();
+        retainedLinePassKeys = new HashSet<>();
+    }
+
+    private void removeNonRetainedShapes() {
+        Set<Shape> retainedShapes = new HashSet<>(retainedLineShapes.values());
+        Iterator<Shape> iterator = shapes.iterator();
+        while (iterator.hasNext()) {
+            Shape shape = iterator.next();
+            if (retainedShapes.contains(shape)) continue;
+
+            try {
+                shape.remove();
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to remove transient shape", e);
+            }
+            iterator.remove();
+        }
+    }
+
+    protected void finishRetainedLineRender() {
+        if (retainedLinePassKeys == null) return;
+
+        Iterator<Map.Entry<LineKey, Shape>> iterator = retainedLineShapes.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<LineKey, Shape> entry = iterator.next();
+            if (retainedLinePassKeys.contains(entry.getKey())) continue;
+
+            Shape shape = entry.getValue();
+            try {
+                shape.remove();
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to remove stale line shape", e);
+            }
+            shapes.remove(shape);
+            iterator.remove();
+        }
+
+        retainedLinePassKeys = null;
     }
 
     protected Location toLocation(double x, double y, double z) {
@@ -137,6 +190,23 @@ public abstract class RegionRenderer<T extends Region> {
      * Render a line using TextDisplayShapes
      */
     protected void renderLine(Line line, Color color, float thickness) {
+        if (retainedLinePassKeys != null) {
+            LineKey key = LineKey.of(line, color, thickness, isSeeThrough());
+            retainedLinePassKeys.add(key);
+            Shape existing = retainedLineShapes.get(key);
+            if (existing != null) return;
+
+            Shape shape = createLineShape(line, color, thickness);
+            retainedLineShapes.put(key, shape);
+            shapes.add(shape);
+            return;
+        }
+
+        Shape shape = createLineShape(line, color, thickness);
+        shapes.add(shape);
+    }
+
+    private Shape createLineShape(Line line, Color color, float thickness) {
         Location origin = getOrigin();
         Shape shape = new PacketShapeFactory()
                 .line(origin, line.start(), line.end(), thickness)
@@ -149,7 +219,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .build();
         shape.addViewer(player.getUniqueId());
         shape.spawn();
-        shapes.add(shape);
+            return shape;
     }
 
     /**
@@ -295,4 +365,17 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     protected record Line(Vector3f start, Vector3f end){};
+
+    private record LineKey(float startX, float startY, float startZ,
+                           float endX, float endY, float endZ,
+                           int color, int thickness, boolean seeThrough) {
+        private static LineKey of(Line line, Color color, float thickness, boolean seeThrough) {
+            Vector3f start = line.start();
+            Vector3f end = line.end();
+            return new LineKey(
+                    start.x, start.y, start.z,
+                    end.x, end.y, end.z,
+                    color.asARGB(), Float.floatToIntBits(thickness), seeThrough);
+        }
+    }
 }

@@ -26,7 +26,15 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
 
     @Override
     public void render(PolyhedronRegion region) {
-        clear();
+        beginRetainedLineRender();
+        try {
+            renderRetained(region);
+        } finally {
+            finishRetainedLineRender();
+        }
+    }
+
+    private void renderRetained(PolyhedronRegion region) {
 
         List<Vector3> vertices = region.getVertices();
         if (vertices.isEmpty()) return;

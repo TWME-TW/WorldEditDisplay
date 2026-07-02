@@ -25,7 +25,15 @@ public class PolygonRenderer extends RegionRenderer<PolygonRegion> {
 
     @Override
     public void render(PolygonRegion region) {
-        clear();
+        beginRetainedLineRender();
+        try {
+            renderRetained(region);
+        } finally {
+            finishRetainedLineRender();
+        }
+    }
+
+    private void renderRetained(PolygonRegion region) {
 
         if (!region.isDefined()) return;
 

@@ -36,7 +36,15 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
 
     @Override
     public void render(CuboidRegion region) {
-        clear(); // remove old lines
+        beginRetainedLineRender();
+        try {
+            renderRetained(region);
+        } finally {
+            finishRetainedLineRender();
+        }
+    }
+
+    private void renderRetained(CuboidRegion region) {
 
         boolean isMultiSelection = isMultiSelection(region);
         Vector3 point1 = region.getPoint1();
