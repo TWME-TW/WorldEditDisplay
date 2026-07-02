@@ -327,6 +327,10 @@ public abstract class RegionRenderer<T extends Region> {
         return shapes.stream().mapToInt(s -> s.getEntityUUIDs().size()).sum();
     }
 
+    public int getRetainedLineCount() {
+        return retainedLineShapes.size();
+    }
+
     public Player getPlayer() {
         return player;
     }

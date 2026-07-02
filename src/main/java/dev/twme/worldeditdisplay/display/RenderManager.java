@@ -179,6 +179,8 @@ public class RenderManager {
             } else {
                 int entityCount = getPlayerEntityCount(playerId);
                 MessageUtil.sendTranslated(player, "command.wedisplay.debug.entity_count", entityCount);
+                int retainedLineCount = getPlayerRetainedLineCount(playerId);
+                MessageUtil.sendTranslated(player, "command.wedisplay.debug.retained_line_count", retainedLineCount);
             }
         }
     }
@@ -1253,6 +1255,21 @@ public class RenderManager {
         if (playerMultiRenderers != null) {
             for (RegionRenderer renderer : playerMultiRenderers.values()) {
                 count += renderer.getEntityCount();
+            }
+        }
+        return count;
+    }
+
+    public int getPlayerRetainedLineCount(UUID playerId) {
+        int count = 0;
+        RegionRenderer mainRenderer = mainRenderers.get(playerId);
+        if (mainRenderer != null) {
+            count += mainRenderer.getRetainedLineCount();
+        }
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.get(playerId);
+        if (playerMultiRenderers != null) {
+            for (RegionRenderer renderer : playerMultiRenderers.values()) {
+                count += renderer.getRetainedLineCount();
             }
         }
         return count;
