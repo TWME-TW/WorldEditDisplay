@@ -65,6 +65,7 @@ command:
       disabled: "<#E8C96D>已关闭调试模式！"
       entity_count: "<#C2C7D3>[调试] 当前显示实体数量：<white>%d"
       retained_line_count: "<#C2C7D3>[调试] 已保留未变化线段形状：<white>%d"
+      rebased_shape_count: "<#C2C7D3>[调试] 因玩家移动而重新定位显示形状：<white>%d"
       particle_count: "<#C2C7D3>[调试] 当前粒子点数量：<white>%d"
       cui_message: "<#C2C7D3>[调试] 收到 WECUI 消息：<white>%s"
 

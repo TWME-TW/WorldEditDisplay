@@ -1297,7 +1297,7 @@ public class RenderManager {
         rebaseTask = FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, ignored -> {
             for (RegionRenderer renderer : mainRenderers.values()) {
                 try {
-                    renderer.rebaseOriginIfNeeded();
+                    reportRebaseIfDebug(renderer, renderer.rebaseOriginIfNeeded());
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING, "rebase main renderer fail", e);
                 }
@@ -1305,7 +1305,7 @@ public class RenderManager {
             for (Map<UUID, RegionRenderer> playerMultiRenderers : multiRenderers.values()) {
                 for (RegionRenderer renderer : playerMultiRenderers.values()) {
                     try {
-                        renderer.rebaseOriginIfNeeded();
+                        reportRebaseIfDebug(renderer, renderer.rebaseOriginIfNeeded());
                     } catch (Exception e) {
                         plugin.getLogger().log(Level.WARNING, "rebase multi renderer fail", e);
                     }
@@ -1314,13 +1314,22 @@ public class RenderManager {
             for (Map<UUID, RegionRenderer> playerSharedRenderers : sharedRenderers.values()) {
                 for (RegionRenderer renderer : playerSharedRenderers.values()) {
                     try {
-                        renderer.rebaseOriginIfNeeded();
+                        reportRebaseIfDebug(renderer, renderer.rebaseOriginIfNeeded());
                     } catch (Exception e) {
                         plugin.getLogger().log(Level.WARNING, "rebase shared renderer fail", e);
                     }
                 }
             }
         }, 10L, 10L); // initial delay 10 ticks, period 10 ticks
+    }
+
+    private void reportRebaseIfDebug(RegionRenderer renderer, int rebasedShapes) {
+        if (rebasedShapes <= 0) return;
+        Player player = renderer.getPlayer();
+        if (player == null || !player.isOnline()) return;
+        PlayerData playerData = PlayerData.getPlayerData(player);
+        if (playerData == null || !playerData.isDebugEnabled()) return;
+        MessageUtil.sendTranslated(player, "command.wedisplay.debug.rebased_shape_count", rebasedShapes);
     }
 
     public void refreshPlayerRenderer(Player player) {

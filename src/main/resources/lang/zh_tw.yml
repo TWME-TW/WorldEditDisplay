@@ -65,6 +65,7 @@ command:
       disabled: "<#E8C96D>已關閉除錯模式！"
       entity_count: "<#C2C7D3>[除錯] 目前顯示實體數量：<white>%d"
       retained_line_count: "<#C2C7D3>[除錯] 已保留未變更線段形狀：<white>%d"
+      rebased_shape_count: "<#C2C7D3>[除錯] 因玩家移動而重新定位顯示形狀：<white>%d"
       particle_count: "<#C2C7D3>[除錯] 目前粒子點數量：<white>%d"
       cui_message: "<#C2C7D3>[除錯] 收到 WECUI 訊息：<white>%s"
 

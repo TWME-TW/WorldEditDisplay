@@ -65,6 +65,7 @@ command:
       disabled: "<#E8C96D>Debug mode disabled!"
       entity_count: "<#C2C7D3>[Debug] Current display entity count: <white>%d"
       retained_line_count: "<#C2C7D3>[Debug] Retained unchanged line shapes: <white>%d"
+      rebased_shape_count: "<#C2C7D3>[Debug] Player movement rebased display shapes: <white>%d"
       particle_count: "<#C2C7D3>[Debug] Current particle point count: <white>%d"
       cui_message: "<#C2C7D3>[Debug] Received WECUI message: <white>%s"
 

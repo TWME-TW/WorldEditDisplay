@@ -158,26 +158,29 @@ public abstract class RegionRenderer<T extends Region> {
      * and teleports all shape entities to the player's feet if so.
      * This prevents TextDisplay entities from exceeding their view range.
      */
-    public void rebaseOriginIfNeeded() {
-        if (shapes.isEmpty() || lastRebaseOrigin == null) return;
+    public int rebaseOriginIfNeeded() {
+        if (shapes.isEmpty() || lastRebaseOrigin == null) return 0;
 
         Location playerLoc = player.getLocation();
-        if (!playerLoc.getWorld().equals(lastRebaseOrigin.getWorld())) return;
-        if (playerLoc.distanceSquared(lastRebaseOrigin) < REBASE_DISTANCE_SQUARED) return;
+        if (!playerLoc.getWorld().equals(lastRebaseOrigin.getWorld())) return 0;
+        if (playerLoc.distanceSquared(lastRebaseOrigin) < REBASE_DISTANCE_SQUARED) return 0;
 
         Location newOrigin = playerLoc.clone();
         newOrigin.setYaw(0);
         newOrigin.setPitch(0);
 
+        int rebasedShapes = 0;
         for (Shape shape : shapes) {
             try {
                 shape.teleportOrigin(newOrigin.getX(), newOrigin.getY(), newOrigin.getZ());
+                rebasedShapes++;
             } catch (Exception e) {
                 plugin.getLogger().log(Level.WARNING, "Failed to rebase shape origin", e);
             }
         }
 
         lastRebaseOrigin = newOrigin.clone();
+        return rebasedShapes;
     }
 
     /**
