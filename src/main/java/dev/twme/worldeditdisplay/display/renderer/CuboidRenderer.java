@@ -1,8 +1,5 @@
 package dev.twme.worldeditdisplay.display.renderer;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.bukkit.Color;
 import org.bukkit.entity.Player;
 import org.joml.Vector3f;
@@ -127,56 +124,47 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
 
     private void renderXZPlane(double x1, double y, double z1, double x2, double z2,
                                double spacingX, double spacingZ, Color color) {
-        int countZ = (int) Math.ceil((z2 - z1) / spacingZ) + 1;
-        int countX = (int) Math.ceil((x2 - x1) / spacingX) + 1;
-        List<Line> lines = new ArrayList<>(countZ + countX);
+        float thickness = settings.getCuboidGridThickness();
         for (double z = z1; z <= z2; z += spacingZ) {
             if (z > z1 && z2 - z < SKIP_THRESHOLD) continue;
-            lines.add(new Line(new Vector3f((float) x1, (float) y, (float) z),
-                    new Vector3f((float) x2, (float) y, (float) z)));
+            renderLine(new Line(new Vector3f((float) x1, (float) y, (float) z),
+                new Vector3f((float) x2, (float) y, (float) z)), color, thickness);
         }
         for (double x = x1; x <= x2; x += spacingX) {
             if (x > x1 && x2 - x < SKIP_THRESHOLD) continue;
-            lines.add(new Line(new Vector3f((float) x, (float) y, (float) z1),
-                    new Vector3f((float) x, (float) y, (float) z2)));
+            renderLine(new Line(new Vector3f((float) x, (float) y, (float) z1),
+                new Vector3f((float) x, (float) y, (float) z2)), color, thickness);
         }
-        renderLines(color, settings.getCuboidGridThickness(), lines.toArray(new Line[0]));
     }
 
     private void renderXYPlane(double x1, double y1, double z, double x2, double y2,
                                double spacingX, double spacingY, Color color) {
-        int countY = (int) Math.ceil((y2 - y1) / spacingY) + 1;
-        int countX = (int) Math.ceil((x2 - x1) / spacingX) + 1;
-        List<Line> lines = new ArrayList<>(countY + countX);
+        float thickness = settings.getCuboidGridThickness();
         for (double y = y1; y <= y2; y += spacingY) {
             if (y > y1 && y2 - y < SKIP_THRESHOLD) continue;
-            lines.add(new Line(new Vector3f((float) x1, (float) y, (float) z),
-                    new Vector3f((float) x2, (float) y, (float) z)));
+            renderLine(new Line(new Vector3f((float) x1, (float) y, (float) z),
+                new Vector3f((float) x2, (float) y, (float) z)), color, thickness);
         }
         for (double x = x1; x <= x2; x += spacingX) {
             if (x > x1 && x2 - x < SKIP_THRESHOLD) continue;
-            lines.add(new Line(new Vector3f((float) x, (float) y1, (float) z),
-                    new Vector3f((float) x, (float) y2, (float) z)));
+            renderLine(new Line(new Vector3f((float) x, (float) y1, (float) z),
+                new Vector3f((float) x, (float) y2, (float) z)), color, thickness);
         }
-        renderLines(color, settings.getCuboidGridThickness(), lines.toArray(new Line[0]));
     }
 
     private void renderYZPlane(double x, double y1, double z1, double y2, double z2,
                                double spacingY, double spacingZ, Color color) {
-        int countZ = (int) Math.ceil((z2 - z1) / spacingZ) + 1;
-        int countY = (int) Math.ceil((y2 - y1) / spacingY) + 1;
-        List<Line> lines = new ArrayList<>(countZ + countY);
+        float thickness = settings.getCuboidGridThickness();
         for (double z = z1; z <= z2; z += spacingZ) {
             if (z > z1 && z2 - z < SKIP_THRESHOLD) continue;
-            lines.add(new Line(new Vector3f((float) x, (float) y1, (float) z),
-                    new Vector3f((float) x, (float) y2, (float) z)));
+            renderLine(new Line(new Vector3f((float) x, (float) y1, (float) z),
+                new Vector3f((float) x, (float) y2, (float) z)), color, thickness);
         }
         for (double y = y1; y <= y2; y += spacingY) {
             if (y > y1 && y2 - y < SKIP_THRESHOLD) continue;
-            lines.add(new Line(new Vector3f((float) x, (float) y, (float) z1),
-                    new Vector3f((float) x, (float) y, (float) z2)));
+            renderLine(new Line(new Vector3f((float) x, (float) y, (float) z1),
+                new Vector3f((float) x, (float) y, (float) z2)), color, thickness);
         }
-        renderLines(color, settings.getCuboidGridThickness(), lines.toArray(new Line[0]));
     }
 
     /** Renders fill faces for the 6 sides of the cuboid, one parallelogram per face */

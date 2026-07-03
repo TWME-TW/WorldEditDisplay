@@ -127,6 +127,8 @@ public class PlayerRenderSettings {
             config = YamlConfiguration.loadConfiguration(configFile);
             reloadFields();
         } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING,
+                    "Failed to load player render settings: " + configFile.getAbsolutePath(), e);
             config = new YamlConfiguration();
         }
     }

@@ -1,7 +1,7 @@
 package dev.twme.worldeditdisplay.listener;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.entity.Player;
@@ -41,7 +41,12 @@ public class OutboundPacketListener implements PacketListener {
 
         if (event.getPacketType() != PacketType.Play.Server.PLUGIN_MESSAGE) return;
 
-        WrapperPlayServerPluginMessage packet = new WrapperPlayServerPluginMessage(event);
+        WrapperPlayServerPluginMessage packet;
+        try {
+            packet = new WrapperPlayServerPluginMessage(event);
+        } catch (Exception e) {
+            return;
+        }
         String channel = packet.getChannelName();
 
         if (!Constants.CUI_CHANNEL.equals(channel)) return;
@@ -71,16 +76,37 @@ public class OutboundPacketListener implements PacketListener {
 
         event.setCancelled(true); // cancel packet sending
 
-        // Parse CUI message
-        String[] split = message.split("\\|", -1); // preserve trailing empty strings
-        boolean multi = split[0].startsWith("+");
-        String type = split[0].substring(multi ? 1 : 0);
-        List<String> params = split.length > 1
-                ? Arrays.asList(Arrays.copyOfRange(split, 1, split.length))
-                : List.of();
+        ParsedCuiMessage parsed = parseCuiMessage(message);
+        if (parsed == null) return;
 
         // Dispatch CUI event
-        CUIEventArgs eventArgs = new CUIEventArgs(playerData, multi, type, params);
+        CUIEventArgs eventArgs = new CUIEventArgs(playerData, parsed.multi(), parsed.type(), parsed.params());
         playerData.getDispatcher().raiseEvent(eventArgs);
     }
+
+    static ParsedCuiMessage parseCuiMessage(String message) {
+        int firstSeparator = message.indexOf('|');
+        int typeEnd = firstSeparator == -1 ? message.length() : firstSeparator;
+        boolean multi = typeEnd > 0 && message.charAt(0) == '+';
+        int typeStart = multi ? 1 : 0;
+        if (typeStart == typeEnd) return null;
+
+        String type = message.substring(typeStart, typeEnd);
+        if (firstSeparator == -1) {
+            return new ParsedCuiMessage(multi, type, List.of());
+        }
+
+        List<String> params = new ArrayList<>();
+        int paramStart = firstSeparator + 1;
+        int separator;
+        while ((separator = message.indexOf('|', paramStart)) != -1) {
+            params.add(message.substring(paramStart, separator));
+            paramStart = separator + 1;
+        }
+        params.add(message.substring(paramStart));
+
+        return new ParsedCuiMessage(multi, type, params);
+    }
+
+    record ParsedCuiMessage(boolean multi, String type, List<String> params) {}
 }

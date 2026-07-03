@@ -37,10 +37,12 @@ public abstract class RegionRenderer<T extends Region> {
     protected final Player player;
     protected final UUID playerUUID;
     protected final PlayerRenderSettings settings;
+    private final PacketShapeFactory shapeFactory;
 
     // pool of shapes
     protected final List<Shape> shapes;
     private final Map<LineKey, Shape> retainedLineShapes;
+    private final Set<Shape> retainedLineShapeSet;
     private Set<LineKey> retainedLinePassKeys;
     private RetainedLineStats currentRetainedLineStats = RetainedLineStats.empty();
     private RetainedLineStats lastRetainedLineStats = RetainedLineStats.empty();
@@ -59,8 +61,10 @@ public abstract class RegionRenderer<T extends Region> {
         this.player = player;
         this.playerUUID = player.getUniqueId();
         this.settings = settings;
+        this.shapeFactory = new PacketShapeFactory();
         this.shapes = new ArrayList<>();
         this.retainedLineShapes = new HashMap<>();
+        this.retainedLineShapeSet = new HashSet<>();
         this.config = RenderConfig.getDefault();
     }
 
@@ -88,6 +92,7 @@ public abstract class RegionRenderer<T extends Region> {
         }
         shapes.clear();
         retainedLineShapes.clear();
+        retainedLineShapeSet.clear();
         retainedLinePassKeys = null;
         currentRetainedLineStats = RetainedLineStats.empty();
         lastRetainedLineStats = RetainedLineStats.empty();
@@ -102,11 +107,10 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     private void removeNonRetainedShapes() {
-        Set<Shape> retainedShapes = new HashSet<>(retainedLineShapes.values());
         Iterator<Shape> iterator = shapes.iterator();
         while (iterator.hasNext()) {
             Shape shape = iterator.next();
-            if (retainedShapes.contains(shape)) continue;
+            if (retainedLineShapeSet.contains(shape)) continue;
 
             try {
                 shape.remove();
@@ -134,6 +138,7 @@ public abstract class RegionRenderer<T extends Region> {
             }
             shapes.remove(shape);
             iterator.remove();
+            retainedLineShapeSet.remove(shape);
             currentRetainedLineStats = currentRetainedLineStats.withRemovedLine();
         }
 
@@ -212,6 +217,7 @@ public abstract class RegionRenderer<T extends Region> {
 
             Shape shape = createLineShape(line, color, thickness);
             retainedLineShapes.put(key, shape);
+            retainedLineShapeSet.add(shape);
             shapes.add(shape);
             currentRetainedLineStats = currentRetainedLineStats.withSpawnedLine();
             return;
@@ -223,7 +229,7 @@ public abstract class RegionRenderer<T extends Region> {
 
     private Shape createLineShape(Line line, Color color, float thickness) {
         Location origin = getOrigin();
-        Shape shape = new PacketShapeFactory()
+        Shape shape = shapeFactory
                 .line(origin, line.start(), line.end(), thickness)
             .rootAnchor(true)
                 .color(color)
@@ -301,7 +307,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderParallelogram(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = new PacketShapeFactory()
+        Shape shape = shapeFactory
                 .parallelogram(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -320,7 +326,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderTriangle(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = new PacketShapeFactory()
+        Shape shape = shapeFactory
                 .triangle(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -339,7 +345,11 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     public int getEntityCount() {
-        return shapes.stream().mapToInt(s -> s.getEntityUUIDs().size()).sum();
+        int count = 0;
+        for (Shape shape : shapes) {
+            count += shape.getEntityUUIDs().size();
+        }
+        return count;
     }
 
     public int getRetainedLineCount() {
@@ -347,7 +357,11 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     public int getRetainedLineEntityCount() {
-        return retainedLineShapes.values().stream().mapToInt(s -> s.getEntityUUIDs().size()).sum();
+        int count = 0;
+        for (Shape shape : retainedLineShapes.values()) {
+            count += shape.getEntityUUIDs().size();
+        }
+        return count;
     }
 
     public RetainedLineStats getLastRetainedLineStats() {

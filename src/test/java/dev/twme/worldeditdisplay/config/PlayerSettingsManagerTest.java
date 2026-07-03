@@ -3,8 +3,6 @@ package dev.twme.worldeditdisplay.config;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -18,7 +16,7 @@ class PlayerSettingsManagerTest {
         TestSettings settings = new TestSettings(false);
         settings.setDirty(true);
 
-        settingsCache(manager).put(playerId, settings);
+        manager.getSettingsCache().put(playerId, settings);
 
         manager.saveAllDirty();
 
@@ -32,18 +30,41 @@ class PlayerSettingsManagerTest {
         TestSettings settings = new TestSettings(true);
         settings.setDirty(true);
 
-        settingsCache(manager).put(playerId, settings);
+        manager.getSettingsCache().put(playerId, settings);
 
         manager.saveAllDirty();
 
         assertFalse(settings.isDirty());
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<UUID, PlayerRenderSettings> settingsCache(PlayerSettingsManager manager) throws Exception {
-        Field field = PlayerSettingsManager.class.getDeclaredField("settingsCache");
-        field.setAccessible(true);
-        return (Map<UUID, PlayerRenderSettings>) field.get(manager);
+    @Test
+    void saveAndUnloadKeepsDirtySettingsCachedWhenSaveFails() throws Exception {
+        PlayerSettingsManager manager = new PlayerSettingsManager(null);
+        UUID playerId = UUID.randomUUID();
+        TestSettings settings = new TestSettings(false);
+        settings.setDirty(true);
+
+        manager.getSettingsCache().put(playerId, settings);
+
+        manager.saveAndUnload(playerId);
+
+        assertTrue(settings.isDirty());
+        assertTrue(manager.getSettingsCache().containsKey(playerId));
+    }
+
+    @Test
+    void saveAndUnloadRemovesSettingsWhenSaveSucceeds() throws Exception {
+        PlayerSettingsManager manager = new PlayerSettingsManager(null);
+        UUID playerId = UUID.randomUUID();
+        TestSettings settings = new TestSettings(true);
+        settings.setDirty(true);
+
+        manager.getSettingsCache().put(playerId, settings);
+
+        manager.saveAndUnload(playerId);
+
+        assertFalse(settings.isDirty());
+        assertFalse(manager.getSettingsCache().containsKey(playerId));
     }
 
     private static final class TestSettings extends PlayerRenderSettings {

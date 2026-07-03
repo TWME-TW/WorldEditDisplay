@@ -101,6 +101,14 @@ public class RenderManager {
     private TaskWrapper rebaseTask;
 
     public RenderManager(WorldEditDisplay plugin) {
+        this(plugin, true);
+    }
+
+    RenderManager() {
+        this(null, false);
+    }
+
+    private RenderManager(WorldEditDisplay plugin, boolean startTasks) {
         this.plugin = plugin;
         this.mainRenderers = new ConcurrentHashMap<>();
         this.multiRenderers = new ConcurrentHashMap<>();
@@ -115,6 +123,8 @@ public class RenderManager {
         this.multiParticleRenderers = new ConcurrentHashMap<>();
         this.sharedParticleRenderers = new ConcurrentHashMap<>();
         this.particleRendererFactories = new HashMap<>();
+
+        if (!startTasks) return;
 
         registerRendererFactories();
         registerParticleRendererFactories();
@@ -545,12 +555,39 @@ public class RenderManager {
     }
 
     private void releaseSharedColorIfUnused(UUID sharerId) {
-        ShareManager shareManager = plugin.getShareManager();
-        if (shareManager == null) return;
-        if (!shareManager.getActiveViewers(sharerId).isEmpty()) return;
+        if (hasSharedRenderReference(sharerId)) return;
         sharedColors.remove(sharerId);
         labelComponentCache.remove(sharerId);
         labelComponentNames.remove(sharerId);
+    }
+
+    Map<UUID, Color> getSharedColors() {
+        return sharedColors;
+    }
+
+    Map<UUID, Map<UUID, WrapperEntity>> getLabelEntities() {
+        return labelEntities;
+    }
+
+    Map<UUID, String> getLabelComponentNames() {
+        return labelComponentNames;
+    }
+
+    void releaseSharedColorForTest(UUID sharerId) {
+        releaseSharedColorIfUnused(sharerId);
+    }
+
+    private boolean hasSharedRenderReference(UUID sharerId) {
+        for (Map<UUID, RegionRenderer> viewerRenderers : sharedRenderers.values()) {
+            if (viewerRenderers.containsKey(sharerId)) return true;
+        }
+        for (Map<UUID, ParticleRenderer> viewerRenderers : sharedParticleRenderers.values()) {
+            if (viewerRenderers.containsKey(sharerId)) return true;
+        }
+        for (Map<UUID, WrapperEntity> viewerLabels : labelEntities.values()) {
+            if (viewerLabels.containsKey(sharerId)) return true;
+        }
+        return false;
     }
 
     private Color createSharedColor(UUID sharerId, Collection<Color> existingColors) {
@@ -1236,7 +1273,10 @@ public class RenderManager {
 
     public int getActiveRenderCount() {
         int mainCount = mainRenderers.size();
-        int multiCount = multiRenderers.values().stream().mapToInt(Map::size).sum();
+        int multiCount = 0;
+        for (Map<UUID, RegionRenderer> renderers : multiRenderers.values()) {
+            multiCount += renderers.size();
+        }
         return mainCount + multiCount;
     }
 

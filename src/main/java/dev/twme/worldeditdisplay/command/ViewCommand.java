@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -242,22 +241,47 @@ public class ViewCommand {
 
     public List<String> tabComplete(Player player, String[] args) {
         if (args.length == 2) {
-            List<String> options = new ArrayList<>(List.of("hide", "hideall", "unhide", "label", "list"));
-            return options.stream()
-                    .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                    .collect(Collectors.toList());
+            return filterPermittedOptions(player, List.of("hide", "hideall", "unhide", "label", "list"), args[1]);
         }
         if (args.length == 3) {
             String sub = args[1].toLowerCase();
+            if (!canUseSubCommand(player, sub)) return List.of();
             if (sub.equals("hide") || sub.equals("unhide")) {
-                return Bukkit.getOnlinePlayers().stream()
-                        .filter(p -> !p.equals(player))
-                        .map(Player::getName)
-                        .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
-                        .collect(Collectors.toList());
+                List<String> result = new ArrayList<>();
+                String prefix = args[2].toLowerCase();
+                for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                    if (onlinePlayer.equals(player)) continue;
+                    addIfStartsWith(result, onlinePlayer.getName(), prefix);
+                }
+                return result;
             }
         }
         return List.of();
+    }
+
+    private List<String> filterPermittedOptions(Player player, List<String> options, String prefix) {
+        String lowerPrefix = prefix.toLowerCase();
+        List<String> result = new ArrayList<>();
+        for (String option : options) {
+            if (!canUseSubCommand(player, option)) continue;
+            addIfStartsWith(result, option, lowerPrefix);
+        }
+        return result;
+    }
+
+    private static void addIfStartsWith(List<String> result, String value, String lowerPrefix) {
+        if (value.toLowerCase().startsWith(lowerPrefix)) {
+            result.add(value);
+        }
+    }
+
+    boolean canUseSubCommand(Player player, String subCommand) {
+        return switch (subCommand) {
+            case "hide", "hideall", "unhide" -> player.hasPermission("worldeditdisplay.use.view.hide");
+            case "label" -> player.hasPermission("worldeditdisplay.use.view.label");
+            case "list" -> player.hasPermission("worldeditdisplay.use.view.list");
+            default -> false;
+        };
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
