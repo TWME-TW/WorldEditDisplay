@@ -549,7 +549,7 @@ public class PlayerSettingsCommand implements TabExecutor {
         return result;
     }
 
-    private static List<String> filterStartsWith(List<String> values, String prefix) {
+    private static List<String> filterStartsWith(Iterable<String> values, String prefix) {
         String lowerPrefix = prefix.toLowerCase();
         List<String> result = new ArrayList<>();
         for (String value : values) {
