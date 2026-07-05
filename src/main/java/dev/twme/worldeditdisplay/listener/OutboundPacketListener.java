@@ -60,19 +60,12 @@ public class OutboundPacketListener implements PacketListener {
 
         PlayerData playerData = PlayerData.getPlayerData(player);
 
-        // Bedrock (Floodgate) players: cancel CUI packets (they don't support CUI)
-        // but still parse the message so we can create Region objects for particle rendering.
-        if (playerData.isBedrockPlayer()) {
-            event.setCancelled(true);
-        }
-
         // If debug mode, show the received WECUI message
         if (playerData.isDebugEnabled()) {
             MessageUtil.sendTranslated(player, "command.wedisplay.debug.cui_message", message);
         }
 
-        // If CUI already enabled, let the packet go through (unless bedrock, already cancelled)
-        if (playerData.isCuiEnabled()) return;
+        if (!shouldUseServerRenderer(playerData)) return;
 
         event.setCancelled(true); // cancel packet sending
 
@@ -82,6 +75,12 @@ public class OutboundPacketListener implements PacketListener {
         // Dispatch CUI event
         CUIEventArgs eventArgs = new CUIEventArgs(playerData, parsed.multi(), parsed.type(), parsed.params());
         playerData.getDispatcher().raiseEvent(eventArgs);
+    }
+
+    static boolean shouldUseServerRenderer(PlayerData playerData) {
+        return playerData.isRenderingEnabled()
+                || !playerData.isCuiEnabled()
+                || playerData.isBedrockPlayer();
     }
 
     static ParsedCuiMessage parseCuiMessage(String message) {

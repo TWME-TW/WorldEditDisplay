@@ -7,7 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
+import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
+
+import dev.twme.worldeditdisplay.player.PlayerData;
 
 class OutboundPacketListenerTest {
 
@@ -33,5 +36,33 @@ class OutboundPacketListenerTest {
     void parseCuiMessageRejectsEmptyType() {
         assertNull(OutboundPacketListener.parseCuiMessage("|1"));
         assertNull(OutboundPacketListener.parseCuiMessage("+|1"));
+    }
+
+    @Test
+    void serverRendererStaysActiveAfterCuiRegistrationWhenRenderingEnabled() {
+        PlayerData playerData = new PlayerData((Player) null);
+        playerData.setRenderingEnabled(true);
+        playerData.setCuiEnabled(true);
+
+        assertTrue(OutboundPacketListener.shouldUseServerRenderer(playerData));
+    }
+
+    @Test
+    void clientCuiReceivesPacketsWhenServerRenderingDisabled() {
+        PlayerData playerData = new PlayerData((Player) null);
+        playerData.setRenderingEnabled(false);
+        playerData.setCuiEnabled(true);
+
+        assertFalse(OutboundPacketListener.shouldUseServerRenderer(playerData));
+    }
+
+    @Test
+    void bedrockPlayersAlwaysUseServerRenderer() {
+        PlayerData playerData = new PlayerData((Player) null);
+        playerData.setRenderingEnabled(false);
+        playerData.setCuiEnabled(true);
+        playerData.setBedrockPlayer(true);
+
+        assertTrue(OutboundPacketListener.shouldUseServerRenderer(playerData));
     }
 }
