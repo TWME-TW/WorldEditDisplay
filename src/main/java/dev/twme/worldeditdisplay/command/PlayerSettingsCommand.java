@@ -3,7 +3,6 @@ package dev.twme.worldeditdisplay.command;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -44,17 +43,17 @@ public class PlayerSettingsCommand implements TabExecutor {
 
         Player player = (Player) sender;
 
-        if (!player.hasPermission("worldeditdisplay.use.settings")) {
-            MessageUtil.sendTranslated(player, "general.no_permission");
-            return true;
-        }
-
         if (args.length == 0) {
             sendHelp(player);
             return true;
         }
 
         String subCommand = args[0].toLowerCase();
+
+        if (!canUseSubCommand(player, subCommand)) {
+            MessageUtil.sendTranslated(player, "general.no_permission");
+            return true;
+        }
 
         switch (subCommand) {
             case "set" -> handleSet(player, args);
@@ -65,26 +64,36 @@ public class PlayerSettingsCommand implements TabExecutor {
             case "toggle" -> handleToggle(player);
             case "debug" -> handleDebug(player);
             case "render" -> handleRender(player, args);
-            case "share" -> {
-                if (!player.hasPermission("worldeditdisplay.use.share")) {
-                    MessageUtil.sendTranslated(player, "general.no_permission");
-                } else {
-                    shareCommand.handle(player, args);
-                }
-            }
-            case "view" -> {
-                if (!player.hasPermission("worldeditdisplay.use.view")
-                        && !player.hasPermission("worldeditdisplay.use.view.list")
-                        && !player.hasPermission("worldeditdisplay.use.view.label")) {
-                    MessageUtil.sendTranslated(player, "general.no_permission");
-                } else {
-                    viewCommand.handle(player, args);
-                }
-            }
+            case "share" -> shareCommand.handle(player, args);
+            case "view" -> viewCommand.handle(player, args);
             default -> sendHelp(player);
         }
 
         return true;
+    }
+
+    boolean requiresSettingsPermission(String subCommand) {
+        return switch (subCommand) {
+            case "set", "reset", "show", "reloadplayer", "lang", "language", "debug" -> true;
+            default -> false;
+        };
+    }
+
+    boolean canUseSubCommand(CommandSender sender, String subCommand) {
+        if (requiresSettingsPermission(subCommand)) {
+            return sender.hasPermission("worldeditdisplay.use.settings");
+        }
+
+        return switch (subCommand) {
+            case "toggle" -> sender.hasPermission("worldeditdisplay.use");
+            case "render" -> sender.hasPermission("worldeditdisplay.use.render");
+            case "share" -> sender.hasPermission("worldeditdisplay.use.share");
+            case "view" -> sender.hasPermission("worldeditdisplay.use.view")
+                    || sender.hasPermission("worldeditdisplay.use.view.hide")
+                    || sender.hasPermission("worldeditdisplay.use.view.list")
+                    || sender.hasPermission("worldeditdisplay.use.view.label");
+            default -> true;
+        };
     }
 
     // command handlers
@@ -102,6 +111,12 @@ public class PlayerSettingsCommand implements TabExecutor {
         if (!isValidRenderer(renderer)) {
             MessageUtil.sendTranslated(player, "command.wedisplay.set.invalid_renderer");
             MessageUtil.sendTranslated(player, "command.wedisplay.set.available_renderers");
+            return true;
+        }
+
+        if (!isValidSetting(renderer, setting)) {
+            MessageUtil.sendTranslated(player, "command.wedisplay.set.failed");
+            MessageUtil.sendTranslated(player, "command.wedisplay.set.failed_hint");
             return true;
         }
 
@@ -147,6 +162,11 @@ public class PlayerSettingsCommand implements TabExecutor {
         if (args.length >= 3) {
             // reset one setting
             String setting = args[2].toLowerCase();
+            if (!isValidSetting(renderer, setting)) {
+                MessageUtil.sendTranslated(player, "command.wedisplay.set.failed");
+                MessageUtil.sendTranslated(player, "command.wedisplay.set.failed_hint");
+                return true;
+            }
             settings.reset("renderer." + renderer + "." + setting);
             MessageUtil.sendTranslated(player, "command.wedisplay.reset.success_setting", renderer, setting);
         } else {
@@ -422,7 +442,11 @@ public class PlayerSettingsCommand implements TabExecutor {
                 renderer.equals("polyhedron");
     }
 
-    private Object parseValue(String setting, String value) {
+    boolean isValidSetting(String renderer, String setting) {
+        return getSettingKeys(renderer).contains(setting);
+    }
+
+    Object parseValue(String setting, String value) {
         if (setting.contains("color")) {
             if (!value.startsWith("#")) {
                 value = "#" + value;
@@ -432,7 +456,9 @@ public class PlayerSettingsCommand implements TabExecutor {
             }
             return null;
         } else if (setting.contains("enabled") || setting.contains("see_through")) {
-            return Boolean.parseBoolean(value);
+            if (value.equalsIgnoreCase("true")) return true;
+            if (value.equalsIgnoreCase("false")) return false;
+            return null;
         } else if (setting.contains("thickness") || setting.contains("size") ||
                 setting.contains("length") || setting.contains("factor")) {
             try { return Double.parseDouble(value); }
@@ -451,39 +477,31 @@ public class PlayerSettingsCommand implements TabExecutor {
     private static final List<String> RENDERERS = Arrays.asList(
             "cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron");
 
+    private static final List<String> RENDER_MODES = Arrays.asList("auto", "text", "particle", "toggle");
+
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                                 @NotNull String alias, @NotNull String[] args) {
         if (!(sender instanceof Player)) return null;
 
-        List<String> completions = new ArrayList<>();
+        List<String> completions = List.of();
 
         if (args.length == 1) {
             // first arg: subcommand
-            completions = SUB_COMMANDS.stream()
-                    .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
-                    .filter(cmd -> !cmd.equals("render")
-                            || sender.hasPermission("worldeditdisplay.use.render"))
-                    .collect(Collectors.toList());
+            completions = filterSubCommands(sender, args[0]);
 
         } else if (args.length == 2) {
             String subCommand = args[0].toLowerCase();
 
             if (subCommand.equals("set") || subCommand.equals("reset") || subCommand.equals("show")) {
                 // second arg: renderer type
-                completions = RENDERERS.stream()
-                        .filter(r -> r.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                completions = filterStartsWith(RENDERERS, args[1]);
             } else if (subCommand.equals("lang") || subCommand.equals("language")) {
                 // second arg: language code
-                completions = plugin.getLanguageManager().getAvailableLanguages().stream()
-                        .filter(lang -> lang.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                completions = filterStartsWith(plugin.getLanguageManager().getAvailableLanguages(), args[1]);
             } else if (subCommand.equals("render")) {
                 // second arg: render mode
-                completions = Arrays.asList("auto", "text", "particle", "toggle").stream()
-                        .filter(m -> m.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                completions = filterStartsWith(RENDER_MODES, args[1]);
             } else if (subCommand.equals("share")) {
                 return shareCommand.tabComplete((Player) sender, args);
             } else if (subCommand.equals("view")) {
@@ -496,9 +514,7 @@ public class PlayerSettingsCommand implements TabExecutor {
 
             if (subCommand.equals("set") || subCommand.equals("reset")) {
                 // third arg: setting key
-                completions = getSettingKeys(renderer).stream()
-                        .filter(key -> key.startsWith(args[2].toLowerCase()))
-                        .collect(Collectors.toList());
+                completions = filterStartsWith(getSettingKeys(renderer), args[2]);
             } else if (subCommand.equals("share")) {
                 return shareCommand.tabComplete((Player) sender, args);
             } else if (subCommand.equals("view")) {
@@ -521,6 +537,28 @@ public class PlayerSettingsCommand implements TabExecutor {
         }
 
         return completions;
+    }
+
+    private List<String> filterSubCommands(CommandSender sender, String prefix) {
+        String lowerPrefix = prefix.toLowerCase();
+        List<String> result = new ArrayList<>();
+        for (String subCommand : SUB_COMMANDS) {
+            if (!subCommand.startsWith(lowerPrefix)) continue;
+            if (!canUseSubCommand(sender, subCommand)) continue;
+            result.add(subCommand);
+        }
+        return result;
+    }
+
+    private static List<String> filterStartsWith(Iterable<String> values, String prefix) {
+        String lowerPrefix = prefix.toLowerCase();
+        List<String> result = new ArrayList<>();
+        for (String value : values) {
+            if (value.startsWith(lowerPrefix)) {
+                result.add(value);
+            }
+        }
+        return result;
     }
 
     // helper methods

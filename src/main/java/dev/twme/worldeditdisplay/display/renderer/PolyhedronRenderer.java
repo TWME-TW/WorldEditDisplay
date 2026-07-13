@@ -15,6 +15,8 @@ import dev.twme.worldeditdisplay.region.Vector3;
 
 public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
 
+    private final Set<Long> renderedEdges = new HashSet<>();
+
     public PolyhedronRenderer(WorldEditDisplay plugin, Player player, PlayerRenderSettings settings) {
         super(plugin, player, settings);
     }
@@ -26,13 +28,20 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
 
     @Override
     public void render(PolyhedronRegion region) {
-        clear();
+        beginRetainedLineRender();
+        try {
+            renderRetained(region);
+        } finally {
+            finishRetainedLineRender();
+        }
+    }
+
+    private void renderRetained(PolyhedronRegion region) {
 
         List<Vector3> vertices = region.getVertices();
         if (vertices.isEmpty()) return;
 
-        long validCount = vertices.stream().filter(v -> v != null).count();
-        if (validCount == 0) return;
+        if (!hasAnyVertex(vertices)) return;
 
         boolean multi = isMultiSelection(region);
 
@@ -55,6 +64,13 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
         }
     }
 
+    private boolean hasAnyVertex(List<Vector3> vertices) {
+        for (Vector3 vertex : vertices) {
+            if (vertex != null) return true;
+        }
+        return false;
+    }
+
     private void renderVertices(List<Vector3> vertices, Color vertexColor, Color vertex0Color) {
         for (int i = 0; i < vertices.size(); i++) {
             Vector3 vertex = vertices.get(i);
@@ -73,7 +89,7 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
     }
 
     private void renderFaceEdges(List<Vector3> vertices, List<int[]> faces, Color color) {
-        Set<Long> renderedEdges = new HashSet<>();
+        renderedEdges.clear();
 
         for (int[] face : faces) {
             if (face == null || face.length < 2) continue;

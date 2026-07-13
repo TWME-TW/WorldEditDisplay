@@ -2,6 +2,7 @@ package dev.twme.worldeditdisplay.display;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -31,6 +32,7 @@ import dev.twme.worldeditdisplay.display.renderer.EllipsoidRenderer;
 import dev.twme.worldeditdisplay.display.renderer.PolygonRenderer;
 import dev.twme.worldeditdisplay.display.renderer.PolyhedronRenderer;
 import dev.twme.worldeditdisplay.display.renderer.RegionRenderer;
+import dev.twme.worldeditdisplay.display.renderer.RegionRenderer.RetainedLineStats;
 import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.region.BoundingBox;
 import dev.twme.worldeditdisplay.region.CuboidRegion;
@@ -100,6 +102,14 @@ public class RenderManager {
     private TaskWrapper rebaseTask;
 
     public RenderManager(WorldEditDisplay plugin) {
+        this(plugin, true);
+    }
+
+    RenderManager() {
+        this(null, false);
+    }
+
+    private RenderManager(WorldEditDisplay plugin, boolean startTasks) {
         this.plugin = plugin;
         this.mainRenderers = new ConcurrentHashMap<>();
         this.multiRenderers = new ConcurrentHashMap<>();
@@ -114,6 +124,8 @@ public class RenderManager {
         this.multiParticleRenderers = new ConcurrentHashMap<>();
         this.sharedParticleRenderers = new ConcurrentHashMap<>();
         this.particleRendererFactories = new HashMap<>();
+
+        if (!startTasks) return;
 
         registerRendererFactories();
         registerParticleRendererFactories();
@@ -179,6 +191,12 @@ public class RenderManager {
             } else {
                 int entityCount = getPlayerEntityCount(playerId);
                 MessageUtil.sendTranslated(player, "command.wedisplay.debug.entity_count", entityCount);
+                int retainedLineCount = getPlayerRetainedLineCount(playerId);
+                int retainedLineEntityCount = getPlayerRetainedLineEntityCount(playerId);
+                MessageUtil.sendTranslated(player, "command.wedisplay.debug.retained_line_count", retainedLineCount, retainedLineEntityCount);
+                RetainedLineStats retainedLineStats = getPlayerRetainedLineStats(playerId);
+                MessageUtil.sendTranslated(player, "command.wedisplay.debug.retained_line_pass",
+                        retainedLineStats.reusedLines(), retainedLineStats.spawnedLines(), retainedLineStats.removedLines());
             }
         }
     }
@@ -228,23 +246,23 @@ public class RenderManager {
         Map<UUID, RegionRenderer> viewerSharedRenderers =
                 sharedRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
 
-        viewerSharedRenderers.entrySet().removeIf(e -> {
-            if (!sharers.contains(e.getKey())) {
-                e.getValue().clear();
-                releaseSharedColorIfUnused(e.getKey());
-                return true;
-            }
-            return false;
-        });
+        removeStaleSharedTextRenderers(viewerId, viewerSharedRenderers, sharers);
 
         Vector3 viewerPos = null;
         for (UUID sharerId : sharers) {
             if (!shareManager.isActiveShare(sharerId, viewerId)) {
                 if (viewerPos == null) viewerPos = Vector3.from(viewer.getLocation());
-                if (!shouldRenderForViewAll(viewer, sharerId, viewerPos)) continue;
+                if (!shouldRenderForViewAll(viewer, sharerId, viewerPos)) {
+                    clearSharedTextReference(viewerId, viewerSharedRenderers, sharerId);
+                    continue;
+                }
             }
             Color sharedColor = getOrCreateSharedColor(sharerId);
             renderSharedForViewer(viewer, viewerSharedRenderers, sharerId, sharedColor, false);
+        }
+
+        if (viewerSharedRenderers.isEmpty()) {
+            sharedRenderers.remove(viewerId, viewerSharedRenderers);
         }
     }
 
@@ -254,44 +272,95 @@ public class RenderManager {
         Map<UUID, ParticleRenderer> viewerShared =
                 sharedParticleRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
 
-        viewerShared.entrySet().removeIf(e -> {
-            if (!sharers.contains(e.getKey())) {
-                e.getValue().clear();
-                releaseSharedColorIfUnused(e.getKey());
-                return true;
-            }
-            return false;
-        });
+        removeStaleSharedParticleRenderers(viewerId, viewerShared, sharers);
 
         int maxParticleDist = plugin.getRenderSettings().getParticleMaxRenderDistance();
 
         Vector3 viewerPos = null;
         for (UUID sharerId : sharers) {
             Player sharer = Bukkit.getPlayer(sharerId);
-            if (sharer == null || !sharer.isOnline()) continue;
+            if (sharer == null || !sharer.isOnline()) {
+                clearSharedParticleReference(viewerId, viewerShared, sharerId);
+                continue;
+            }
 
             // Distance check: apply max_render_distance as an absolute cap for ALL particle shares
             if (viewerPos == null) viewerPos = Vector3.from(viewer.getLocation());
             PlayerData sharerData = PlayerData.getPlayerData(sharer);
             Region sharerRegion = sharerData != null ? sharerData.getSelection() : null;
 
-            double distance;
-            if (sharerRegion != null && sharerRegion.getBoundingBox() != null) {
-                distance = sharerRegion.getBoundingBox().distanceTo(viewerPos);
-            } else {
-                distance = viewer.getLocation().distance(sharer.getLocation());
+            if (!isWithinParticleRenderDistance(viewer, sharer, sharerRegion,
+                    viewerPos, maxParticleDist)) {
+                clearSharedParticleReference(viewerId, viewerShared, sharerId);
+                continue;
             }
-
-            if (distance > maxParticleDist) continue;
 
             // For viewall-sourced players, also apply viewall distance-based loading
             if (!shareManager.isActiveShare(sharerId, viewerId)) {
-                if (!shouldRenderForViewAll(viewer, sharerId, viewerPos)) continue;
+                if (!shouldRenderForViewAll(viewer, sharerId, viewerPos)) {
+                    clearSharedParticleReference(viewerId, viewerShared, sharerId);
+                    continue;
+                }
             }
 
             Color sharedColor = getOrCreateSharedColor(sharerId);
             renderSharedParticleForViewer(viewer, viewerShared, sharerId, sharedColor, false);
         }
+
+        if (viewerShared.isEmpty()) {
+            sharedParticleRenderers.remove(viewerId, viewerShared);
+        }
+    }
+
+    private boolean isWithinParticleRenderDistance(Player viewer, Player sharer, Region sharerRegion,
+                                                   Vector3 viewerPos, int maxParticleDistance) {
+        if (!viewer.getWorld().equals(sharer.getWorld())) return false;
+        double distance = sharerRegion != null && sharerRegion.getBoundingBox() != null
+                ? sharerRegion.getBoundingBox().distanceTo(viewerPos)
+                : viewer.getLocation().distance(sharer.getLocation());
+        return distance <= maxParticleDistance;
+    }
+
+    private void removeStaleSharedTextRenderers(UUID viewerId,
+                                                Map<UUID, RegionRenderer> viewerRenderers,
+                                                Set<UUID> visibleSharers) {
+        Set<UUID> referencedSharers = new HashSet<>(viewerRenderers.keySet());
+        Map<UUID, WrapperEntity> viewerLabels = labelEntities.get(viewerId);
+        if (viewerLabels != null) referencedSharers.addAll(viewerLabels.keySet());
+
+        for (UUID sharerId : referencedSharers) {
+            if (visibleSharers.contains(sharerId)) continue;
+            clearSharedTextReference(viewerId, viewerRenderers, sharerId);
+        }
+    }
+
+    private void removeStaleSharedParticleRenderers(UUID viewerId,
+                                                    Map<UUID, ParticleRenderer> viewerRenderers,
+                                                    Set<UUID> visibleSharers) {
+        Set<UUID> referencedSharers = new HashSet<>(viewerRenderers.keySet());
+        Map<UUID, WrapperEntity> viewerLabels = labelEntities.get(viewerId);
+        if (viewerLabels != null) referencedSharers.addAll(viewerLabels.keySet());
+
+        for (UUID sharerId : referencedSharers) {
+            if (visibleSharers.contains(sharerId)) continue;
+            clearSharedParticleReference(viewerId, viewerRenderers, sharerId);
+        }
+    }
+
+    private void clearSharedTextReference(UUID viewerId, Map<UUID, RegionRenderer> viewerRenderers,
+                                          UUID sharerId) {
+        RegionRenderer renderer = viewerRenderers.remove(sharerId);
+        if (renderer != null) renderer.clear();
+        clearSharedLabel(viewerId, sharerId);
+        releaseSharedColorIfUnused(sharerId);
+    }
+
+    private void clearSharedParticleReference(UUID viewerId, Map<UUID, ParticleRenderer> viewerRenderers,
+                                              UUID sharerId) {
+        ParticleRenderer renderer = viewerRenderers.remove(sharerId);
+        if (renderer != null) renderer.clear();
+        clearSharedLabel(viewerId, sharerId);
+        releaseSharedColorIfUnused(sharerId);
     }
 
     /**
@@ -382,24 +451,47 @@ public class RenderManager {
             Player viewer = Bukkit.getPlayer(viewerId);
             if (viewer == null || !viewer.isOnline()) continue;
 
+            UUID sharerId = sharer.getUniqueId();
+            boolean activeShare = shareManager.isActiveShare(sharerId, viewerId);
+            PlayerData viewerData = PlayerData.getPlayerData(viewer);
+            if (viewerData == null || !viewerData.isRenderingEnabled()) {
+                clearSharedRender(viewerId, sharerId);
+                continue;
+            }
+            boolean viewerIsParticle = viewerData != null && viewerData.isParticleFallback();
+            Vector3 viewerPos = Vector3.from(viewer.getLocation());
+
             // For viewall-only viewers (not active share), check the hidden list
-            if (!shareManager.isActiveShare(sharer.getUniqueId(), viewerId)) {
-                PlayerData viewerData = PlayerData.getPlayerData(viewer);
-                if (viewerData != null && viewerData.isViewAllHidden(sharer.getUniqueId())) continue;
+            if (!activeShare && (viewerData.isViewAllHidden(sharerId)
+                    || !shouldRenderForViewAll(viewer, sharerId, viewerPos))) {
+                clearSharedRender(viewerId, sharerId);
+                continue;
             }
 
-            Color color = getOrCreateSharedColor(sharer.getUniqueId());
-            PlayerData viewerData = PlayerData.getPlayerData(viewer);
-            boolean viewerIsParticle = viewerData != null && viewerData.isParticleFallback();
+            PlayerData sharerData = PlayerData.getPlayerData(sharer);
+            Region sharerRegion = sharerData != null ? sharerData.getSelection() : null;
+            if (viewerIsParticle && !isWithinParticleRenderDistance(viewer, sharer, sharerRegion,
+                    viewerPos, plugin.getRenderSettings().getParticleMaxRenderDistance())) {
+                clearSharedRender(viewerId, sharerId);
+                continue;
+            }
+
+            Color color = getOrCreateSharedColor(sharerId);
 
             if (viewerIsParticle) {
                 Map<UUID, ParticleRenderer> viewerShared =
                         sharedParticleRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
-                renderSharedParticleForViewer(viewer, viewerShared, sharer.getUniqueId(), color, true);
+                renderSharedParticleForViewer(viewer, viewerShared, sharerId, color, true);
+                if (viewerShared.isEmpty()) {
+                    sharedParticleRenderers.remove(viewerId, viewerShared);
+                }
             } else {
                 Map<UUID, RegionRenderer> viewerSharedRenderers =
                         sharedRenderers.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
-                renderSharedForViewer(viewer, viewerSharedRenderers, sharer.getUniqueId(), color, true);
+                renderSharedForViewer(viewer, viewerSharedRenderers, sharerId, color, true);
+                if (viewerSharedRenderers.isEmpty()) {
+                    sharedRenderers.remove(viewerId, viewerSharedRenderers);
+                }
             }
         }
     }
@@ -416,19 +508,24 @@ public class RenderManager {
                                        UUID sharerId, Color sharedColor, boolean forceRender) {
         Player sharerPlayer = Bukkit.getPlayer(sharerId);
         if (sharerPlayer == null || !sharerPlayer.isOnline()) {
-            RegionRenderer r = viewerSharedRenderers.remove(sharerId);
-            if (r != null) r.clear();
+            clearSharedTextReference(viewer.getUniqueId(), viewerSharedRenderers, sharerId);
+            return;
+        }
+        if (!viewer.getWorld().equals(sharerPlayer.getWorld())) {
+            clearSharedTextReference(viewer.getUniqueId(), viewerSharedRenderers, sharerId);
             return;
         }
 
         PlayerData sharerData = PlayerData.getPlayerData(sharerPlayer);
-        if (sharerData == null) return;
+        if (sharerData == null) {
+            clearSharedTextReference(viewer.getUniqueId(), viewerSharedRenderers, sharerId);
+            return;
+        }
 
         Region sharerRegion = sharerData.getSelection();
 
         if (sharerRegion == null) {
-            RegionRenderer r = viewerSharedRenderers.remove(sharerId);
-            if (r != null) r.clear();
+            clearSharedTextReference(viewer.getUniqueId(), viewerSharedRenderers, sharerId);
             return;
         }
 
@@ -476,20 +573,19 @@ public class RenderManager {
                                                 UUID sharerId, Color sharedColor, boolean forceRender) {
         Player sharerPlayer = Bukkit.getPlayer(sharerId);
         if (sharerPlayer == null || !sharerPlayer.isOnline()) {
-            ParticleRenderer r = viewerShared.remove(sharerId);
-            if (r != null) r.clear();
-            releaseSharedColorIfUnused(sharerId);
+            clearSharedParticleReference(viewer.getUniqueId(), viewerShared, sharerId);
             return;
         }
 
         PlayerData sharerData = PlayerData.getPlayerData(sharerPlayer);
-        if (sharerData == null) return;
+        if (sharerData == null) {
+            clearSharedParticleReference(viewer.getUniqueId(), viewerShared, sharerId);
+            return;
+        }
 
         Region sharerRegion = sharerData.getSelection();
         if (sharerRegion == null) {
-            ParticleRenderer r = viewerShared.remove(sharerId);
-            if (r != null) r.clear();
-            releaseSharedColorIfUnused(sharerId);
+            clearSharedParticleReference(viewer.getUniqueId(), viewerShared, sharerId);
             return;
         }
 
@@ -538,12 +634,39 @@ public class RenderManager {
     }
 
     private void releaseSharedColorIfUnused(UUID sharerId) {
-        ShareManager shareManager = plugin.getShareManager();
-        if (shareManager == null) return;
-        if (!shareManager.getActiveViewers(sharerId).isEmpty()) return;
+        if (hasSharedRenderReference(sharerId)) return;
         sharedColors.remove(sharerId);
         labelComponentCache.remove(sharerId);
         labelComponentNames.remove(sharerId);
+    }
+
+    Map<UUID, Color> getSharedColors() {
+        return sharedColors;
+    }
+
+    Map<UUID, Map<UUID, WrapperEntity>> getLabelEntities() {
+        return labelEntities;
+    }
+
+    Map<UUID, String> getLabelComponentNames() {
+        return labelComponentNames;
+    }
+
+    void releaseSharedColorForTest(UUID sharerId) {
+        releaseSharedColorIfUnused(sharerId);
+    }
+
+    private boolean hasSharedRenderReference(UUID sharerId) {
+        for (Map<UUID, RegionRenderer> viewerRenderers : sharedRenderers.values()) {
+            if (viewerRenderers.containsKey(sharerId)) return true;
+        }
+        for (Map<UUID, ParticleRenderer> viewerRenderers : sharedParticleRenderers.values()) {
+            if (viewerRenderers.containsKey(sharerId)) return true;
+        }
+        for (Map<UUID, WrapperEntity> viewerLabels : labelEntities.values()) {
+            if (viewerLabels.containsKey(sharerId)) return true;
+        }
+        return false;
     }
 
     private Color createSharedColor(UUID sharerId, Collection<Color> existingColors) {
@@ -697,34 +820,39 @@ public class RenderManager {
     public void clearSharedLabels(UUID viewerId) {
         Map<UUID, WrapperEntity> viewerLabels = labelEntities.remove(viewerId);
         if (viewerLabels != null) {
-            viewerLabels.values().forEach(WrapperEntity::remove);
+            for (WrapperEntity label : viewerLabels.values()) {
+                if (label != null) label.remove();
+            }
             viewerLabels.clear();
         }
     }
 
     /** Clear all shared renderers for a specific viewer. */
     public void clearSharedRenders(UUID viewerId) {
+        Set<UUID> sharerIds = new HashSet<>();
+
         // TextDisplay shared renderers
         Map<UUID, RegionRenderer> map = sharedRenderers.remove(viewerId);
         if (map != null) {
-            Set<UUID> sharerIds = Set.copyOf(map.keySet());
+            sharerIds.addAll(map.keySet());
             map.values().forEach(RegionRenderer::clear);
             map.clear();
-            for (UUID sharerId : sharerIds) {
-                releaseSharedColorIfUnused(sharerId);
-            }
         }
         // Particle shared renderers
         Map<UUID, ParticleRenderer> particleMap = sharedParticleRenderers.remove(viewerId);
         if (particleMap != null) {
-            Set<UUID> sharerIds = Set.copyOf(particleMap.keySet());
+            sharerIds.addAll(particleMap.keySet());
             particleMap.values().forEach(ParticleRenderer::clear);
             particleMap.clear();
-            for (UUID sharerId : sharerIds) {
-                releaseSharedColorIfUnused(sharerId);
-            }
         }
+
+        Map<UUID, WrapperEntity> viewerLabels = labelEntities.get(viewerId);
+        if (viewerLabels != null) sharerIds.addAll(viewerLabels.keySet());
         clearSharedLabels(viewerId);
+
+        for (UUID sharerId : sharerIds) {
+            releaseSharedColorIfUnused(sharerId);
+        }
     }
 
     /**
@@ -732,23 +860,14 @@ public class RenderManager {
      * and releases associated colour / component cache state.
      */
     public void clearSharerRenders(UUID sharerId) {
-        // TextDisplay shared renderers
-        for (Map.Entry<UUID, Map<UUID, RegionRenderer>> entry : sharedRenderers.entrySet()) {
-            UUID viewerId = entry.getKey();
-            Map<UUID, RegionRenderer> viewerMap = entry.getValue();
-            RegionRenderer renderer = viewerMap.remove(sharerId);
-            if (renderer != null) renderer.clear();
-            if (viewerMap.isEmpty()) sharedRenderers.remove(viewerId);
-            clearSharedLabel(viewerId, sharerId);
+        Set<UUID> viewerIds = new HashSet<>(sharedRenderers.keySet());
+        viewerIds.addAll(sharedParticleRenderers.keySet());
+        viewerIds.addAll(labelEntities.keySet());
+
+        for (UUID viewerId : viewerIds) {
+            clearSharedRender(viewerId, sharerId);
         }
-        // Particle shared renderers
-        for (Map.Entry<UUID, Map<UUID, ParticleRenderer>> entry : sharedParticleRenderers.entrySet()) {
-            UUID viewerId = entry.getKey();
-            Map<UUID, ParticleRenderer> viewerMap = entry.getValue();
-            ParticleRenderer renderer = viewerMap.remove(sharerId);
-            if (renderer != null) renderer.clear();
-            if (viewerMap.isEmpty()) sharedParticleRenderers.remove(viewerId);
-        }
+
         // The sharer is offline – release colour and component cache unconditionally.
         sharedColors.remove(sharerId);
         labelComponentCache.remove(sharerId);
@@ -775,8 +894,8 @@ public class RenderManager {
                 sharedParticleRenderers.remove(viewerId);
             }
         }
-        releaseSharedColorIfUnused(sharerId);
         clearSharedLabel(viewerId, sharerId);
+        releaseSharedColorIfUnused(sharerId);
     }
 
     /**
@@ -785,30 +904,20 @@ public class RenderManager {
      */
     public void clearViewAllRenders(UUID viewerId) {
         ShareManager shareManager = plugin.getShareManager();
-        // TextDisplay
+        Set<UUID> viewAllOnlySharers = new HashSet<>();
+
         Map<UUID, RegionRenderer> map = sharedRenderers.get(viewerId);
         if (map != null) {
-            map.entrySet().removeIf(e -> {
-                UUID sharerId = e.getKey();
-                if (shareManager != null && shareManager.isActiveShare(sharerId, viewerId)) return false;
-                e.getValue().clear();
-                releaseSharedColorIfUnused(sharerId);
-                clearSharedLabel(viewerId, sharerId);
-                return true;
-            });
-            if (map.isEmpty()) sharedRenderers.remove(viewerId);
+            viewAllOnlySharers.addAll(map.keySet());
         }
-        // Particle
         Map<UUID, ParticleRenderer> particleMap = sharedParticleRenderers.get(viewerId);
         if (particleMap != null) {
-            particleMap.entrySet().removeIf(e -> {
-                UUID sharerId = e.getKey();
-                if (shareManager != null && shareManager.isActiveShare(sharerId, viewerId)) return false;
-                e.getValue().clear();
-                releaseSharedColorIfUnused(sharerId);
-                return true;
-            });
-            if (particleMap.isEmpty()) sharedParticleRenderers.remove(viewerId);
+            viewAllOnlySharers.addAll(particleMap.keySet());
+        }
+
+        for (UUID sharerId : viewAllOnlySharers) {
+            if (shareManager != null && shareManager.isActiveShare(sharerId, viewerId)) continue;
+            clearSharedRender(viewerId, sharerId);
         }
     }
 
@@ -819,13 +928,6 @@ public class RenderManager {
         ShareManager shareManager = plugin.getShareManager();
         if (shareManager != null && shareManager.isActiveShare(sharerId, viewerId)) return;
         clearSharedRender(viewerId, sharerId);
-        // Also clear particle shared render if present
-        Map<UUID, ParticleRenderer> particleMap = sharedParticleRenderers.get(viewerId);
-        if (particleMap != null) {
-            ParticleRenderer r = particleMap.remove(sharerId);
-            if (r != null) r.clear();
-            if (particleMap.isEmpty()) sharedParticleRenderers.remove(viewerId);
-        }
     }
 
     private void updateMainSelection(Player player, UUID playerId, Region mainSelection) {
@@ -1229,7 +1331,10 @@ public class RenderManager {
 
     public int getActiveRenderCount() {
         int mainCount = mainRenderers.size();
-        int multiCount = multiRenderers.values().stream().mapToInt(Map::size).sum();
+        int multiCount = 0;
+        for (Map<UUID, RegionRenderer> renderers : multiRenderers.values()) {
+            multiCount += renderers.size();
+        }
         return mainCount + multiCount;
     }
 
@@ -1258,6 +1363,59 @@ public class RenderManager {
         return count;
     }
 
+    public int getPlayerRetainedLineCount(UUID playerId) {
+        int count = 0;
+        RegionRenderer mainRenderer = mainRenderers.get(playerId);
+        if (mainRenderer != null) {
+            count += mainRenderer.getRetainedLineCount();
+        }
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.get(playerId);
+        if (playerMultiRenderers != null) {
+            for (RegionRenderer renderer : playerMultiRenderers.values()) {
+                count += renderer.getRetainedLineCount();
+            }
+        }
+        return count;
+    }
+
+    public int getPlayerRetainedLineEntityCount(UUID playerId) {
+        int count = 0;
+        RegionRenderer mainRenderer = mainRenderers.get(playerId);
+        if (mainRenderer != null) {
+            count += mainRenderer.getRetainedLineEntityCount();
+        }
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.get(playerId);
+        if (playerMultiRenderers != null) {
+            for (RegionRenderer renderer : playerMultiRenderers.values()) {
+                count += renderer.getRetainedLineEntityCount();
+            }
+        }
+        return count;
+    }
+
+    public RetainedLineStats getPlayerRetainedLineStats(UUID playerId) {
+        RetainedLineStats total = RetainedLineStats.empty();
+        RegionRenderer mainRenderer = mainRenderers.get(playerId);
+        if (mainRenderer != null) {
+            total = addRetainedLineStats(total, mainRenderer.getLastRetainedLineStats());
+        }
+        Map<UUID, RegionRenderer> playerMultiRenderers = multiRenderers.get(playerId);
+        if (playerMultiRenderers != null) {
+            for (RegionRenderer renderer : playerMultiRenderers.values()) {
+                total = addRetainedLineStats(total, renderer.getLastRetainedLineStats());
+            }
+        }
+        return total;
+    }
+
+    private RetainedLineStats addRetainedLineStats(RetainedLineStats first, RetainedLineStats second) {
+        return new RetainedLineStats(
+                first.reusedLines() + second.reusedLines(),
+                first.spawnedLines() + second.spawnedLines(),
+                first.removedLines() + second.removedLines(),
+                first.removedTransientShapes() + second.removedTransientShapes());
+    }
+
     public void shutdown() {
         plugin.getLogger().info("shutdown render manager");
         if (rebaseTask != null) {
@@ -1280,7 +1438,7 @@ public class RenderManager {
         rebaseTask = FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, ignored -> {
             for (RegionRenderer renderer : mainRenderers.values()) {
                 try {
-                    renderer.rebaseOriginIfNeeded();
+                    reportRebaseIfDebug(renderer, renderer.rebaseOriginIfNeeded());
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING, "rebase main renderer fail", e);
                 }
@@ -1288,7 +1446,7 @@ public class RenderManager {
             for (Map<UUID, RegionRenderer> playerMultiRenderers : multiRenderers.values()) {
                 for (RegionRenderer renderer : playerMultiRenderers.values()) {
                     try {
-                        renderer.rebaseOriginIfNeeded();
+                        reportRebaseIfDebug(renderer, renderer.rebaseOriginIfNeeded());
                     } catch (Exception e) {
                         plugin.getLogger().log(Level.WARNING, "rebase multi renderer fail", e);
                     }
@@ -1297,13 +1455,22 @@ public class RenderManager {
             for (Map<UUID, RegionRenderer> playerSharedRenderers : sharedRenderers.values()) {
                 for (RegionRenderer renderer : playerSharedRenderers.values()) {
                     try {
-                        renderer.rebaseOriginIfNeeded();
+                        reportRebaseIfDebug(renderer, renderer.rebaseOriginIfNeeded());
                     } catch (Exception e) {
                         plugin.getLogger().log(Level.WARNING, "rebase shared renderer fail", e);
                     }
                 }
             }
         }, 10L, 10L); // initial delay 10 ticks, period 10 ticks
+    }
+
+    private void reportRebaseIfDebug(RegionRenderer renderer, int rebasedShapes) {
+        if (rebasedShapes <= 0) return;
+        Player player = renderer.getPlayer();
+        if (player == null || !player.isOnline()) return;
+        PlayerData playerData = PlayerData.getPlayerData(player);
+        if (playerData == null || !playerData.isDebugEnabled()) return;
+        MessageUtil.sendTranslated(player, "command.wedisplay.debug.rebased_shape_count", rebasedShapes);
     }
 
     public void refreshPlayerRenderer(Player player) {

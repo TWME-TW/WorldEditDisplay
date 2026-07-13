@@ -32,6 +32,11 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.4</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.6.2</version>
         <executions>
@@ -145,7 +150,7 @@
     <dependency>
       <groupId>io.github.tofaa2</groupId>
       <artifactId>spigot</artifactId>
-      <version>3.3.3+119e9e1-SNAPSHOT</version>
+      <version>3.3.4+b54a52a-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -165,6 +170,12 @@
       <artifactId>viaversion-api</artifactId>
       <version>5.0.0</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.11.4</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

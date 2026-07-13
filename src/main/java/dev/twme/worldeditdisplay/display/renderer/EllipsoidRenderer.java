@@ -35,7 +35,15 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
 
     @Override
     public void render(EllipsoidRegion region) {
-        clear();
+        beginRetainedLineRender();
+        try {
+            renderRetained(region);
+        } finally {
+            finishRetainedLineRender();
+        }
+    }
+
+    private void renderRetained(EllipsoidRegion region) {
         segmentCache.clear();
 
         if (!region.isDefined()) return;

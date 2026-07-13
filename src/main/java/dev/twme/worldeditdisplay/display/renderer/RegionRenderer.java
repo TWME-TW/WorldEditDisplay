@@ -1,7 +1,12 @@
 package dev.twme.worldeditdisplay.display.renderer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -32,9 +37,15 @@ public abstract class RegionRenderer<T extends Region> {
     protected final Player player;
     protected final UUID playerUUID;
     protected final PlayerRenderSettings settings;
+    private final PacketShapeFactory shapeFactory;
 
     // pool of shapes
     protected final List<Shape> shapes;
+    private final Map<LineKey, Shape> retainedLineShapes;
+    private final Set<Shape> retainedLineShapeSet;
+    private Set<LineKey> retainedLinePassKeys;
+    private RetainedLineStats currentRetainedLineStats = RetainedLineStats.empty();
+    private RetainedLineStats lastRetainedLineStats = RetainedLineStats.empty();
 
     protected RenderConfig config;
 
@@ -50,7 +61,10 @@ public abstract class RegionRenderer<T extends Region> {
         this.player = player;
         this.playerUUID = player.getUniqueId();
         this.settings = settings;
+        this.shapeFactory = new PacketShapeFactory();
         this.shapes = new ArrayList<>();
+        this.retainedLineShapes = new HashMap<>();
+        this.retainedLineShapeSet = new HashSet<>();
         this.config = RenderConfig.getDefault();
     }
 
@@ -77,7 +91,59 @@ public abstract class RegionRenderer<T extends Region> {
             }
         }
         shapes.clear();
+        retainedLineShapes.clear();
+        retainedLineShapeSet.clear();
+        retainedLinePassKeys = null;
+        currentRetainedLineStats = RetainedLineStats.empty();
+        lastRetainedLineStats = RetainedLineStats.empty();
         lastRebaseOrigin = null;
+    }
+
+    protected void beginRetainedLineRender() {
+        renderOrigin = null;
+        currentRetainedLineStats = RetainedLineStats.empty();
+        removeNonRetainedShapes();
+        retainedLinePassKeys = new HashSet<>();
+    }
+
+    private void removeNonRetainedShapes() {
+        Iterator<Shape> iterator = shapes.iterator();
+        while (iterator.hasNext()) {
+            Shape shape = iterator.next();
+            if (retainedLineShapeSet.contains(shape)) continue;
+
+            try {
+                shape.remove();
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to remove transient shape", e);
+            }
+            iterator.remove();
+            currentRetainedLineStats = currentRetainedLineStats.withTransientRemoved();
+        }
+    }
+
+    protected void finishRetainedLineRender() {
+        if (retainedLinePassKeys == null) return;
+
+        Iterator<Map.Entry<LineKey, Shape>> iterator = retainedLineShapes.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<LineKey, Shape> entry = iterator.next();
+            if (retainedLinePassKeys.contains(entry.getKey())) continue;
+
+            Shape shape = entry.getValue();
+            try {
+                shape.remove();
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to remove stale line shape", e);
+            }
+            shapes.remove(shape);
+            iterator.remove();
+            retainedLineShapeSet.remove(shape);
+            currentRetainedLineStats = currentRetainedLineStats.withRemovedLine();
+        }
+
+        retainedLinePassKeys = null;
+        lastRetainedLineStats = currentRetainedLineStats;
     }
 
     protected Location toLocation(double x, double y, double z) {
@@ -105,26 +171,29 @@ public abstract class RegionRenderer<T extends Region> {
      * and teleports all shape entities to the player's feet if so.
      * This prevents TextDisplay entities from exceeding their view range.
      */
-    public void rebaseOriginIfNeeded() {
-        if (shapes.isEmpty() || lastRebaseOrigin == null) return;
+    public int rebaseOriginIfNeeded() {
+        if (shapes.isEmpty() || lastRebaseOrigin == null) return 0;
 
         Location playerLoc = player.getLocation();
-        if (!playerLoc.getWorld().equals(lastRebaseOrigin.getWorld())) return;
-        if (playerLoc.distanceSquared(lastRebaseOrigin) < REBASE_DISTANCE_SQUARED) return;
+        if (!playerLoc.getWorld().equals(lastRebaseOrigin.getWorld())) return 0;
+        if (playerLoc.distanceSquared(lastRebaseOrigin) < REBASE_DISTANCE_SQUARED) return 0;
 
         Location newOrigin = playerLoc.clone();
         newOrigin.setYaw(0);
         newOrigin.setPitch(0);
 
+        int rebasedShapes = 0;
         for (Shape shape : shapes) {
             try {
                 shape.teleportOrigin(newOrigin.getX(), newOrigin.getY(), newOrigin.getZ());
+                rebasedShapes++;
             } catch (Exception e) {
                 plugin.getLogger().log(Level.WARNING, "Failed to rebase shape origin", e);
             }
         }
 
         lastRebaseOrigin = newOrigin.clone();
+        return rebasedShapes;
     }
 
     /**
@@ -137,8 +206,30 @@ public abstract class RegionRenderer<T extends Region> {
      * Render a line using TextDisplayShapes
      */
     protected void renderLine(Line line, Color color, float thickness) {
+        if (retainedLinePassKeys != null) {
+            LineKey key = LineKey.of(line, color, thickness, isSeeThrough());
+            retainedLinePassKeys.add(key);
+            Shape existing = retainedLineShapes.get(key);
+            if (existing != null) {
+                currentRetainedLineStats = currentRetainedLineStats.withReusedLine();
+                return;
+            }
+
+            Shape shape = createLineShape(line, color, thickness);
+            retainedLineShapes.put(key, shape);
+            retainedLineShapeSet.add(shape);
+            shapes.add(shape);
+            currentRetainedLineStats = currentRetainedLineStats.withSpawnedLine();
+            return;
+        }
+
+        Shape shape = createLineShape(line, color, thickness);
+        shapes.add(shape);
+    }
+
+    private Shape createLineShape(Line line, Color color, float thickness) {
         Location origin = getOrigin();
-        Shape shape = new PacketShapeFactory()
+        Shape shape = shapeFactory
                 .line(origin, line.start(), line.end(), thickness)
             .rootAnchor(true)
                 .color(color)
@@ -149,7 +240,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .build();
         shape.addViewer(player.getUniqueId());
         shape.spawn();
-        shapes.add(shape);
+        return shape;
     }
 
     /**
@@ -216,7 +307,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderParallelogram(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = new PacketShapeFactory()
+        Shape shape = shapeFactory
                 .parallelogram(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -235,7 +326,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderTriangle(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = new PacketShapeFactory()
+        Shape shape = shapeFactory
                 .triangle(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -254,7 +345,27 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     public int getEntityCount() {
-        return shapes.stream().mapToInt(s -> s.getEntityUUIDs().size()).sum();
+        int count = 0;
+        for (Shape shape : shapes) {
+            count += shape.getEntityUUIDs().size();
+        }
+        return count;
+    }
+
+    public int getRetainedLineCount() {
+        return retainedLineShapes.size();
+    }
+
+    public int getRetainedLineEntityCount() {
+        int count = 0;
+        for (Shape shape : retainedLineShapes.values()) {
+            count += shape.getEntityUUIDs().size();
+        }
+        return count;
+    }
+
+    public RetainedLineStats getLastRetainedLineStats() {
+        return lastRetainedLineStats;
     }
 
     public Player getPlayer() {
@@ -295,4 +406,39 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     protected record Line(Vector3f start, Vector3f end){};
+
+    public record RetainedLineStats(int reusedLines, int spawnedLines, int removedLines, int removedTransientShapes) {
+        public static RetainedLineStats empty() {
+            return new RetainedLineStats(0, 0, 0, 0);
+        }
+
+        private RetainedLineStats withReusedLine() {
+            return new RetainedLineStats(reusedLines + 1, spawnedLines, removedLines, removedTransientShapes);
+        }
+
+        private RetainedLineStats withSpawnedLine() {
+            return new RetainedLineStats(reusedLines, spawnedLines + 1, removedLines, removedTransientShapes);
+        }
+
+        private RetainedLineStats withRemovedLine() {
+            return new RetainedLineStats(reusedLines, spawnedLines, removedLines + 1, removedTransientShapes);
+        }
+
+        private RetainedLineStats withTransientRemoved() {
+            return new RetainedLineStats(reusedLines, spawnedLines, removedLines, removedTransientShapes + 1);
+        }
+    }
+
+    private record LineKey(float startX, float startY, float startZ,
+                           float endX, float endY, float endZ,
+                           int color, int thickness, boolean seeThrough) {
+        private static LineKey of(Line line, Color color, float thickness, boolean seeThrough) {
+            Vector3f start = line.start();
+            Vector3f end = line.end();
+            return new LineKey(
+                    start.x, start.y, start.z,
+                    end.x, end.y, end.z,
+                    color.asARGB(), Float.floatToIntBits(thickness), seeThrough);
+        }
+    }
 }

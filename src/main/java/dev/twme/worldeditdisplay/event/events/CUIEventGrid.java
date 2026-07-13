@@ -38,9 +38,8 @@ public class CUIEventGrid extends CUIEvent {
         if (region != null) {
             // 設定網格間距
             region.setGridSpacing(spacing);
-            // TODO: 可在此處添加日誌記錄功能 (例如使用 Logger 替代 System.out.println)
         }
-        // NOTE: 若無多選區域，grid spacing 更新會被忽略
+        // 若無多選區域，WorldEdit 的 grid spacing 更新會被忽略。
 
         return null;
     }

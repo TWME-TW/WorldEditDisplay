@@ -64,6 +64,9 @@ command:
       enabled: "<green>已開啟除錯模式！每次渲染時將顯示實體數量。"
       disabled: "<#E8C96D>已關閉除錯模式！"
       entity_count: "<#C2C7D3>[除錯] 目前顯示實體數量：<white>%d"
+      retained_line_count: "<#C2C7D3>[除錯] 已保留線段形狀：<white>%d <#C2C7D3>（顯示實體：<white>%d<#C2C7D3>）"
+      retained_line_pass: "<#C2C7D3>[除錯] 最近線段 pass 重用/新增/移除：<white>%d<#C2C7D3>/<#C2C7D3><white>%d<#C2C7D3>/<#C2C7D3><white>%d"
+      rebased_shape_count: "<#C2C7D3>[除錯] 因玩家移動而重新定位顯示形狀：<white>%d"
       particle_count: "<#C2C7D3>[除錯] 目前粒子點數量：<white>%d"
       cui_message: "<#C2C7D3>[除錯] 收到 WECUI 訊息：<white>%s"
 

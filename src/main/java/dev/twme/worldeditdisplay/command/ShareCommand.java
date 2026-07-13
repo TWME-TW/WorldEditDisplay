@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -279,49 +278,76 @@ public class ShareCommand {
 
     public List<String> tabComplete(Player player, String[] args) {
         if (args.length == 2) {
-            List<String> options = new ArrayList<>(List.of("invite", "accept", "revoke", "unwatch", "list"));
-            return options.stream()
-                    .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                    .collect(Collectors.toList());
+            return filterPermittedOptions(player, List.of("invite", "accept", "revoke", "unwatch", "list"), args[1]);
         }
         if (args.length == 3) {
             String sub = args[1].toLowerCase();
+            if (!canUseSubCommand(player, sub)) return Collections.emptyList();
             return switch (sub) {
                 case "invite" -> {
-                    yield Bukkit.getOnlinePlayers().stream()
-                            .filter(p -> !p.equals(player))
-                            .map(Player::getName)
-                            .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
-                            .collect(Collectors.toList());
+                    List<String> result = new ArrayList<>();
+                    String prefix = args[2].toLowerCase();
+                    for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                        if (onlinePlayer.equals(player)) continue;
+                        addIfStartsWith(result, onlinePlayer.getName(), prefix);
+                    }
+                    yield result;
                 }
                 case "accept" -> {
                     Set<UUID> pending = plugin.getShareManager().getPendingInvitesFor(player.getUniqueId());
-                    yield pending.stream()
-                            .map(this::getPlayerName)
-                            .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
-                            .collect(Collectors.toList());
+                    yield filterPlayerNames(pending, args[2]);
                 }
                 case "revoke" -> {
                     Set<UUID> viewers = plugin.getShareManager().getActiveViewers(player.getUniqueId());
                     Set<UUID> pending = plugin.getShareManager().getPendingSentBy(player.getUniqueId());
                     Set<UUID> combined = new HashSet<>(viewers);
                     combined.addAll(pending);
-                    yield combined.stream()
-                            .map(this::getPlayerName)
-                            .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
-                            .collect(Collectors.toList());
+                    yield filterPlayerNames(combined, args[2]);
                 }
                 case "unwatch" -> {
                     Set<UUID> sharers = plugin.getShareManager().getActiveSharers(player.getUniqueId());
-                    yield sharers.stream()
-                            .map(this::getPlayerName)
-                            .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
-                            .collect(Collectors.toList());
+                    yield filterPlayerNames(sharers, args[2]);
                 }
                 default -> Collections.emptyList();
             };
         }
         return Collections.emptyList();
+    }
+
+    boolean canUseSubCommand(Player player, String subCommand) {
+        return switch (subCommand) {
+            case "invite" -> player.hasPermission("worldeditdisplay.use.share.invite");
+            case "accept" -> player.hasPermission("worldeditdisplay.use.share.accept");
+            case "revoke" -> player.hasPermission("worldeditdisplay.use.share.revoke");
+            case "unwatch" -> player.hasPermission("worldeditdisplay.use.share.unwatch");
+            case "list" -> player.hasPermission("worldeditdisplay.use.share.list");
+            default -> false;
+        };
+    }
+
+    private List<String> filterPermittedOptions(Player player, List<String> options, String prefix) {
+        String lowerPrefix = prefix.toLowerCase();
+        List<String> result = new ArrayList<>();
+        for (String option : options) {
+            if (!canUseSubCommand(player, option)) continue;
+            addIfStartsWith(result, option, lowerPrefix);
+        }
+        return result;
+    }
+
+    private List<String> filterPlayerNames(Set<UUID> playerIds, String prefix) {
+        String lowerPrefix = prefix.toLowerCase();
+        List<String> result = new ArrayList<>();
+        for (UUID playerId : playerIds) {
+            addIfStartsWith(result, getPlayerName(playerId), lowerPrefix);
+        }
+        return result;
+    }
+
+    private static void addIfStartsWith(List<String> result, String value, String lowerPrefix) {
+        if (value.toLowerCase().startsWith(lowerPrefix)) {
+            result.add(value);
+        }
     }
 
     private String getPlayerName(UUID uuid) {

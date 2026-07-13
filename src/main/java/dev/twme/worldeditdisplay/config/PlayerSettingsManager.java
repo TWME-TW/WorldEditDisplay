@@ -133,6 +133,10 @@ public class PlayerSettingsManager {
         return settingsCache.size();
     }
 
+    Map<UUID, PlayerRenderSettings> getSettingsCache() {
+        return settingsCache;
+    }
+
     /**
      * 儲存所有髒資料（已修改但未寫入磁碟的設定），並清除髒旗標。
      * 適合在非同步執行緒中呼叫。
@@ -141,23 +145,30 @@ public class PlayerSettingsManager {
         for (PlayerRenderSettings settings : settingsCache.values()) {
             synchronized (settings) {
                 if (settings.isDirty()) {
-                    settings.save();
-                    settings.markClean();
+                    if (settings.save()) {
+                        settings.markClean();
+                    }
                 }
             }
         }
     }
 
     /**
-     * 儲存指定玩家的設定（若有髒資料），然後從快取中移除。
+     * 儲存指定玩家的設定（若有髒資料），成功後從快取中移除。
      * 應在玩家離線後於非同步執行緒中呼叫。
      *
      * @param uuid 玩家 UUID
      */
     public void saveAndUnload(UUID uuid) {
-        PlayerRenderSettings settings = settingsCache.remove(uuid);
-        if (settings != null && settings.isDirty()) {
-            settings.save();
+        PlayerRenderSettings settings = settingsCache.get(uuid);
+        if (settings == null) return;
+
+        synchronized (settings) {
+            if (settings.isDirty() && !settings.save()) {
+                return;
+            }
+            settings.markClean();
         }
+        settingsCache.remove(uuid, settings);
     }
 }

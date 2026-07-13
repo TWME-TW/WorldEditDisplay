@@ -26,7 +26,15 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
 
     @Override
     public void render(CylinderRegion region) {
-        clear();
+        beginRetainedLineRender();
+        try {
+            renderRetained(region);
+        } finally {
+            finishRetainedLineRender();
+        }
+    }
+
+    private void renderRetained(CylinderRegion region) {
 
         boolean isMulti = isMultiSelection(region);
         Vector3 center = region.getCenter();

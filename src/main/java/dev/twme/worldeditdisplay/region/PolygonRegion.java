@@ -65,7 +65,11 @@ public class PolygonRegion extends Region {
 
     @Override
     public boolean isDefined() {
-        return !points.isEmpty() && points.stream().anyMatch(p -> p != null) && maxY >= minY;
+        if (points.isEmpty() || maxY < minY) return false;
+        for (Vector2 point : points) {
+            if (point != null) return true;
+        }
+        return false;
     }
 
     @Override

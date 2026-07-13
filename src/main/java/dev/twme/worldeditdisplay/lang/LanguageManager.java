@@ -146,7 +146,8 @@ public class LanguageManager {
             if (languages.containsKey(clientLocale)) return clientLocale;
 
             // fallback: just use language code (like zh)
-            String langCode = clientLocale.split("_")[0];
+            int separatorIndex = clientLocale.indexOf('_');
+            String langCode = separatorIndex == -1 ? clientLocale : clientLocale.substring(0, separatorIndex);
             for (String lang : languages.keySet()) {
                 if (lang.startsWith(langCode)) return lang;
             }

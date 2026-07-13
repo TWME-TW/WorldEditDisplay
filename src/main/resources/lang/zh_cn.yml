@@ -64,6 +64,9 @@ command:
       enabled: "<green>已开启调试模式！每次渲染时将显示实体数量。"
       disabled: "<#E8C96D>已关闭调试模式！"
       entity_count: "<#C2C7D3>[调试] 当前显示实体数量：<white>%d"
+      retained_line_count: "<#C2C7D3>[调试] 已保留线段形状：<white>%d <#C2C7D3>（显示实体：<white>%d<#C2C7D3>）"
+      retained_line_pass: "<#C2C7D3>[调试] 最近线段 pass 重用/新增/移除：<white>%d<#C2C7D3>/<#C2C7D3><white>%d<#C2C7D3>/<#C2C7D3><white>%d"
+      rebased_shape_count: "<#C2C7D3>[调试] 因玩家移动而重新定位显示形状：<white>%d"
       particle_count: "<#C2C7D3>[调试] 当前粒子点数量：<white>%d"
       cui_message: "<#C2C7D3>[调试] 收到 WECUI 消息：<white>%s"
 

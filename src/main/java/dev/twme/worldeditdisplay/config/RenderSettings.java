@@ -3,6 +3,7 @@ package dev.twme.worldeditdisplay.config;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
 
 import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
@@ -294,6 +295,8 @@ public class RenderSettings {
             loadBStatsSettings(config);
             loadViewAllSettings(config);
         } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING,
+                    "Failed to reload render settings; falling back to built-in defaults", e);
             loadDefaults();
         }
     }
