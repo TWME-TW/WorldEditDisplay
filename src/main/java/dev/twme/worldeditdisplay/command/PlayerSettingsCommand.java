@@ -89,6 +89,7 @@ public class PlayerSettingsCommand implements TabExecutor {
             case "render" -> sender.hasPermission("worldeditdisplay.use.render");
             case "share" -> sender.hasPermission("worldeditdisplay.use.share");
             case "view" -> sender.hasPermission("worldeditdisplay.use.view")
+                    || sender.hasPermission("worldeditdisplay.use.view.hide")
                     || sender.hasPermission("worldeditdisplay.use.view.list")
                     || sender.hasPermission("worldeditdisplay.use.view.label");
             default -> true;

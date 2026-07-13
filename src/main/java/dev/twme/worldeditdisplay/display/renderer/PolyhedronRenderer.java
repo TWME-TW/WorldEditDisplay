@@ -41,7 +41,7 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
         List<Vector3> vertices = region.getVertices();
         if (vertices.isEmpty()) return;
 
-    if (!hasAnyVertex(vertices)) return;
+        if (!hasAnyVertex(vertices)) return;
 
         boolean multi = isMultiSelection(region);
 

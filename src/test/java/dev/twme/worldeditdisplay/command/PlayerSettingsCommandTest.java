@@ -67,6 +67,13 @@ class PlayerSettingsCommandTest {
     }
 
     @Test
+    void viewRouteAcceptsHideOnlyPermission() {
+        CommandSender sender = senderWithPermissions("worldeditdisplay.use.view.hide");
+
+        assertTrue(command.canUseSubCommand(sender, "view"));
+    }
+
+    @Test
     void shareSubCommandPermissionChecksMatchSpecificPermissions() {
         ShareCommand shareCommand = new ShareCommand(null);
         org.bukkit.entity.Player player = playerWithPermissions("worldeditdisplay.use.share.invite", "worldeditdisplay.use.share.list");

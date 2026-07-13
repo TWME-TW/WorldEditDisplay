@@ -40,4 +40,62 @@ class RenderManagerSharedCacheTest {
 
         assertTrue(renderManager.getSharedColors().containsKey(sharerId));
     }
+
+    @Test
+    void clearSharedRenderReleasesCacheAfterRemovingLastLabel() {
+        RenderManager renderManager = new RenderManager();
+        UUID viewerId = UUID.randomUUID();
+        UUID sharerId = UUID.randomUUID();
+
+        renderManager.getSharedColors().put(sharerId, Color.RED);
+        renderManager.getLabelComponentNames().put(sharerId, "Sharer");
+        Map<UUID, me.tofaa.entitylib.wrapper.WrapperEntity> viewerLabels = new java.util.HashMap<>();
+        viewerLabels.put(sharerId, null);
+        renderManager.getLabelEntities().put(viewerId, viewerLabels);
+
+        renderManager.clearSharedRender(viewerId, sharerId);
+
+        assertFalse(renderManager.getSharedColors().containsKey(sharerId));
+        assertFalse(renderManager.getLabelComponentNames().containsKey(sharerId));
+        assertFalse(renderManager.getLabelEntities().containsKey(viewerId));
+    }
+
+    @Test
+    void clearSharedRendersReleasesCacheForLabelOnlyReference() {
+        RenderManager renderManager = new RenderManager();
+        UUID viewerId = UUID.randomUUID();
+        UUID sharerId = UUID.randomUUID();
+
+        renderManager.getSharedColors().put(sharerId, Color.RED);
+        renderManager.getLabelComponentNames().put(sharerId, "Sharer");
+        Map<UUID, me.tofaa.entitylib.wrapper.WrapperEntity> viewerLabels = new java.util.HashMap<>();
+        viewerLabels.put(sharerId, null);
+        renderManager.getLabelEntities().put(viewerId, viewerLabels);
+
+        renderManager.clearSharedRenders(viewerId);
+
+        assertFalse(renderManager.getSharedColors().containsKey(sharerId));
+        assertFalse(renderManager.getLabelComponentNames().containsKey(sharerId));
+        assertFalse(renderManager.getLabelEntities().containsKey(viewerId));
+    }
+
+    @Test
+    void clearSharerRendersClearsLabelOnlyReference() {
+        RenderManager renderManager = new RenderManager();
+        UUID viewerId = UUID.randomUUID();
+        UUID sharerId = UUID.randomUUID();
+
+        renderManager.getSharedColors().put(sharerId, Color.RED);
+        renderManager.getLabelComponentNames().put(sharerId, "Sharer");
+        Map<UUID, me.tofaa.entitylib.wrapper.WrapperEntity> viewerLabels = new java.util.HashMap<>();
+        viewerLabels.put(sharerId, null);
+        renderManager.getLabelEntities().put(viewerId, viewerLabels);
+
+        renderManager.clearSharerRenders(sharerId);
+
+        assertFalse(renderManager.getSharedColors().containsKey(sharerId));
+        assertFalse(renderManager.getLabelComponentNames().containsKey(sharerId));
+        assertFalse(renderManager.getLabelEntities().containsKey(viewerId));
+    }
+
 }
