@@ -145,7 +145,7 @@
     <dependency>
       <groupId>io.github.tofaa2</groupId>
       <artifactId>spigot</artifactId>
-      <version>3.3.3+119e9e1-SNAPSHOT</version>
+      <version>3.3.3+b54a52a-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
