@@ -58,7 +58,14 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
         sendCui(player, "p|0|" + x + "|" + y + "|" + z + "|27");
         sendCui(player, "p|1|" + (x + 2) + "|" + (y + 2) + "|" + (z + 2) + "|27");
 
-        getServer().getScheduler().runTaskLater(this, () -> reportEntityCount(player, worldEditDisplay), 20L);
+        getServer().getScheduler().runTaskLater(this, () -> {
+            sendCui(player, "u|0");
+            getServer().getScheduler().runTaskLater(
+                    this,
+                    () -> reportRendererState(player, worldEditDisplay),
+                    20L
+            );
+        }, 20L);
         return true;
     }
 
@@ -69,13 +76,30 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
         );
     }
 
-    private void reportEntityCount(Player player, Plugin worldEditDisplay) {
+    private void reportRendererState(Player player, Plugin worldEditDisplay) {
         try {
             Object renderManager = worldEditDisplay.getClass().getMethod("getRenderManager").invoke(worldEditDisplay);
             int entityCount = (int) renderManager.getClass()
                     .getMethod("getPlayerEntityCount", java.util.UUID.class)
                     .invoke(renderManager, player.getUniqueId());
-            player.sendMessage("WED_READY:" + entityCount);
+            int retainedLineCount = (int) renderManager.getClass()
+                    .getMethod("getPlayerRetainedLineCount", java.util.UUID.class)
+                    .invoke(renderManager, player.getUniqueId());
+            int retainedLineEntityCount = (int) renderManager.getClass()
+                    .getMethod("getPlayerRetainedLineEntityCount", java.util.UUID.class)
+                    .invoke(renderManager, player.getUniqueId());
+            Object retainedLineStats = renderManager.getClass()
+                    .getMethod("getPlayerRetainedLineStats", java.util.UUID.class)
+                    .invoke(renderManager, player.getUniqueId());
+            int reusedLines = (int) retainedLineStats.getClass().getMethod("reusedLines").invoke(retainedLineStats);
+            int spawnedLines = (int) retainedLineStats.getClass().getMethod("spawnedLines").invoke(retainedLineStats);
+            int removedLines = (int) retainedLineStats.getClass().getMethod("removedLines").invoke(retainedLineStats);
+            player.sendMessage("WED_READY:" + entityCount
+                    + ":" + retainedLineCount
+                    + ":" + retainedLineEntityCount
+                    + ":" + reusedLines
+                    + ":" + spawnedLines
+                    + ":" + removedLines);
         } catch (ReflectiveOperationException exception) {
             getLogger().severe("Unable to inspect the WorldEditDisplay renderer: " + exception);
             player.sendMessage("WED_ERROR:renderer inspection failed");

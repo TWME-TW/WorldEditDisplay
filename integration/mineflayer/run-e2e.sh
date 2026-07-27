@@ -92,9 +92,9 @@ if ! grep -q 'Done (' "${SERVER_DIR}/server.log"; then
   echo "Paper did not start within 180 seconds" >&2
   exit 1
 fi
-if ! grep -q 'Enabling WorldEditDisplay v2.4.0' "${SERVER_DIR}/server.log"; then
+if ! grep -q 'Enabling WorldEditDisplay v2.5.0' "${SERVER_DIR}/server.log"; then
   tail -160 "${SERVER_DIR}/server.log" >&2
-  echo "WorldEditDisplay 2.4.0 did not enable" >&2
+  echo "WorldEditDisplay 2.5.0 did not enable" >&2
   exit 1
 fi
 
