@@ -14,7 +14,9 @@ import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.util.Vector3f;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
@@ -47,9 +49,9 @@ import dev.twme.worldeditdisplay.util.MessageUtil;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 import io.github.retrooper.packetevents.util.folia.TaskWrapper;
-import me.tofaa.entitylib.meta.display.AbstractDisplayMeta;
-import me.tofaa.entitylib.meta.display.TextDisplayMeta;
-import me.tofaa.entitylib.wrapper.WrapperEntity;
+import io.github.twme.virtualentities.VirtualEntity;
+import io.github.twme.virtualentities.metadata.EntityMetadataFlags;
+import io.github.twme.virtualentities.metadata.GeneratedEntityMetadataKeys;
 
 /**
  * keeps track of player renderers
@@ -64,7 +66,7 @@ public class RenderManager {
     /** viewer → (sharer → renderer): renderers for other players' shared selections */
     private final Map<UUID, Map<UUID, RegionRenderer>> sharedRenderers;
     /** viewer → (sharer → label entity): name-tag labels shown above shared selections */
-    private final Map<UUID, Map<UUID, WrapperEntity>> labelEntities;
+    private final Map<UUID, Map<UUID, VirtualEntity>> labelEntities;
     /** sharer → colour: stable shared-selection colour assignments across all viewers */
     private final Map<UUID, Color> sharedColors;
     /**
@@ -98,6 +100,7 @@ public class RenderManager {
     private static final float SHARED_MIN_HUE_DISTANCE = 0.12f;
     private static final float SHARED_HUE_STEP = 0.61803398875f;
     private static final int SHARED_COLOR_ATTEMPTS = 12;
+    private static final byte BILLBOARD_CENTER = 3;
 
     private TaskWrapper rebaseTask;
 
@@ -325,7 +328,7 @@ public class RenderManager {
                                                 Map<UUID, RegionRenderer> viewerRenderers,
                                                 Set<UUID> visibleSharers) {
         Set<UUID> referencedSharers = new HashSet<>(viewerRenderers.keySet());
-        Map<UUID, WrapperEntity> viewerLabels = labelEntities.get(viewerId);
+        Map<UUID, VirtualEntity> viewerLabels = labelEntities.get(viewerId);
         if (viewerLabels != null) referencedSharers.addAll(viewerLabels.keySet());
 
         for (UUID sharerId : referencedSharers) {
@@ -338,7 +341,7 @@ public class RenderManager {
                                                     Map<UUID, ParticleRenderer> viewerRenderers,
                                                     Set<UUID> visibleSharers) {
         Set<UUID> referencedSharers = new HashSet<>(viewerRenderers.keySet());
-        Map<UUID, WrapperEntity> viewerLabels = labelEntities.get(viewerId);
+        Map<UUID, VirtualEntity> viewerLabels = labelEntities.get(viewerId);
         if (viewerLabels != null) referencedSharers.addAll(viewerLabels.keySet());
 
         for (UUID sharerId : referencedSharers) {
@@ -644,7 +647,7 @@ public class RenderManager {
         return sharedColors;
     }
 
-    Map<UUID, Map<UUID, WrapperEntity>> getLabelEntities() {
+    Map<UUID, Map<UUID, VirtualEntity>> getLabelEntities() {
         return labelEntities;
     }
 
@@ -663,7 +666,7 @@ public class RenderManager {
         for (Map<UUID, ParticleRenderer> viewerRenderers : sharedParticleRenderers.values()) {
             if (viewerRenderers.containsKey(sharerId)) return true;
         }
-        for (Map<UUID, WrapperEntity> viewerLabels : labelEntities.values()) {
+        for (Map<UUID, VirtualEntity> viewerLabels : labelEntities.values()) {
             if (viewerLabels.containsKey(sharerId)) return true;
         }
         return false;
@@ -774,53 +777,59 @@ public class RenderManager {
             nameChanged = true;
         }
 
-        Map<UUID, WrapperEntity> viewerLabels =
+        Map<UUID, VirtualEntity> viewerLabels =
                 labelEntities.computeIfAbsent(viewerId, k -> new ConcurrentHashMap<>());
-        WrapperEntity existingLabel = viewerLabels.get(sharerId);
+        VirtualEntity existingLabel = viewerLabels.get(sharerId);
 
         if (existingLabel != null) {
             // Only send a metadata packet when the sharer's name was rebuilt this frame.
-            if (nameChanged && existingLabel.getEntityMeta() instanceof TextDisplayMeta meta) {
-                meta.setText(nameText);
+            if (nameChanged) {
+                existingLabel.metadata().set(GeneratedEntityMetadataKeys.TextDisplay.TEXT, nameText);
+                existingLabel.syncMetadata();
             }
             existingLabel.teleport(SpigotConversionUtil.fromBukkitLocation(labelLoc));
             return;
         }
 
-        WrapperEntity label = new WrapperEntity(EntityTypes.TEXT_DISPLAY);
-        label.spawn(SpigotConversionUtil.fromBukkitLocation(labelLoc));
-        if (label.getEntityMeta() instanceof TextDisplayMeta meta) {
-            // Derive a dark, semi-opaque background from the sharer's shared colour
-            int bgColor = (0xC0 << 24)
-                    | ((int) (sharedColor.getRed()   * 0.25) << 16)
-                    | ((int) (sharedColor.getGreen() * 0.25) <<  8)
-                    |  (int) (sharedColor.getBlue()  * 0.25);
-            meta.setText(nameText);
-            meta.setBillboardConstraints(AbstractDisplayMeta.BillboardConstraints.CENTER);
-            meta.setScale(new Vector3f(2.0f, 2.0f, 2.0f));
-            meta.setSeeThrough(true);
-            meta.setViewRange(64.0f);
-            meta.setBrightnessOverride(15 << 4 | 15 << 20);
-            meta.setBackgroundColor(bgColor);
+        User viewerUser = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+        if (viewerUser == null) {
+            return;
         }
-        label.addViewer(viewerId);
+        // Derive a dark, semi-opaque background from the sharer's shared colour.
+        int backgroundColor = (0xC0 << 24)
+                | ((int) (sharedColor.getRed() * 0.25) << 16)
+                | ((int) (sharedColor.getGreen() * 0.25) << 8)
+                | (int) (sharedColor.getBlue() * 0.25);
+        VirtualEntity label = plugin.getVirtualEntityManager()
+                .entity(EntityTypes.TEXT_DISPLAY)
+                .metadata()
+                .build();
+        label.metadata()
+                .set(GeneratedEntityMetadataKeys.TextDisplay.TEXT, nameText)
+                .set(GeneratedEntityMetadataKeys.TextDisplay.BACKGROUND_COLOR, backgroundColor)
+                .setFlag(EntityMetadataFlags.TextDisplay.SEE_THROUGH, true)
+                .set(GeneratedEntityMetadataKeys.Display.BILLBOARD_RENDER_CONSTRAINTS, BILLBOARD_CENTER)
+                .set(GeneratedEntityMetadataKeys.Display.SCALE, new Vector3f(2.0f, 2.0f, 2.0f))
+                .set(GeneratedEntityMetadataKeys.Display.VIEW_RANGE, 64.0f)
+                .set(GeneratedEntityMetadataKeys.Display.BRIGHTNESS_OVERRIDE, 15 << 4 | 15 << 20);
+        label.addViewer(viewerUser).spawn(SpigotConversionUtil.fromBukkitLocation(labelLoc));
         viewerLabels.put(sharerId, label);
     }
 
     /** Remove the label entity a specific viewer has for a specific sharer. */
     private void clearSharedLabel(UUID viewerId, UUID sharerId) {
-        Map<UUID, WrapperEntity> viewerLabels = labelEntities.get(viewerId);
+        Map<UUID, VirtualEntity> viewerLabels = labelEntities.get(viewerId);
         if (viewerLabels == null) return;
-        WrapperEntity label = viewerLabels.remove(sharerId);
+        VirtualEntity label = viewerLabels.remove(sharerId);
         if (label != null) label.remove();
         if (viewerLabels.isEmpty()) labelEntities.remove(viewerId);
     }
 
     /** Remove all label entities for a specific viewer. */
     public void clearSharedLabels(UUID viewerId) {
-        Map<UUID, WrapperEntity> viewerLabels = labelEntities.remove(viewerId);
+        Map<UUID, VirtualEntity> viewerLabels = labelEntities.remove(viewerId);
         if (viewerLabels != null) {
-            for (WrapperEntity label : viewerLabels.values()) {
+            for (VirtualEntity label : viewerLabels.values()) {
                 if (label != null) label.remove();
             }
             viewerLabels.clear();
@@ -846,7 +855,7 @@ public class RenderManager {
             particleMap.clear();
         }
 
-        Map<UUID, WrapperEntity> viewerLabels = labelEntities.get(viewerId);
+        Map<UUID, VirtualEntity> viewerLabels = labelEntities.get(viewerId);
         if (viewerLabels != null) sharerIds.addAll(viewerLabels.keySet());
         clearSharedLabels(viewerId);
 
@@ -1215,7 +1224,7 @@ public class RenderManager {
         sharedRenderers.clear();
         sharedColors.clear();
 
-        labelEntities.values().forEach(m -> m.values().forEach(WrapperEntity::remove));
+        labelEntities.values().forEach(m -> m.values().forEach(VirtualEntity::remove));
         labelEntities.clear();
 
         // Particle fallback renderers

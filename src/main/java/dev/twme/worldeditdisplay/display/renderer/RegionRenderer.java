@@ -15,7 +15,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.joml.Vector3f;
 
-import dev.twme.textdisplayshape.packet.PacketShapeFactory;
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
@@ -37,8 +36,6 @@ public abstract class RegionRenderer<T extends Region> {
     protected final Player player;
     protected final UUID playerUUID;
     protected final PlayerRenderSettings settings;
-    private final PacketShapeFactory shapeFactory;
-
     // pool of shapes
     protected final List<Shape> shapes;
     private final Map<LineKey, Shape> retainedLineShapes;
@@ -62,7 +59,6 @@ public abstract class RegionRenderer<T extends Region> {
         this.player = player;
         this.playerUUID = player.getUniqueId();
         this.settings = settings;
-        this.shapeFactory = new PacketShapeFactory();
         this.shapes = new ArrayList<>();
         this.retainedLineShapes = new HashMap<>();
         this.retainedLineShapeSet = new HashSet<>();
@@ -241,7 +237,7 @@ public abstract class RegionRenderer<T extends Region> {
 
     private Shape createLineShape(Line line, Color color, float thickness) {
         Location origin = getOrigin();
-        Shape shape = shapeFactory
+        Shape shape = plugin.getPacketShapeFactory()
                 .line(origin, line.start(), line.end(), thickness)
             .rootAnchor(true)
                 .color(color)
@@ -319,7 +315,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderParallelogram(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = shapeFactory
+        Shape shape = plugin.getPacketShapeFactory()
                 .parallelogram(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -338,7 +334,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderTriangle(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = shapeFactory
+        Shape shape = plugin.getPacketShapeFactory()
                 .triangle(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -418,7 +414,6 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     protected record Line(Vector3f start, Vector3f end){};
-
     public record RetainedLineStats(int reusedLines, int spawnedLines, int removedLines, int removedTransientShapes) {
         public static RetainedLineStats empty() {
             return new RetainedLineStats(0, 0, 0, 0);

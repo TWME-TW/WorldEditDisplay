@@ -24,12 +24,12 @@ import dev.twme.worldeditdisplay.listener.PlayerLocaleChangeListener;
 import dev.twme.worldeditdisplay.listener.PlayerQuitListener;
 import dev.twme.worldeditdisplay.share.ShareManager;
 import dev.twme.worldeditdisplay.util.MessageUtil;
+import dev.twme.textdisplayshape.packet.PacketShapeFactory;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 import io.github.retrooper.packetevents.util.folia.TaskWrapper;
-import me.tofaa.entitylib.APIConfig;
-import me.tofaa.entitylib.EntityLib;
-import me.tofaa.entitylib.spigot.SpigotEntityLibPlatform;
+import io.github.twme.virtualentities.VirtualEntities;
+import io.github.twme.virtualentities.VirtualEntityManager;
 
 public final class WorldEditDisplay extends JavaPlugin {
     private static WorldEditDisplay plugin;
@@ -38,6 +38,8 @@ public final class WorldEditDisplay extends JavaPlugin {
     private PlayerSettingsManager playerSettingsManager;
     private LanguageManager languageManager;
     private ShareManager shareManager;
+    private VirtualEntityManager virtualEntityManager;
+    private PacketShapeFactory packetShapeFactory;
     private final Set<UUID> viewAllPlayers = ConcurrentHashMap.newKeySet();
 
     // Packet listener references (kept for clean unregistration on disable)
@@ -71,15 +73,13 @@ public final class WorldEditDisplay extends JavaPlugin {
 
         PacketEvents.getAPI().init();
 
+        virtualEntityManager = VirtualEntities.create();
+        packetShapeFactory = new PacketShapeFactory(virtualEntityManager);
+
         inboundListenerInstance = new InboundPacketListener();
         inboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(inboundListenerInstance, PacketListenerPriority.NORMAL);
         outboundListenerInstance = new OutboundPacketListener();
         outboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(outboundListenerInstance, PacketListenerPriority.NORMAL);
-
-        SpigotEntityLibPlatform platform = new SpigotEntityLibPlatform(this);
-        APIConfig settings = new APIConfig(PacketEvents.getAPI())
-                .usePlatformLogger();
-        EntityLib.init(platform, settings);
 
         // Load default configuration
         saveDefaultConfig();
@@ -154,6 +154,24 @@ public final class WorldEditDisplay extends JavaPlugin {
             playerSettingsSaveTask = null;
         }
 
+        // Stop packet-driven state changes before render and entity cleanup.
+        if (inboundListenerInstance != null) {
+            inboundListenerInstance.deactivate();
+            inboundListenerInstance = null;
+        }
+        if (outboundListenerInstance != null) {
+            outboundListenerInstance.deactivate();
+            outboundListenerInstance = null;
+        }
+        if (inboundPacketListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(inboundPacketListener);
+            inboundPacketListener = null;
+        }
+        if (outboundPacketListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(outboundPacketListener);
+            outboundPacketListener = null;
+        }
+
         // Save share data
         if (shareManager != null) {
             shareManager.save();
@@ -168,26 +186,10 @@ public final class WorldEditDisplay extends JavaPlugin {
         if (renderManager != null) {
             renderManager.shutdown();
         }
-
-        // STEP 1 — Deactivate listener flags FIRST, so any in-flight
-        // Netty dispatch that hasn't yet entered the listener method
-        // will bail out at the `!active` guard before triggering any
-        // lazy plugin class loading.
-        if (inboundListenerInstance != null) {
-            inboundListenerInstance.deactivate();
-        }
-        if (outboundListenerInstance != null) {
-            outboundListenerInstance.deactivate();
-        }
-
-        // STEP 2 — Then unregister from PacketEvents (future dispatches).
-        if (inboundPacketListener != null) {
-            PacketEvents.getAPI().getEventManager().unregisterListener(inboundPacketListener);
-            inboundPacketListener = null;
-        }
-        if (outboundPacketListener != null) {
-            PacketEvents.getAPI().getEventManager().unregisterListener(outboundPacketListener);
-            outboundPacketListener = null;
+        if (virtualEntityManager != null) {
+            virtualEntityManager.close();
+            virtualEntityManager = null;
+            packetShapeFactory = null;
         }
 
         getLogger().info("WorldEditDisplay disabled");
@@ -215,6 +217,20 @@ public final class WorldEditDisplay extends JavaPlugin {
 
     public ShareManager getShareManager() {
         return shareManager;
+    }
+
+    public VirtualEntityManager getVirtualEntityManager() {
+        if (virtualEntityManager == null) {
+            throw new IllegalStateException("Virtual entity manager is not available");
+        }
+        return virtualEntityManager;
+    }
+
+    public PacketShapeFactory getPacketShapeFactory() {
+        if (packetShapeFactory == null) {
+            throw new IllegalStateException("Packet shape factory is not available");
+        }
+        return packetShapeFactory;
     }
 
     public Set<UUID> getViewAllPlayers() {

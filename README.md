@@ -20,6 +20,8 @@ A server-side WorldEdit selection visualization plugin | WorldEdit 選區視覺�
 
 WorldEditDisplay is a server-side plugin for Minecraft that adds visual selection rendering for WorldEdit. It intercepts WorldEdit's CUI (Client User Interface) protocol packets and renders selections using Display Entities on the server side. This means players can see their WorldEdit selections without installing any client-side mods.
 
+Version 2.4.0 migrates all packet-only selection shapes and shared-player labels from EntityLib to [VirtualEntities](https://github.com/twme-ai/VirtualEntities), using the [twme-ai/TextDisplayShapes](https://github.com/twme-ai/TextDisplayShapes) 3.0.0 packet module.
+
 ### Features
 
 **Selection Types**
@@ -71,7 +73,7 @@ Players can customize their own rendering preferences:
 - Paper 1.19.4 ~ 26.2; Folia / Spigot 1.20 ~ 1.21.x
 - Java 17 or higher (subject to the Minecraft server version's own Java requirement)
 - Required plugins:
-  - [PacketEvents](https://github.com/retrooper/packetevents) 2.11.1+
+  - [PacketEvents](https://github.com/retrooper/packetevents) 2.13.0+
 
 ### Installation
 
@@ -275,6 +277,12 @@ mvn clean package
 
 The compiled jar will be in `target/WorldEditDisplay-version-platform.jar`
 
+Run the full Paper 1.21.11, PacketEvents 2.13.0, and Mineflayer CUI rendering test with:
+
+```bash
+./integration/mineflayer/run-e2e.sh
+```
+
 **Project Structure**
 ```
 src/main/java/dev/twme/worldeditdisplay/
@@ -305,7 +313,9 @@ See [LICENSE](LICENSE) file for details.
 - [WorldEdit](https://github.com/EngineHub/WorldEdit) - The core editing tool
 - [WorldEditCUI](https://github.com/EngineHub/WorldEditCUI) - Client-side CUI mod (protocol reference)
 - [PacketEvents](https://github.com/retrooper/packetevents) - Packet handling library
-- [TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes) - Shape rendering library used by the plugin
+- [TextDisplayShapes](https://github.com/twme-ai/TextDisplayShapes) - VirtualEntities-based shape rendering library used by the plugin
+- [VirtualEntities](https://github.com/twme-ai/VirtualEntities) - Packet-only entity lifecycle and metadata library used by TextDisplayShapes and shared labels
+- [TWME-TW/TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes) - Upstream TextDisplayShapes project
 
 ---
 
@@ -366,7 +376,7 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 - Paper 1.19.4 ~ 26.2；Folia / Spigot 1.20 ~ 1.21.x
 - Java 17 或更高版本（仍須符合 Minecraft 伺服器版本本身的 Java 需求）
 - 必要插件：
-  - [PacketEvents](https://github.com/retrooper/packetevents) 2.11.1+
+  - [PacketEvents](https://github.com/retrooper/packetevents) 2.13.0+
 
 ### 安裝
 
@@ -600,7 +610,9 @@ src/main/java/dev/twme/worldeditdisplay/
 - [WorldEdit](https://github.com/EngineHub/WorldEdit) - 核心編輯工具
 - [WorldEditCUI](https://github.com/EngineHub/WorldEditCUI) - 客戶端 CUI 模組（協議參考）
 - [PacketEvents](https://github.com/retrooper/packetevents) - 封包處理函式庫
-- [TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes) - 此插件使用的形狀渲染函式庫
+- [TextDisplayShapes](https://github.com/twme-ai/TextDisplayShapes) - 此插件使用、基於 VirtualEntities 的形狀渲染函式庫
+- [VirtualEntities](https://github.com/twme-ai/VirtualEntities) - TextDisplayShapes 與共享標籤使用的封包虛擬實體生命週期與 metadata 函式庫
+- [TWME-TW/TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes) - TextDisplayShapes 上游專案
 
 ---
 

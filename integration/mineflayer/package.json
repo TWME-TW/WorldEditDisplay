@@ -1,0 +1,11 @@
+{
+  "name": "worldeditdisplay-mineflayer-e2e",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "mineflayer": "4.37.1"
+  }
+}
