@@ -55,6 +55,7 @@ public abstract class RegionRenderer<T extends Region> {
     private Location renderOrigin;
 
     private static final double REBASE_DISTANCE_SQUARED = 80.0 * 80.0;
+    private static final float MIN_LINE_LENGTH_SQUARED = 1.0e-6f;
 
     public RegionRenderer(WorldEditDisplay plugin, Player player, PlayerRenderSettings settings) {
         this.plugin = plugin;
@@ -206,6 +207,8 @@ public abstract class RegionRenderer<T extends Region> {
      * Render a line using TextDisplayShapes
      */
     protected void renderLine(Line line, Color color, float thickness) {
+        if (!isRenderableLine(line)) return;
+
         if (retainedLinePassKeys != null) {
             LineKey key = LineKey.of(line, color, thickness, isSeeThrough());
             retainedLinePassKeys.add(key);
@@ -225,6 +228,15 @@ public abstract class RegionRenderer<T extends Region> {
 
         Shape shape = createLineShape(line, color, thickness);
         shapes.add(shape);
+    }
+
+    static boolean isRenderableLine(Line line) {
+        return line != null
+                && line.start() != null
+                && line.end() != null
+                && line.start().isFinite()
+                && line.end().isFinite()
+                && line.start().distanceSquared(line.end()) >= MIN_LINE_LENGTH_SQUARED;
     }
 
     private Shape createLineShape(Line line, Color color, float thickness) {

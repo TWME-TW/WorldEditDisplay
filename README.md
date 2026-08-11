@@ -68,8 +68,8 @@ Players can customize their own rendering preferences:
 
 ### Requirements
 
-- Minecraft 1.20 ~ 1.21.x (Paper / Folia / Spigot)
-- Java 21 or higher
+- Paper 1.19.4 ~ 26.2; Folia / Spigot 1.20 ~ 1.21.x
+- Java 17 or higher (subject to the Minecraft server version's own Java requirement)
 - Required plugins:
   - [PacketEvents](https://github.com/retrooper/packetevents) 2.11.1+
 
@@ -363,8 +363,8 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 
 ### 需求
 
-- Minecraft 1.20 ~ 1.21.x（Paper / Folia / Spigot）
-- Java 21 或更高版本
+- Paper 1.19.4 ~ 26.2；Folia / Spigot 1.20 ~ 1.21.x
+- Java 17 或更高版本（仍須符合 Minecraft 伺服器版本本身的 Java 需求）
 - 必要插件：
   - [PacketEvents](https://github.com/retrooper/packetevents) 2.11.1+
 

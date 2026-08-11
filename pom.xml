@@ -12,7 +12,7 @@
   <name>WorldEditDisplay</name>
 
   <properties>
-    <java.version>21</java.version>
+    <java.version>17</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <platform>paper</platform>
   </properties>
@@ -26,8 +26,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.15.0</version>
         <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
+          <release>${java.version}</release>
         </configuration>
       </plugin>
       <plugin>
