@@ -54,12 +54,15 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
         int x = player.getLocation().getBlockX() + 2;
         int y = player.getLocation().getBlockY();
         int z = player.getLocation().getBlockZ() + 2;
+        String secondPoint = "p|1|" + (x + 2) + "|" + (y + 2) + "|" + (z + 2) + "|27";
         sendCui(player, "s|cuboid");
         sendCui(player, "p|0|" + x + "|" + y + "|" + z + "|27");
-        sendCui(player, "p|1|" + (x + 2) + "|" + (y + 2) + "|" + (z + 2) + "|27");
+        sendCui(player, secondPoint);
 
         getServer().getScheduler().runTaskLater(this, () -> {
-            sendCui(player, "u|0");
+            // Re-send an unchanged point after the first render has settled. This
+            // forces a second retained render pass through the real CUI path.
+            sendCui(player, secondPoint);
             getServer().getScheduler().runTaskLater(
                     this,
                     () -> reportRendererState(player, worldEditDisplay),
