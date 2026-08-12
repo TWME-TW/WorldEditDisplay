@@ -15,7 +15,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.joml.Vector3f;
 
-import dev.twme.textdisplayshape.packet.PacketShapeFactory;
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
@@ -37,8 +36,6 @@ public abstract class RegionRenderer<T extends Region> {
     protected final Player player;
     protected final UUID playerUUID;
     protected final PlayerRenderSettings settings;
-    private final PacketShapeFactory shapeFactory;
-
     // pool of shapes
     protected final List<Shape> shapes;
     private final Map<LineKey, Shape> retainedLineShapes;
@@ -55,13 +52,13 @@ public abstract class RegionRenderer<T extends Region> {
     private Location renderOrigin;
 
     private static final double REBASE_DISTANCE_SQUARED = 80.0 * 80.0;
+    private static final float MIN_LINE_LENGTH_SQUARED = 1.0e-6f;
 
     public RegionRenderer(WorldEditDisplay plugin, Player player, PlayerRenderSettings settings) {
         this.plugin = plugin;
         this.player = player;
         this.playerUUID = player.getUniqueId();
         this.settings = settings;
-        this.shapeFactory = new PacketShapeFactory();
         this.shapes = new ArrayList<>();
         this.retainedLineShapes = new HashMap<>();
         this.retainedLineShapeSet = new HashSet<>();
@@ -206,6 +203,8 @@ public abstract class RegionRenderer<T extends Region> {
      * Render a line using TextDisplayShapes
      */
     protected void renderLine(Line line, Color color, float thickness) {
+        if (!isRenderableLine(line)) return;
+
         if (retainedLinePassKeys != null) {
             LineKey key = LineKey.of(line, color, thickness, isSeeThrough());
             retainedLinePassKeys.add(key);
@@ -227,9 +226,18 @@ public abstract class RegionRenderer<T extends Region> {
         shapes.add(shape);
     }
 
+    static boolean isRenderableLine(Line line) {
+        return line != null
+                && line.start() != null
+                && line.end() != null
+                && line.start().isFinite()
+                && line.end().isFinite()
+                && line.start().distanceSquared(line.end()) >= MIN_LINE_LENGTH_SQUARED;
+    }
+
     private Shape createLineShape(Line line, Color color, float thickness) {
         Location origin = getOrigin();
-        Shape shape = shapeFactory
+        Shape shape = plugin.getPacketShapeFactory()
                 .line(origin, line.start(), line.end(), thickness)
             .rootAnchor(true)
                 .color(color)
@@ -307,7 +315,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderParallelogram(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = shapeFactory
+        Shape shape = plugin.getPacketShapeFactory()
                 .parallelogram(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -326,7 +334,7 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderTriangle(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         Location origin = getOrigin();
-        Shape shape = shapeFactory
+        Shape shape = plugin.getPacketShapeFactory()
                 .triangle(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
@@ -406,7 +414,6 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     protected record Line(Vector3f start, Vector3f end){};
-
     public record RetainedLineStats(int reusedLines, int spawnedLines, int removedLines, int removedTransientShapes) {
         public static RetainedLineStats empty() {
             return new RetainedLineStats(0, 0, 0, 0);

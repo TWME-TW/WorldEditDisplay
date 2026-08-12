@@ -9,6 +9,8 @@ import java.util.UUID;
 import org.bukkit.Color;
 import org.junit.jupiter.api.Test;
 
+import io.github.twme.virtualentities.VirtualEntity;
+
 class RenderManagerSharedCacheTest {
 
     @Test
@@ -32,7 +34,7 @@ class RenderManagerSharedCacheTest {
         UUID sharerId = UUID.randomUUID();
 
         renderManager.getSharedColors().put(sharerId, Color.RED);
-        Map<UUID, me.tofaa.entitylib.wrapper.WrapperEntity> viewerLabels = new java.util.HashMap<>();
+        Map<UUID, VirtualEntity> viewerLabels = new java.util.HashMap<>();
         viewerLabels.put(sharerId, null);
         renderManager.getLabelEntities().put(viewerId, viewerLabels);
 
@@ -49,7 +51,7 @@ class RenderManagerSharedCacheTest {
 
         renderManager.getSharedColors().put(sharerId, Color.RED);
         renderManager.getLabelComponentNames().put(sharerId, "Sharer");
-        Map<UUID, me.tofaa.entitylib.wrapper.WrapperEntity> viewerLabels = new java.util.HashMap<>();
+        Map<UUID, VirtualEntity> viewerLabels = new java.util.HashMap<>();
         viewerLabels.put(sharerId, null);
         renderManager.getLabelEntities().put(viewerId, viewerLabels);
 
@@ -68,7 +70,7 @@ class RenderManagerSharedCacheTest {
 
         renderManager.getSharedColors().put(sharerId, Color.RED);
         renderManager.getLabelComponentNames().put(sharerId, "Sharer");
-        Map<UUID, me.tofaa.entitylib.wrapper.WrapperEntity> viewerLabels = new java.util.HashMap<>();
+        Map<UUID, VirtualEntity> viewerLabels = new java.util.HashMap<>();
         viewerLabels.put(sharerId, null);
         renderManager.getLabelEntities().put(viewerId, viewerLabels);
 
@@ -87,7 +89,7 @@ class RenderManagerSharedCacheTest {
 
         renderManager.getSharedColors().put(sharerId, Color.RED);
         renderManager.getLabelComponentNames().put(sharerId, "Sharer");
-        Map<UUID, me.tofaa.entitylib.wrapper.WrapperEntity> viewerLabels = new java.util.HashMap<>();
+        Map<UUID, VirtualEntity> viewerLabels = new java.util.HashMap<>();
         viewerLabels.put(sharerId, null);
         renderManager.getLabelEntities().put(viewerId, viewerLabels);
 
