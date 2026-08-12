@@ -131,13 +131,13 @@
     <dependency>
       <groupId>com.github.twme-ai.TextDisplayShapes</groupId>
       <artifactId>textdisplayshape-packet</artifactId>
-      <version>v3.0.0</version>
+      <version>c0ad5ded36381101c5175ef98315a4ab00b96ce8</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.twme-ai</groupId>
       <artifactId>VirtualEntities</artifactId>
-      <version>v0.7.0</version>
+      <version>v0.9.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
