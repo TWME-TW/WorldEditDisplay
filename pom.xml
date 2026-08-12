@@ -102,6 +102,16 @@
       <url>https://repo.codemc.io/repository/maven-snapshots/</url>
     </repository>
     <repository>
+      <id>twme-releases</id>
+      <url>https://repo.twme.dev/releases</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
       <id>jitpack</id>
       <url>https://jitpack.io</url>
       <releases>
@@ -129,9 +139,9 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.twme-ai.TextDisplayShapes</groupId>
+      <groupId>dev.twme</groupId>
       <artifactId>textdisplayshape-packet</artifactId>
-      <version>f6ef63969c836dfe3e14b0a3f6ccbdeadc1970b2</version>
+      <version>3.0.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
