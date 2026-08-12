@@ -812,7 +812,9 @@ public class RenderManager {
                 .set(GeneratedEntityMetadataKeys.Display.SCALE, new Vector3f(2.0f, 2.0f, 2.0f))
                 .set(GeneratedEntityMetadataKeys.Display.VIEW_RANGE, 64.0f)
                 .set(GeneratedEntityMetadataKeys.Display.BRIGHTNESS_OVERRIDE, 15 << 4 | 15 << 20);
-        label.addViewer(viewerUser).spawn(SpigotConversionUtil.fromBukkitLocation(labelLoc));
+        plugin.getPacketShapeFactory()
+                .addViewer(label, viewerUser)
+                .spawn(SpigotConversionUtil.fromBukkitLocation(labelLoc));
         viewerLabels.put(sharerId, label);
     }
 

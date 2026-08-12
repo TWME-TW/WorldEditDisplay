@@ -131,7 +131,7 @@
     <dependency>
       <groupId>com.github.twme-ai.TextDisplayShapes</groupId>
       <artifactId>textdisplayshape-packet</artifactId>
-      <version>c0ad5ded36381101c5175ef98315a4ab00b96ce8</version>
+      <version>f6ef63969c836dfe3e14b0a3f6ccbdeadc1970b2</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
