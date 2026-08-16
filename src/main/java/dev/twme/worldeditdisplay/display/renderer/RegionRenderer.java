@@ -172,7 +172,7 @@ public abstract class RegionRenderer<T extends Region> {
         if (shapes.isEmpty() || lastRebaseOrigin == null) return 0;
 
         Location playerLoc = player.getLocation();
-        if (!playerLoc.getWorld().equals(lastRebaseOrigin.getWorld())) return 0;
+        if (!isSameLoadedWorld(playerLoc, lastRebaseOrigin)) return 0;
         if (playerLoc.distanceSquared(lastRebaseOrigin) < REBASE_DISTANCE_SQUARED) return 0;
 
         Location newOrigin = playerLoc.clone();
@@ -191,6 +191,14 @@ public abstract class RegionRenderer<T extends Region> {
 
         lastRebaseOrigin = newOrigin.clone();
         return rebasedShapes;
+    }
+
+    static boolean isSameLoadedWorld(Location first, Location second) {
+        return first != null
+                && second != null
+                && first.isWorldLoaded()
+                && second.isWorldLoaded()
+                && first.getWorld().equals(second.getWorld());
     }
 
     /**
