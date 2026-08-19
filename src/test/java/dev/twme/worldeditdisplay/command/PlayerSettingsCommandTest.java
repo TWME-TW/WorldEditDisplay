@@ -38,8 +38,20 @@ class PlayerSettingsCommandTest {
     @Test
     void settingWhitelistRejectsUnknownKeys() {
         assertTrue(command.isValidSetting("cuboid", "edge_color"));
+        assertTrue(command.isValidSetting("cuboid", "max_grid_spacing"));
+        assertTrue(command.isValidSetting("cylinder", "sqrt_scale_factor"));
+        assertTrue(command.isValidSetting("cylinder", "max_grid_spacing"));
+        assertTrue(command.isValidSetting("ellipsoid", "sqrt_scale_factor"));
+        assertTrue(command.isValidSetting("ellipsoid", "max_grid_spacing"));
+        assertTrue(command.isValidSetting("polygon", "max_grid_spacing"));
         assertFalse(command.isValidSetting("cuboid", "unknown_setting"));
         assertFalse(command.isValidSetting("missing", "edge_color"));
+    }
+
+    @Test
+    void parseValueUsesCorrectTypesForRestoredDisplaySettings() {
+        assertEquals(Integer.valueOf(-1), command.parseValue("max_grid_spacing", "-1"));
+        assertEquals(Double.valueOf(2.5), command.parseValue("sqrt_scale_factor", "2.5"));
     }
 
     @Test

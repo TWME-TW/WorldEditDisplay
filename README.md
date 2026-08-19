@@ -254,7 +254,7 @@ This allows server admins to control which player groups have rendering enabled 
 /wedisplay set cuboid edge_thickness 0.08
 
 # Change grid spacing
-/wedisplay set cuboid height_grid_division 2
+/wedisplay set cuboid height_grid_division 8
 
 # Enable face filling with half-transparent red
 /wedisplay set cuboid fill_enabled true
@@ -556,7 +556,7 @@ worldeditdisplay.render.auto-enable:     # 登入時自動啟用渲染（預設�
 /wedisplay set cuboid edge_thickness 0.08
 
 # 變更高度網格分割
-/wedisplay set cuboid height_grid_division 2
+/wedisplay set cuboid height_grid_division 8
 
 # 啟用半透明的紅色表面填充
 /wedisplay set cuboid fill_enabled true

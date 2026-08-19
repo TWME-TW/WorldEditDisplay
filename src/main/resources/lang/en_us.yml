@@ -129,6 +129,7 @@ command:
       list_pending_received: "<#478FC6>Pending received: <white>%s <#C2C7D3>(use /wedisplay share accept <player>)"
 
     view:
+      usage: "<#CE5F4E>Usage: <#D1968C>/wedisplay view [hide|hideall|unhide|label|list]"
       enabled: "<green>Viewall mode enabled!"
       disabled: "<#E8C96D>Viewall mode disabled!"
       hide_usage: "<#CE5F4E>Usage: <#D1968C>/wedisplay view hide <player>"
@@ -155,6 +156,7 @@ settings:
     grid_thickness: "<#C2C7D3>grid_thickness <#478FC6>\u25b8 <white>%.2f <click:suggest_command:'/wedisplay set cuboid grid_thickness '><#478FC6>[\u270e]</click>"
     vertex_marker_size: "<#C2C7D3>vertex_marker_size <#478FC6>\u25b8 <white>%.2f <click:suggest_command:'/wedisplay set cuboid vertex_marker_size '><#478FC6>[\u270e]</click>"
     height_grid_division: "<#C2C7D3>height_grid_division <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set cuboid height_grid_division '><#478FC6>[\u270e]</click>"
+    max_grid_spacing: "<#C2C7D3>max_grid_spacing <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set cuboid max_grid_spacing '><#478FC6>[\u270e]</click>"
     fill_enabled: "<#C2C7D3>fill_enabled <#478FC6>\u25b8 <white>%s <click:suggest_command:'/wedisplay set cuboid fill_enabled '><#478FC6>[\u270e]</click>"
     fill_color: "<#C2C7D3>fill_color <#478FC6>\u25b8 <white>%s <click:suggest_command:'/wedisplay set cuboid fill_color '><#478FC6>[\u270e]</click>"
   cylinder:
@@ -170,8 +172,10 @@ settings:
     min_circle_segments: "<#C2C7D3>min_circle_segments <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set cylinder min_circle_segments '><#478FC6>[\u270e]</click>"
     max_circle_segments: "<#C2C7D3>max_circle_segments <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set cylinder max_circle_segments '><#478FC6>[\u270e]</click>"
     target_segment_length: "<#C2C7D3>target_segment_length <#478FC6>\u25b8 <white>%.2f <click:suggest_command:'/wedisplay set cylinder target_segment_length '><#478FC6>[\u270e]</click>"
+    sqrt_scale_factor: "<#C2C7D3>sqrt_scale_factor <#478FC6>\u25b8 <white>%.2f <click:suggest_command:'/wedisplay set cylinder sqrt_scale_factor '><#478FC6>[\u270e]</click>"
     height_grid_division: "<#C2C7D3>height_grid_division <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set cylinder height_grid_division '><#478FC6>[\u270e]</click>"
     radius_grid_division: "<#C2C7D3>radius_grid_division <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set cylinder radius_grid_division '><#478FC6>[\u270e]</click>"
+    max_grid_spacing: "<#C2C7D3>max_grid_spacing <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set cylinder max_grid_spacing '><#478FC6>[\u270e]</click>"
     fill_enabled: "<#C2C7D3>fill_enabled <#478FC6>\u25b8 <white>%s <click:suggest_command:'/wedisplay set cylinder fill_enabled '><#478FC6>[\u270e]</click>"
     fill_color: "<#C2C7D3>fill_color <#478FC6>\u25b8 <white>%s <click:suggest_command:'/wedisplay set cylinder fill_color '><#478FC6>[\u270e]</click>"
   ellipsoid:
@@ -186,7 +190,9 @@ settings:
     min_segments: "<#C2C7D3>min_segments <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set ellipsoid min_segments '><#478FC6>[\u270e]</click>"
     max_segments: "<#C2C7D3>max_segments <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set ellipsoid max_segments '><#478FC6>[\u270e]</click>"
     target_segment_length: "<#C2C7D3>target_segment_length <#478FC6>\u25b8 <white>%.2f <click:suggest_command:'/wedisplay set ellipsoid target_segment_length '><#478FC6>[\u270e]</click>"
+    sqrt_scale_factor: "<#C2C7D3>sqrt_scale_factor <#478FC6>\u25b8 <white>%.2f <click:suggest_command:'/wedisplay set ellipsoid sqrt_scale_factor '><#478FC6>[\u270e]</click>"
     radius_grid_division: "<#C2C7D3>radius_grid_division <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set ellipsoid radius_grid_division '><#478FC6>[\u270e]</click>"
+    max_grid_spacing: "<#C2C7D3>max_grid_spacing <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set ellipsoid max_grid_spacing '><#478FC6>[\u270e]</click>"
     fill_enabled: "<#C2C7D3>fill_enabled <#478FC6>\u25b8 <white>%s <click:suggest_command:'/wedisplay set ellipsoid fill_enabled '><#478FC6>[\u270e]</click>"
     fill_color: "<#C2C7D3>fill_color <#478FC6>\u25b8 <white>%s <click:suggest_command:'/wedisplay set ellipsoid fill_color '><#478FC6>[\u270e]</click>"
     fill_generators: "<#C2C7D3>fill_generators <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set ellipsoid fill_generators '><#478FC6>[\u270e]</click>"
@@ -198,6 +204,7 @@ settings:
     edge_thickness: "<#C2C7D3>edge_thickness <#478FC6>\u25b8 <white>%.2f <click:suggest_command:'/wedisplay set polygon edge_thickness '><#478FC6>[\u270e]</click>"
     vertical_thickness: "<#C2C7D3>vertical_thickness <#478FC6>\u25b8 <white>%.2f <click:suggest_command:'/wedisplay set polygon vertical_thickness '><#478FC6>[\u270e]</click>"
     height_grid_division: "<#C2C7D3>height_grid_division <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set polygon height_grid_division '><#478FC6>[\u270e]</click>"
+    max_grid_spacing: "<#C2C7D3>max_grid_spacing <#478FC6>\u25b8 <white>%d <click:suggest_command:'/wedisplay set polygon max_grid_spacing '><#478FC6>[\u270e]</click>"
     fill_enabled: "<#C2C7D3>fill_enabled <#478FC6>\u25b8 <white>%s <click:suggest_command:'/wedisplay set polygon fill_enabled '><#478FC6>[\u270e]</click>"
     fill_color: "<#C2C7D3>fill_color <#478FC6>\u25b8 <white>%s <click:suggest_command:'/wedisplay set polygon fill_color '><#478FC6>[\u270e]</click>"
   polyhedron:

@@ -34,6 +34,7 @@ public class PlayerRenderSettings {
     private Float cuboidGridThickness;
     private Float cuboidVertexMarkerSize;
     private Integer cuboidHeightGridDivision;
+    private Integer cuboidMaxGridSpacing;
 
     // Cylinder
     private Boolean cylinderSeeThrough;
@@ -48,8 +49,10 @@ public class PlayerRenderSettings {
     private Integer cylinderMinCircleSegments;
     private Integer cylinderMaxCircleSegments;
     private Double cylinderTargetSegmentLength;
+    private Double cylinderSqrtScaleFactor;
     private Integer cylinderHeightGridDivision;
     private Integer cylinderRadiusGridDivision;
+    private Integer cylinderMaxGridSpacing;
     private Boolean cylinderFillEnabled;
     private Color cylinderFillColor;
 
@@ -65,7 +68,9 @@ public class PlayerRenderSettings {
     private Integer ellipsoidMinSegments;
     private Integer ellipsoidMaxSegments;
     private Double ellipsoidTargetSegmentLength;
+    private Double ellipsoidSqrtScaleFactor;
     private Integer ellipsoidRadiusGridDivision;
+    private Integer ellipsoidMaxGridSpacing;
     private Boolean ellipsoidFillEnabled;
     private Color ellipsoidFillColor;
     private Integer ellipsoidFillGenerators;
@@ -80,6 +85,7 @@ public class PlayerRenderSettings {
     private Float polygonEdgeThickness;
     private Float polygonVerticalThickness;
     private Integer polygonHeightGridDivision;
+    private Integer polygonMaxGridSpacing;
 
     // Polyhedron
     private Boolean polyhedronSeeThrough;
@@ -116,25 +122,48 @@ public class PlayerRenderSettings {
         this.config = new org.bukkit.configuration.file.YamlConfiguration();
     }
 
-    public void load() {
-        clearFields();
+    private PlayerRenderSettings(RenderSettings serverSettings) {
+        this.plugin = null;
+        this.playerUUID = null;
+        this.serverSettings = serverSettings;
+        this.configFile = null;
+        this.config = new YamlConfiguration();
+    }
+
+    static PlayerRenderSettings inMemory(RenderSettings serverSettings) {
+        return new PlayerRenderSettings(serverSettings);
+    }
+
+    public synchronized void load() {
+        if (configFile == null) {
+            config = new YamlConfiguration();
+            reloadFields();
+            dirty = false;
+            return;
+        }
         if (!configFile.exists()) {
             config = new YamlConfiguration();
+            reloadFields();
+            dirty = false;
             return;
         }
 
         try {
             config = YamlConfiguration.loadConfiguration(configFile);
             reloadFields();
+            dirty = false;
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,
                     "Failed to load player render settings: " + configFile.getAbsolutePath(), e);
             config = new YamlConfiguration();
+            reloadFields();
+            dirty = false;
         }
     }
 
     /** Refreshes all parsed fields from the current in-memory config object without re-reading disk. */
     private void reloadFields() {
+        clearFields();
         loadCuboidSettings(config.getConfigurationSection("renderer.cuboid"));
         loadCylinderSettings(config.getConfigurationSection("renderer.cylinder"));
         loadEllipsoidSettings(config.getConfigurationSection("renderer.ellipsoid"));
@@ -154,6 +183,7 @@ public class PlayerRenderSettings {
         cuboidGridThickness = null;
         cuboidVertexMarkerSize = null;
         cuboidHeightGridDivision = null;
+        cuboidMaxGridSpacing = null;
 
         cylinderSeeThrough = null;
         cylinderCircleColor = null;
@@ -167,8 +197,10 @@ public class PlayerRenderSettings {
         cylinderMinCircleSegments = null;
         cylinderMaxCircleSegments = null;
         cylinderTargetSegmentLength = null;
+        cylinderSqrtScaleFactor = null;
         cylinderHeightGridDivision = null;
         cylinderRadiusGridDivision = null;
+        cylinderMaxGridSpacing = null;
         cylinderFillEnabled = null;
         cylinderFillColor = null;
 
@@ -183,7 +215,9 @@ public class PlayerRenderSettings {
         ellipsoidMinSegments = null;
         ellipsoidMaxSegments = null;
         ellipsoidTargetSegmentLength = null;
+        ellipsoidSqrtScaleFactor = null;
         ellipsoidRadiusGridDivision = null;
+        ellipsoidMaxGridSpacing = null;
         ellipsoidFillEnabled = null;
         ellipsoidFillColor = null;
         ellipsoidFillGenerators = null;
@@ -197,6 +231,7 @@ public class PlayerRenderSettings {
         polygonEdgeThickness = null;
         polygonVerticalThickness = null;
         polygonHeightGridDivision = null;
+        polygonMaxGridSpacing = null;
 
         polyhedronSeeThrough = null;
         polyhedronLineColor = null;
@@ -240,6 +275,7 @@ public class PlayerRenderSettings {
         cuboidGridThickness = getFloat(section, "grid_thickness");
         cuboidVertexMarkerSize = getFloat(section, "vertex_marker_size");
         cuboidHeightGridDivision = getInt(section, "height_grid_division");
+        cuboidMaxGridSpacing = getInt(section, "max_grid_spacing");
     }
 
     private void loadCylinderSettings(ConfigurationSection section) {
@@ -256,8 +292,10 @@ public class PlayerRenderSettings {
         cylinderMinCircleSegments = getInt(section, "min_circle_segments");
         cylinderMaxCircleSegments = getInt(section, "max_circle_segments");
         cylinderTargetSegmentLength = getDouble(section, "target_segment_length");
+        cylinderSqrtScaleFactor = getDouble(section, "sqrt_scale_factor");
         cylinderHeightGridDivision = getInt(section, "height_grid_division");
         cylinderRadiusGridDivision = getInt(section, "radius_grid_division");
+        cylinderMaxGridSpacing = getInt(section, "max_grid_spacing");
         cylinderFillEnabled = getBoolean(section, "fill_enabled");
         cylinderFillColor = getColor(section, "fill_color");
     }
@@ -275,7 +313,9 @@ public class PlayerRenderSettings {
         ellipsoidMinSegments = getInt(section, "min_segments");
         ellipsoidMaxSegments = getInt(section, "max_segments");
         ellipsoidTargetSegmentLength = getDouble(section, "target_segment_length");
+        ellipsoidSqrtScaleFactor = getDouble(section, "sqrt_scale_factor");
         ellipsoidRadiusGridDivision = getInt(section, "radius_grid_division");
+        ellipsoidMaxGridSpacing = getInt(section, "max_grid_spacing");
         ellipsoidFillEnabled = getBoolean(section, "fill_enabled");
         ellipsoidFillColor = getColor(section, "fill_color");
         ellipsoidFillGenerators = getInt(section, "fill_generators");
@@ -292,6 +332,7 @@ public class PlayerRenderSettings {
         polygonEdgeThickness = getFloat(section, "edge_thickness");
         polygonVerticalThickness = getFloat(section, "vertical_thickness");
         polygonHeightGridDivision = getInt(section, "height_grid_division");
+        polygonMaxGridSpacing = getInt(section, "max_grid_spacing");
     }
 
     private void loadPolyhedronSettings(ConfigurationSection section) {
@@ -364,6 +405,8 @@ public class PlayerRenderSettings {
             return value >= serverSettings.getSegmentsMin() && value <= serverSettings.getSegmentsMax();
         if (key.contains("division"))
             return value >= serverSettings.getGridDivisionMin() && value <= serverSettings.getGridDivisionMax();
+        if (key.equals("max_grid_spacing") && value == -1)
+            return true;
         if (key.contains("spacing"))
             return value >= serverSettings.getGridSpacingMin() && value <= serverSettings.getGridSpacingMax();
         if (key.equals("target_segment_length"))
@@ -375,7 +418,7 @@ public class PlayerRenderSettings {
         return true;
     }
 
-    public void reset(String path) {
+    public synchronized void reset(String path) {
         config.set(path, null);
         dirty = true;
         // Refresh in-memory parsed fields from the updated in-memory config.
@@ -406,7 +449,7 @@ public class PlayerRenderSettings {
     public float getCuboidGridThickness() { return cuboidGridThickness != null ? cuboidGridThickness : serverSettings.getCuboidGridThickness(); }
     public float getCuboidVertexMarkerSize() { return cuboidVertexMarkerSize != null ? cuboidVertexMarkerSize : serverSettings.getCuboidVertexMarkerSize(); }
     public int getCuboidHeightGridDivision() { return cuboidHeightGridDivision != null ? cuboidHeightGridDivision : serverSettings.getCuboidHeightGridDivision(); }
-    public int getCuboidMaxGridSpacing() { return serverSettings.getCuboidMaxGridSpacing(); }
+    public int getCuboidMaxGridSpacing() { return cuboidMaxGridSpacing != null ? cuboidMaxGridSpacing : serverSettings.getCuboidMaxGridSpacing(); }
 
     // === Cylinder Getters ===
     public boolean isCylinderSeeThrough() { return cylinderSeeThrough != null ? cylinderSeeThrough : serverSettings.isCylinderSeeThrough(); }
@@ -421,10 +464,10 @@ public class PlayerRenderSettings {
     public int getCylinderMinCircleSegments() { return cylinderMinCircleSegments != null ? cylinderMinCircleSegments : serverSettings.getCylinderMinCircleSegments(); }
     public int getCylinderMaxCircleSegments() { return cylinderMaxCircleSegments != null ? cylinderMaxCircleSegments : serverSettings.getCylinderMaxCircleSegments(); }
     public double getCylinderTargetSegmentLength() { return cylinderTargetSegmentLength != null ? cylinderTargetSegmentLength : serverSettings.getCylinderTargetSegmentLength(); }
-    public double getCylinderSqrtScaleFactor() { return serverSettings.getCylinderSqrtScaleFactor(); }
+    public double getCylinderSqrtScaleFactor() { return cylinderSqrtScaleFactor != null ? cylinderSqrtScaleFactor : serverSettings.getCylinderSqrtScaleFactor(); }
     public int getCylinderHeightGridDivision() { return cylinderHeightGridDivision != null ? cylinderHeightGridDivision : serverSettings.getCylinderHeightGridDivision(); }
     public int getCylinderRadiusGridDivision() { return cylinderRadiusGridDivision != null ? cylinderRadiusGridDivision : serverSettings.getCylinderRadiusGridDivision(); }
-    public int getCylinderMaxGridSpacing() { return serverSettings.getCylinderMaxGridSpacing(); }
+    public int getCylinderMaxGridSpacing() { return cylinderMaxGridSpacing != null ? cylinderMaxGridSpacing : serverSettings.getCylinderMaxGridSpacing(); }
     public boolean isCylinderFillEnabled() { return cylinderFillEnabled != null ? cylinderFillEnabled : serverSettings.isCylinderFillEnabled(); }
     public Color getCylinderFillColor() { return cylinderFillColor != null ? cylinderFillColor : serverSettings.getCylinderFillColor(); }
 
@@ -440,9 +483,9 @@ public class PlayerRenderSettings {
     public int getEllipsoidMinSegments() { return ellipsoidMinSegments != null ? ellipsoidMinSegments : serverSettings.getEllipsoidMinSegments(); }
     public int getEllipsoidMaxSegments() { return ellipsoidMaxSegments != null ? ellipsoidMaxSegments : serverSettings.getEllipsoidMaxSegments(); }
     public double getEllipsoidTargetSegmentLength() { return ellipsoidTargetSegmentLength != null ? ellipsoidTargetSegmentLength : serverSettings.getEllipsoidTargetSegmentLength(); }
-    public double getEllipsoidSqrtScaleFactor() { return serverSettings.getEllipsoidSqrtScaleFactor(); }
+    public double getEllipsoidSqrtScaleFactor() { return ellipsoidSqrtScaleFactor != null ? ellipsoidSqrtScaleFactor : serverSettings.getEllipsoidSqrtScaleFactor(); }
     public int getEllipsoidRadiusGridDivision() { return ellipsoidRadiusGridDivision != null ? ellipsoidRadiusGridDivision : serverSettings.getEllipsoidRadiusGridDivision(); }
-    public int getEllipsoidMaxGridSpacing() { return serverSettings.getEllipsoidMaxGridSpacing(); }
+    public int getEllipsoidMaxGridSpacing() { return ellipsoidMaxGridSpacing != null ? ellipsoidMaxGridSpacing : serverSettings.getEllipsoidMaxGridSpacing(); }
     public boolean isEllipsoidFillEnabled() { return ellipsoidFillEnabled != null ? ellipsoidFillEnabled : serverSettings.isEllipsoidFillEnabled(); }
     public Color getEllipsoidFillColor() { return ellipsoidFillColor != null ? ellipsoidFillColor : serverSettings.getEllipsoidFillColor(); }
     public int getEllipsoidFillGenerators() { return ellipsoidFillGenerators != null ? ellipsoidFillGenerators : serverSettings.getEllipsoidFillGenerators(); }
@@ -457,7 +500,7 @@ public class PlayerRenderSettings {
     public float getPolygonEdgeThickness() { return polygonEdgeThickness != null ? polygonEdgeThickness : serverSettings.getPolygonEdgeThickness(); }
     public float getPolygonVerticalThickness() { return polygonVerticalThickness != null ? polygonVerticalThickness : serverSettings.getPolygonVerticalThickness(); }
     public int getPolygonHeightGridDivision() { return polygonHeightGridDivision != null ? polygonHeightGridDivision : serverSettings.getPolygonHeightGridDivision(); }
-    public int getPolygonMaxGridSpacing() { return serverSettings.getPolygonMaxGridSpacing(); }
+    public int getPolygonMaxGridSpacing() { return polygonMaxGridSpacing != null ? polygonMaxGridSpacing : serverSettings.getPolygonMaxGridSpacing(); }
 
     // === Polyhedron Getters ===
     public boolean isPolyhedronSeeThrough() { return polyhedronSeeThrough != null ? polyhedronSeeThrough : serverSettings.isPolyhedronSeeThrough(); }
