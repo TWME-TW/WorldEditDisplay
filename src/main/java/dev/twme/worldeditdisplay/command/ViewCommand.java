@@ -52,7 +52,7 @@ public class ViewCommand {
                 }
                 handleList(player, page);
             }
-            default -> handleToggle(player);
+            default -> MessageUtil.sendTranslated(player, "command.wedisplay.view.usage");
         }
     }
 

@@ -3,12 +3,14 @@ package dev.twme.worldeditdisplay.command;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.logging.Level;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.util.MessageUtil;
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 public class ReloadCommand implements CommandExecutor {
     
@@ -31,6 +33,11 @@ public class ReloadCommand implements CommandExecutor {
             plugin.getRenderSettings().reload();
             plugin.getLanguageManager().reload();
             if (plugin.getShareManager() != null) plugin.getShareManager().reloadConfig();
+            for (Player player : plugin.getServer().getOnlinePlayers()) {
+                FoliaScheduler.getEntityScheduler().execute(player, plugin, () -> {
+                    if (player.isOnline()) plugin.getRenderManager().refreshPlayerRenderer(player);
+                }, null, 1L);
+            }
             MessageUtil.sendTranslated(sender, "general.reload_success");
             return true;
             

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -20,6 +21,8 @@ import dev.twme.worldeditdisplay.WorldEditDisplay;
  * Loads, stores, and provides translations for different languages.
  */
 public class LanguageManager {
+
+    static final List<String> DEFAULT_LANGUAGES = List.of("zh_tw", "zh_cn", "en_us");
 
     private final WorldEditDisplay plugin;
     private final Map<String, YamlConfiguration> languages = new HashMap<>();
@@ -51,8 +54,7 @@ public class LanguageManager {
      * Load default languages (like zh_tw, en_us)
      */
     private void loadDefaultLanguages() {
-        String[] defaultLanguages = {"zh_tw", "en_us"};
-        for (String lang : defaultLanguages) {
+        for (String lang : DEFAULT_LANGUAGES) {
             saveDefaultLanguage(lang);
             loadLanguage(lang);
         }
