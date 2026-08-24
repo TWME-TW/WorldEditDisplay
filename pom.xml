@@ -229,7 +229,7 @@
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-key</artifactId>
-          <version>4.17.0</version>
+          <version>5.1.1</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
