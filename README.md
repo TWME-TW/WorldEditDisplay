@@ -20,7 +20,7 @@ A server-side WorldEdit selection visualization plugin | WorldEdit 選區視覺�
 
 WorldEditDisplay is a server-side plugin for Minecraft that adds visual selection rendering for WorldEdit. It intercepts WorldEdit's CUI (Client User Interface) protocol packets and renders selections using Display Entities on the server side. This means players can see their WorldEdit selections without installing any client-side mods.
 
-Version 2.5.0 preserves the retained-line renderer and expanded debug statistics while migrating all packet-only selection shapes and shared-player labels from EntityLib to [VirtualEntities](https://github.com/twme-ai/VirtualEntities) v0.9.0, using the [TWME-TW/TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes) 3.0.0 packet module.
+Version 2.5.1 preserves the retained-line renderer and expanded debug statistics while improving WorldEditCUI client detection and handoff, on top of the VirtualEntities rendering backend introduced in 2.5.0.
 
 ### Features
 
