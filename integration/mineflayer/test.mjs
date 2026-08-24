@@ -147,6 +147,51 @@ function waitForTextDisplayCount(bot, expectedMinimum) {
   })
 }
 
+function waitForCuiPayload(bot, expected) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      bot._client.removeListener('custom_payload', listener)
+      reject(new Error(`Timed out waiting for WorldEditCUI payload: ${expected}`))
+    }, timeoutMs)
+    const listener = (packet) => {
+      if (packet.channel !== 'worldedit:cui' || packet.data.toString('utf8') !== expected) return
+      clearTimeout(timeout)
+      bot._client.removeListener('custom_payload', listener)
+      resolve(packet)
+    }
+    bot._client.on('custom_payload', listener)
+  })
+}
+
+async function readCuiState(bot) {
+  const stateMessage = waitForMessage(bot, 'WED_CUI_STATE:')
+  bot.chat('/wedtest cui-state')
+  const message = await stateMessage
+  const state = message
+    .substring(message.indexOf('WED_CUI_STATE:') + 'WED_CUI_STATE:'.length)
+    .trim()
+    .split(':')
+  if (state.length !== 3 || !['true', 'false'].includes(state[0]) || !['true', 'false'].includes(state[1])) {
+    throw new Error(`WorldEditDisplay reported invalid CUI state: ${message}`)
+  }
+  const entityCount = Number(state[2])
+  if (!Number.isInteger(entityCount)) {
+    throw new Error(`WorldEditDisplay reported invalid CUI entity count: ${message}`)
+  }
+  return {
+    cuiEnabled: state[0] === 'true',
+    renderingEnabled: state[1] === 'true',
+    entityCount
+  }
+}
+
+function sendCuiHandshake(bot) {
+  bot._client.write('custom_payload', {
+    channel: 'worldedit:cui',
+    data: Buffer.from('v|4', 'utf8')
+  })
+}
+
 function createAndSpawnBot(username) {
   const bot = mineflayer.createBot({
     host: '127.0.0.1',
@@ -254,6 +299,52 @@ try {
   const sharedLabel = await sharedLabelPromise
   const viewerTextDisplays = await waitForTextDisplayCount(viewer, visibleTextDisplays + 1)
 
+  const regularClientCuiState = await readCuiState(sharer)
+  if (regularClientCuiState.cuiEnabled) {
+    throw new Error('WorldEditDisplay mistook its silent server handshake for a client-side CUI')
+  }
+
+  const cuiClient = await createAndSpawnBot('WEDCUI')
+  bots.push(cuiClient)
+  cuiClient.once('error', fatal)
+  cuiClient.once('kicked', reason => fatal(new Error(`WEDCUI was kicked: ${reason}`)))
+
+  const cuiRendererReadyMessage = waitForMessage(cuiClient, 'WED_READY:')
+  cuiClient.chat('/wedtest')
+  const cuiRendererReady = await cuiRendererReadyMessage
+  const cuiRendererEntityCount = Number(
+    cuiRendererReady
+      .substring(cuiRendererReady.indexOf('WED_READY:') + 'WED_READY:'.length)
+      .trim()
+      .split(':')[0]
+  )
+  if (!Number.isInteger(cuiRendererEntityCount) || cuiRendererEntityCount <= 0) {
+    throw new Error(`WorldEditDisplay did not render for a client before its CUI handshake: ${cuiRendererReady}`)
+  }
+
+  sendCuiHandshake(cuiClient)
+  const nativeCuiState = await readCuiState(cuiClient)
+  if (!nativeCuiState.cuiEnabled || !nativeCuiState.renderingEnabled || nativeCuiState.entityCount !== 0) {
+    throw new Error(`WorldEditDisplay did not hand rendering over to the native CUI: ${JSON.stringify(nativeCuiState)}`)
+  }
+
+  const forwardedCuiPayload = waitForCuiPayload(cuiClient, 'u|0')
+  cuiClient.chat('/wedtest cui-forward')
+  await forwardedCuiPayload
+
+  const renderingDisabledMessage = waitForMessage(cuiClient, 'selection rendering disabled')
+  cuiClient.chat('/wedisplay toggle')
+  await renderingDisabledMessage
+  const renderingEnabledMessage = waitForMessage(cuiClient, 'selection rendering enabled')
+  cuiClient.chat('/wedisplay toggle')
+  await renderingEnabledMessage
+  const refreshedNativeCuiState = await readCuiState(cuiClient)
+  if (!refreshedNativeCuiState.cuiEnabled
+      || !refreshedNativeCuiState.renderingEnabled
+      || refreshedNativeCuiState.entityCount !== 0) {
+    throw new Error(`WorldEditDisplay recreated its renderer after a native CUI refresh: ${JSON.stringify(refreshedNativeCuiState)}`)
+  }
+
   console.log(JSON.stringify({
     managerInitialized: true,
     rendererEntities: entityCount,
@@ -265,10 +356,16 @@ try {
     sharedViewerTextDisplays: viewerTextDisplays,
     sharedLabelEntityId: sharedLabel.id,
     sharedLabelText: 'WEDSharer',
+    regularClientCuiDetected: regularClientCuiState.cuiEnabled,
+    nativeCuiDetected: nativeCuiState.cuiEnabled,
+    nativeCuiRendererCleared: nativeCuiState.entityCount === 0,
+    nativeCuiPayloadForwarded: true,
+    nativeCuiRefreshSuppressed: refreshedNativeCuiState.entityCount === 0,
     translation: entity.metadata[translationIndex]
   }))
   sharer.quit('e2e complete')
   viewer.quit('e2e complete')
+  cuiClient.quit('e2e complete')
 } catch (error) {
   fatal(error)
 }

@@ -39,12 +39,12 @@ class OutboundPacketListenerTest {
     }
 
     @Test
-    void serverRendererStaysActiveAfterCuiRegistrationWhenRenderingEnabled() {
+    void clientCuiTakesPriorityWhenServerRenderingIsEnabled() {
         PlayerData playerData = new PlayerData((Player) null);
         playerData.setRenderingEnabled(true);
         playerData.setCuiEnabled(true);
 
-        assertTrue(OutboundPacketListener.shouldUseServerRenderer(playerData));
+        assertFalse(OutboundPacketListener.shouldUseServerRenderer(playerData));
     }
 
     @Test
@@ -62,6 +62,14 @@ class OutboundPacketListenerTest {
         playerData.setRenderingEnabled(false);
         playerData.setCuiEnabled(true);
         playerData.setBedrockPlayer(true);
+
+        assertTrue(OutboundPacketListener.shouldUseServerRenderer(playerData));
+    }
+
+    @Test
+    void serverRendererConsumesPacketsForClientsWithoutCuiEvenWhenRenderingIsDisabled() {
+        PlayerData playerData = new PlayerData((Player) null);
+        playerData.setRenderingEnabled(false);
 
         assertTrue(OutboundPacketListener.shouldUseServerRenderer(playerData));
     }

@@ -76,7 +76,7 @@ public final class WorldEditDisplay extends JavaPlugin {
         virtualEntityManager = VirtualEntities.create();
         packetShapeFactory = new PacketShapeFactory(virtualEntityManager);
 
-        inboundListenerInstance = new InboundPacketListener();
+        inboundListenerInstance = new InboundPacketListener(this);
         inboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(inboundListenerInstance, PacketListenerPriority.NORMAL);
         outboundListenerInstance = new OutboundPacketListener();
         outboundPacketListener = PacketEvents.getAPI().getEventManager().registerListener(outboundListenerInstance, PacketListenerPriority.NORMAL);

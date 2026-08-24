@@ -40,10 +40,10 @@ public class PlayerData {
 
     private final Player player;
     private final CUIEventDispatcher dispatcher;
-    private boolean isCuiEnabled = false;
+    private volatile boolean isCuiEnabled = false;
     private boolean renderingEnabled = false; // default off; will enable on login if player has permission
     private boolean debugEnabled = false;
-    private boolean bedrockPlayer = false; // true if joined via Floodgate (GeyserMC)
+    private volatile boolean bedrockPlayer = false; // true if joined via Floodgate (GeyserMC)
     private boolean particleFallback = false; // true if player's client is < 1.19.4 (TextDisplay unsupported)
     private RenderMode renderMode = RenderMode.AUTO; // user preference, defaults to AUTO
 
@@ -109,6 +109,14 @@ public class PlayerData {
 
     public void setCuiEnabled(boolean enabled) {
         this.isCuiEnabled = enabled;
+    }
+
+    /**
+     * Whether the Java client mod should render this player's own selection.
+     * Bedrock clients always use the server renderer even if a proxy sends CUI traffic.
+     */
+    public boolean isNativeCuiActive() {
+        return isCuiEnabled && !bedrockPlayer;
     }
 
     /**
