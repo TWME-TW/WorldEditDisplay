@@ -168,7 +168,7 @@ public class RenderManager {
             return;
         }
 
-        if (!playerData.isRenderingEnabled()) {
+        if (!playerData.isRenderingEnabled() || playerData.isNativeCuiActive()) {
             clearRender(playerId);
             return;
         }

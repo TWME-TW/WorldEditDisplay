@@ -9,14 +9,17 @@ import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPluginMessage;
 
+import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.common.Constants;
 import dev.twme.worldeditdisplay.player.PlayerData;
+import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 /**
  * Listens to incoming plugin messages.
- * Detects CUI registration and marks players as having CUI enabled.
+ * Detects CUI registration or version handshakes and marks players as having CUI enabled.
  */
 public class InboundPacketListener implements PacketListener {
+    private final WorldEditDisplay plugin;
 
     /**
      * Guard flag: set to {@code false} by {@link #deactivate()} during
@@ -25,6 +28,10 @@ public class InboundPacketListener implements PacketListener {
      * that would hit the already-closed PluginClassLoader ZipFile.
      */
     private volatile boolean active = true;
+
+    public InboundPacketListener(WorldEditDisplay plugin) {
+        this.plugin = plugin;
+    }
 
     /** Called from onDisable to prevent the classloader-zip-closed race. */
     public void deactivate() {
@@ -45,15 +52,52 @@ public class InboundPacketListener implements PacketListener {
             return; // ignore invalid packets
         }
 
-        // Listen for REGISTER channel to detect CUI
-        if (Constants.REGISTER_CHANNEL.equals(packet.getChannelName())) {
-            String registerMessage = new String(packet.getData(), StandardCharsets.UTF_8);
+        if (!isCuiHandshake(packet.getChannelName(), packet.getData())) return;
 
-            if (registerMessage.contains(Constants.CUI_CHANNEL)) {
-                Player player = event.getPlayer();
-                PlayerData playerData = PlayerData.getPlayerData(player);
-                playerData.setCuiEnabled(true); // mark player as having CUI
-            }
+        Player player = event.getPlayer();
+        PlayerData playerData = PlayerData.getPlayerData(player);
+        if (playerData.isCuiEnabled()) return;
+
+        playerData.setCuiEnabled(true);
+        playerData.cancelPendingRender();
+        FoliaScheduler.getEntityScheduler().run(player, plugin, ignored -> {
+            if (!active || plugin.getRenderManager() == null) return;
+            plugin.getRenderManager().clearRender(player.getUniqueId());
+        }, null);
+    }
+
+    static boolean isCuiHandshake(String channel, byte[] data) {
+        if (data == null) return false;
+
+        if (Constants.CUI_CHANNEL.equals(channel)) {
+            String message = new String(data, StandardCharsets.UTF_8);
+            return message.startsWith("v|") && message.length() > 2;
         }
+
+        return Constants.REGISTER_CHANNEL.equals(channel)
+                && containsRegisteredChannel(data, Constants.CUI_CHANNEL);
+    }
+
+    private static boolean containsRegisteredChannel(byte[] data, String expectedChannel) {
+        byte[] expected = expectedChannel.getBytes(StandardCharsets.UTF_8);
+        int channelStart = 0;
+
+        for (int i = 0; i <= data.length; i++) {
+            if (i < data.length && data[i] != 0) continue;
+
+            int channelLength = i - channelStart;
+            if (channelLength == expected.length) {
+                boolean matches = true;
+                for (int j = 0; j < expected.length; j++) {
+                    if (data[channelStart + j] != expected[j]) {
+                        matches = false;
+                        break;
+                    }
+                }
+                if (matches) return true;
+            }
+            channelStart = i + 1;
+        }
+        return false;
     }
 }

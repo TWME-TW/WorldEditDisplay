@@ -51,6 +51,19 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
             return true;
         }
 
+        if (arguments.length > 0 && arguments[0].equalsIgnoreCase("cui-state")) {
+            getServer().getScheduler().runTaskLater(
+                    this,
+                    () -> reportCuiState(player, worldEditDisplay),
+                    1L
+            );
+            return true;
+        }
+        if (arguments.length > 0 && arguments[0].equalsIgnoreCase("cui-forward")) {
+            sendCui(player, "u|0");
+            return true;
+        }
+
         int x = player.getLocation().getBlockX() + 2;
         int y = player.getLocation().getBlockY();
         int z = player.getLocation().getBlockZ() + 2;
@@ -106,6 +119,35 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
         } catch (ReflectiveOperationException exception) {
             getLogger().severe("Unable to inspect the WorldEditDisplay renderer: " + exception);
             player.sendMessage("WED_ERROR:renderer inspection failed");
+        }
+    }
+
+    private void reportCuiState(Player player, Plugin worldEditDisplay) {
+        try {
+            ClassLoader pluginClassLoader = worldEditDisplay.getClass().getClassLoader();
+            Class<?> playerDataClass = Class.forName(
+                    "dev.twme.worldeditdisplay.player.PlayerData",
+                    true,
+                    pluginClassLoader
+            );
+            Object playerData = playerDataClass
+                    .getMethod("getPlayerData", Player.class)
+                    .invoke(null, player);
+            boolean cuiEnabled = (boolean) playerDataClass
+                    .getMethod("isCuiEnabled")
+                    .invoke(playerData);
+            boolean renderingEnabled = (boolean) playerDataClass
+                    .getMethod("isRenderingEnabled")
+                    .invoke(playerData);
+
+            Object renderManager = worldEditDisplay.getClass().getMethod("getRenderManager").invoke(worldEditDisplay);
+            int entityCount = (int) renderManager.getClass()
+                    .getMethod("getPlayerEntityCount", java.util.UUID.class)
+                    .invoke(renderManager, player.getUniqueId());
+            player.sendMessage("WED_CUI_STATE:" + cuiEnabled + ":" + renderingEnabled + ":" + entityCount);
+        } catch (ReflectiveOperationException exception) {
+            getLogger().severe("Unable to inspect WorldEditDisplay CUI state: " + exception);
+            player.sendMessage("WED_ERROR:CUI state inspection failed");
         }
     }
 }

@@ -78,9 +78,7 @@ public class OutboundPacketListener implements PacketListener {
     }
 
     static boolean shouldUseServerRenderer(PlayerData playerData) {
-        return playerData.isRenderingEnabled()
-                || !playerData.isCuiEnabled()
-                || playerData.isBedrockPlayer();
+        return !playerData.isNativeCuiActive();
     }
 
     static ParsedCuiMessage parseCuiMessage(String message) {
