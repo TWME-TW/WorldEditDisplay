@@ -59,6 +59,8 @@ public class InboundPacketListener implements PacketListener {
         if (playerData.isCuiEnabled()) return;
 
         playerData.setCuiEnabled(true);
+        if (!playerData.isNativeCuiActive()) return;
+
         playerData.cancelPendingRender();
         FoliaScheduler.getEntityScheduler().run(player, plugin, ignored -> {
             if (!active || plugin.getRenderManager() == null) return;

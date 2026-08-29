@@ -15,6 +15,7 @@ import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
 import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.util.ColorUtil;
+import dev.twme.worldeditdisplay.util.CuiProtocolUtil;
 import dev.twme.worldeditdisplay.util.MessageUtil;
 
 /**
@@ -239,12 +240,16 @@ public class PlayerSettingsCommand implements TabExecutor {
 
     private boolean handleToggle(Player player) {
         PlayerData data = PlayerData.getPlayerData(player);
-        boolean newState = !data.isRenderingEnabled();
+        boolean serverRendererActive = data.isRenderingEnabled() && !data.isNativeCuiActive();
+        boolean newState = !serverRendererActive;
+
         data.setRenderingEnabled(newState);
+        data.setServerRendererForced(newState);
 
         if (newState) {
             MessageUtil.sendTranslated(player, "command.wedisplay.toggle.enabled");
             plugin.getRenderManager().updateRender(player);
+            CuiProtocolUtil.requestSelectionRefresh(player);
         } else {
             MessageUtil.sendTranslated(player, "command.wedisplay.toggle.disabled");
             plugin.getRenderManager().clearRender(player.getUniqueId());

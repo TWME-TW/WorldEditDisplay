@@ -48,6 +48,20 @@ class OutboundPacketListenerTest {
     }
 
     @Test
+    void explicitServerRendererOverrideTakesPriorityOverDetectedClientCui() {
+        PlayerData playerData = new PlayerData((Player) null);
+        playerData.setRenderingEnabled(true);
+        playerData.setCuiEnabled(true);
+        playerData.setServerRendererForced(true);
+
+        assertTrue(playerData.isCuiEnabled());
+        assertTrue(OutboundPacketListener.shouldUseServerRenderer(playerData));
+
+        playerData.setServerRendererForced(false);
+        assertFalse(OutboundPacketListener.shouldUseServerRenderer(playerData));
+    }
+
+    @Test
     void clientCuiReceivesPacketsWhenServerRenderingDisabled() {
         PlayerData playerData = new PlayerData((Player) null);
         playerData.setRenderingEnabled(false);

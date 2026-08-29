@@ -11,14 +11,28 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Paper fixture that drives WorldEditDisplay through its WorldEdit CUI input. */
 public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
     private static final String CUI_CHANNEL = "worldedit:cui";
+    private final Map<UUID, List<String>> currentSelections = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
         // WorldEditDisplay is a hard dependency, so its PacketEvents listeners are ready first.
+        // Emulate WorldEdit's behaviour: a CUI version handshake requests the current selection.
+        getServer().getMessenger().registerIncomingPluginChannel(this, CUI_CHANNEL, (channel, player, message) -> {
+            String payload = new String(message, StandardCharsets.UTF_8);
+            if (!payload.startsWith("v|")) return;
+
+            List<String> selection = currentSelections.get(player.getUniqueId());
+            if (selection == null || selection.isEmpty()) return;
+            getServer().getScheduler().runTask(this, () -> selection.forEach(cui -> sendCui(player, cui)));
+        });
     }
 
     @Override
@@ -67,9 +81,12 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
         int x = player.getLocation().getBlockX() + 2;
         int y = player.getLocation().getBlockY();
         int z = player.getLocation().getBlockZ() + 2;
+        String selection = "s|cuboid";
+        String firstPoint = "p|0|" + x + "|" + y + "|" + z + "|27";
         String secondPoint = "p|1|" + (x + 2) + "|" + (y + 2) + "|" + (z + 2) + "|27";
-        sendCui(player, "s|cuboid");
-        sendCui(player, "p|0|" + x + "|" + y + "|" + z + "|27");
+        currentSelections.put(player.getUniqueId(), List.of(selection, firstPoint, secondPoint));
+        sendCui(player, selection);
+        sendCui(player, firstPoint);
         sendCui(player, secondPoint);
 
         getServer().getScheduler().runTaskLater(this, () -> {
@@ -139,12 +156,15 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
             boolean renderingEnabled = (boolean) playerDataClass
                     .getMethod("isRenderingEnabled")
                     .invoke(playerData);
+            boolean serverRendererForced = (boolean) playerDataClass
+                    .getMethod("isServerRendererForced")
+                    .invoke(playerData);
 
             Object renderManager = worldEditDisplay.getClass().getMethod("getRenderManager").invoke(worldEditDisplay);
             int entityCount = (int) renderManager.getClass()
                     .getMethod("getPlayerEntityCount", java.util.UUID.class)
                     .invoke(renderManager, player.getUniqueId());
-            player.sendMessage("WED_CUI_STATE:" + cuiEnabled + ":" + renderingEnabled + ":" + entityCount);
+            player.sendMessage("WED_CUI_STATE:" + cuiEnabled + ":" + renderingEnabled + ":" + serverRendererForced + ":" + entityCount);
         } catch (ReflectiveOperationException exception) {
             getLogger().severe("Unable to inspect WorldEditDisplay CUI state: " + exception);
             player.sendMessage("WED_ERROR:CUI state inspection failed");
