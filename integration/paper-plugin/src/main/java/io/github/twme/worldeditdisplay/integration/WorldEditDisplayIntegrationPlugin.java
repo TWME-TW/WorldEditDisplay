@@ -66,10 +66,11 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
         }
 
         if (arguments.length > 0 && arguments[0].equalsIgnoreCase("cui-state")) {
+            long delayTicks = arguments.length > 1 && arguments[1].equalsIgnoreCase("settled") ? 5L : 1L;
             getServer().getScheduler().runTaskLater(
                     this,
                     () -> reportCuiState(player, worldEditDisplay),
-                    1L
+                    delayTicks
             );
             return true;
         }

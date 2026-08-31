@@ -163,9 +163,9 @@ function waitForCuiPayload(bot, expected) {
   })
 }
 
-async function readCuiState(bot) {
+async function readCuiState(bot, settled = false) {
   const stateMessage = waitForMessage(bot, 'WED_CUI_STATE:')
-  bot.chat('/wedtest cui-state')
+  bot.chat(`/wedtest cui-state${settled ? ' settled' : ''}`)
   const message = await stateMessage
   const state = message
     .substring(message.indexOf('WED_CUI_STATE:') + 'WED_CUI_STATE:'.length)
@@ -383,9 +383,20 @@ try {
     throw new Error(`Manual WED override did not refresh and render the current selection: ${JSON.stringify(forcedRendererState)}`)
   }
 
+  sendCuiHandshake(overrideClient)
+  const forcedAfterCuiRefreshState = await readCuiState(overrideClient, true)
+  if (!forcedAfterCuiRefreshState.cuiEnabled
+      || !forcedAfterCuiRefreshState.renderingEnabled
+      || !forcedAfterCuiRefreshState.serverRendererForced
+      || forcedAfterCuiRefreshState.entityCount <= 0) {
+    throw new Error(`Later CUI handshake cleared the manual WED override: ${JSON.stringify(forcedAfterCuiRefreshState)}`)
+  }
+
   const overrideDisabledMessage = waitForMessage(overrideClient, 'selection rendering disabled')
+  const releasedSelectionPayload = waitForCuiPayload(overrideClient, 's|cuboid')
   overrideClient.chat('/wedisplay toggle')
   await overrideDisabledMessage
+  await releasedSelectionPayload
   const releasedRendererState = await readCuiState(overrideClient)
   if (!releasedRendererState.cuiEnabled
       || releasedRendererState.renderingEnabled
@@ -410,6 +421,8 @@ try {
     nativeCuiRendererCleared: nativeCuiState.entityCount === 0,
     nativeCuiPayloadForwarded: true,
     manualOverrideRefreshedSelection: forcedRendererState.entityCount > 0,
+    manualOverrideSurvivedCuiRefresh: forcedAfterCuiRefreshState.entityCount > 0,
+    manualOverrideReleasedSelectionToNativeCui: true,
     manualOverrideReleasedToNativeCui: releasedRendererState.entityCount === 0,
     translation: entity.metadata[translationIndex]
   }))

@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 
+import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
 
 import dev.twme.worldeditdisplay.common.Constants;
+import dev.twme.worldeditdisplay.player.PlayerData;
 
 class InboundPacketListenerTest {
 
@@ -61,5 +63,17 @@ class InboundPacketListenerTest {
                 Constants.REGISTER_CHANNEL,
                 new byte[0]
         ));
+    }
+
+    @Test
+    void queuedNativeCuiClearIsSuppressedAfterManualOverride() {
+        PlayerData playerData = new PlayerData((Player) null);
+        playerData.setCuiEnabled(true);
+
+        assertTrue(InboundPacketListener.shouldClearForNativeCui(playerData));
+
+        playerData.setServerRendererForced(true);
+
+        assertFalse(InboundPacketListener.shouldClearForNativeCui(playerData));
     }
 }

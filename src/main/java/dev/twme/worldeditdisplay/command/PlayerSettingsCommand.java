@@ -253,6 +253,9 @@ public class PlayerSettingsCommand implements TabExecutor {
         } else {
             MessageUtil.sendTranslated(player, "command.wedisplay.toggle.disabled");
             plugin.getRenderManager().clearRender(player.getUniqueId());
+            if (data.isNativeCuiActive()) {
+                CuiProtocolUtil.requestSelectionRefresh(player);
+            }
         }
 
         return true;
