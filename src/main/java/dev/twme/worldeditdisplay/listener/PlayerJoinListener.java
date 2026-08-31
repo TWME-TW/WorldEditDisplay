@@ -1,18 +1,13 @@
 package dev.twme.worldeditdisplay.listener;
 
-import java.nio.charset.StandardCharsets;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPluginMessage;
-
 import dev.twme.worldeditdisplay.WorldEditDisplay;
-import dev.twme.worldeditdisplay.common.Constants;
 import dev.twme.worldeditdisplay.player.PlayerData;
+import dev.twme.worldeditdisplay.util.CuiProtocolUtil;
 import dev.twme.worldeditdisplay.util.FloodgateUtil;
 import dev.twme.worldeditdisplay.util.VersionChecker;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
@@ -63,20 +58,7 @@ public class PlayerJoinListener implements Listener {
         FoliaScheduler.getEntityScheduler().execute(player, plugin, () -> {
             if (!player.isOnline()) return; // player left
 
-            String cuiVersionMessage = "v|4";
-
-            // Register channels for CUI
-            WrapperPlayClientPluginMessage registerPacket = new WrapperPlayClientPluginMessage(
-                    Constants.REGISTER_CHANNEL,
-                    Constants.CUI_CHANNEL.getBytes(StandardCharsets.UTF_8)
-            );
-            WrapperPlayClientPluginMessage cuiVersionPacket = new WrapperPlayClientPluginMessage(
-                    Constants.CUI_CHANNEL,
-                    cuiVersionMessage.getBytes(StandardCharsets.UTF_8)
-            );
-
-            PacketEvents.getAPI().getPlayerManager().receivePacketSilently(player, registerPacket);
-            PacketEvents.getAPI().getPlayerManager().receivePacketSilently(player, cuiVersionPacket);
+            CuiProtocolUtil.requestSelectionRefresh(player);
         }, null, 20L); // 20 ticks = 1 second
     }
 }

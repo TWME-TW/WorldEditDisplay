@@ -107,6 +107,8 @@ Players can customize their own rendering preferences:
 
 `/wedisplay toggle` - Toggle rendering on/off
 - Quick command to enable or disable selection visualization
+- Explicitly enabling WED overrides automatic WorldEditCUI detection for the current session and requests a fresh copy of the current selection from WorldEdit, so WED can still render when a client registers `worldedit:cui` but does not actually draw the selection
+- Disabling a manual override refreshes the current selection and hands rendering back to native WorldEditCUI
 - Works independently for each player
 
 `/wedisplay reloadplayer` - Reload your personal configuration file
@@ -409,6 +411,8 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 
 `/wedisplay toggle` - 切換渲染開關
 - 快速指令來啟用或停用選區視覺化
+- 玩家明確啟用 WED 時，會在該次連線期間覆寫自動 WorldEditCUI 偵測，並主動要求 WorldEdit 重送目前選區；即使客戶端註冊了 `worldedit:cui` 但實際沒有繪製選區，WED 仍可接手顯示
+- 關閉手動覆寫時會刷新目前選區，並將渲染交還給原生 WorldEditCUI
 - 每個玩家獨立運作
 
 `/wedisplay reloadplayer` - 重新載入你的個人配置檔案

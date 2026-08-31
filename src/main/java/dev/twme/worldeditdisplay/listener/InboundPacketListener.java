@@ -59,11 +59,18 @@ public class InboundPacketListener implements PacketListener {
         if (playerData.isCuiEnabled()) return;
 
         playerData.setCuiEnabled(true);
+        if (!shouldClearForNativeCui(playerData)) return;
+
         playerData.cancelPendingRender();
         FoliaScheduler.getEntityScheduler().run(player, plugin, ignored -> {
-            if (!active || plugin.getRenderManager() == null) return;
+            // A manual WED override may have been enabled after this handoff was queued.
+            if (!active || plugin.getRenderManager() == null || !shouldClearForNativeCui(playerData)) return;
             plugin.getRenderManager().clearRender(player.getUniqueId());
         }, null);
+    }
+
+    static boolean shouldClearForNativeCui(PlayerData playerData) {
+        return playerData.isNativeCuiActive();
     }
 
     static boolean isCuiHandshake(String channel, byte[] data) {

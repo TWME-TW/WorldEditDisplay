@@ -163,24 +163,28 @@ function waitForCuiPayload(bot, expected) {
   })
 }
 
-async function readCuiState(bot) {
+async function readCuiState(bot, settled = false) {
   const stateMessage = waitForMessage(bot, 'WED_CUI_STATE:')
-  bot.chat('/wedtest cui-state')
+  bot.chat(`/wedtest cui-state${settled ? ' settled' : ''}`)
   const message = await stateMessage
   const state = message
     .substring(message.indexOf('WED_CUI_STATE:') + 'WED_CUI_STATE:'.length)
     .trim()
     .split(':')
-  if (state.length !== 3 || !['true', 'false'].includes(state[0]) || !['true', 'false'].includes(state[1])) {
+  if (state.length !== 4
+      || !['true', 'false'].includes(state[0])
+      || !['true', 'false'].includes(state[1])
+      || !['true', 'false'].includes(state[2])) {
     throw new Error(`WorldEditDisplay reported invalid CUI state: ${message}`)
   }
-  const entityCount = Number(state[2])
+  const entityCount = Number(state[3])
   if (!Number.isInteger(entityCount)) {
     throw new Error(`WorldEditDisplay reported invalid CUI entity count: ${message}`)
   }
   return {
     cuiEnabled: state[0] === 'true',
     renderingEnabled: state[1] === 'true',
+    serverRendererForced: state[2] === 'true',
     entityCount
   }
 }
@@ -324,7 +328,10 @@ try {
 
   sendCuiHandshake(cuiClient)
   const nativeCuiState = await readCuiState(cuiClient)
-  if (!nativeCuiState.cuiEnabled || !nativeCuiState.renderingEnabled || nativeCuiState.entityCount !== 0) {
+  if (!nativeCuiState.cuiEnabled
+      || !nativeCuiState.renderingEnabled
+      || nativeCuiState.serverRendererForced
+      || nativeCuiState.entityCount !== 0) {
     throw new Error(`WorldEditDisplay did not hand rendering over to the native CUI: ${JSON.stringify(nativeCuiState)}`)
   }
 
@@ -332,17 +339,70 @@ try {
   cuiClient.chat('/wedtest cui-forward')
   await forwardedCuiPayload
 
-  const renderingDisabledMessage = waitForMessage(cuiClient, 'selection rendering disabled')
-  cuiClient.chat('/wedisplay toggle')
-  await renderingDisabledMessage
-  const renderingEnabledMessage = waitForMessage(cuiClient, 'selection rendering enabled')
-  cuiClient.chat('/wedisplay toggle')
-  await renderingEnabledMessage
-  const refreshedNativeCuiState = await readCuiState(cuiClient)
-  if (!refreshedNativeCuiState.cuiEnabled
-      || !refreshedNativeCuiState.renderingEnabled
-      || refreshedNativeCuiState.entityCount !== 0) {
-    throw new Error(`WorldEditDisplay recreated its renderer after a native CUI refresh: ${JSON.stringify(refreshedNativeCuiState)}`)
+  // Reproduce the reported failure: native CUI is detected before WED has ever
+  // cached a selection. The selection is forwarded to the client, so WED still
+  // has zero entities when /wedtest finishes.
+  const overrideClient = await createAndSpawnBot('WEDOverride')
+  bots.push(overrideClient)
+  overrideClient.once('error', fatal)
+  overrideClient.once('kicked', reason => fatal(new Error(`WEDOverride was kicked: ${reason}`)))
+
+  sendCuiHandshake(overrideClient)
+  const overrideNativeState = await readCuiState(overrideClient)
+  if (!overrideNativeState.cuiEnabled
+      || !overrideNativeState.renderingEnabled
+      || overrideNativeState.serverRendererForced
+      || overrideNativeState.entityCount !== 0) {
+    throw new Error(`WorldEditDisplay did not start WEDOverride in native CUI mode: ${JSON.stringify(overrideNativeState)}`)
+  }
+
+  const uncachedSelectionMessage = waitForMessage(overrideClient, 'WED_READY:')
+  overrideClient.chat('/wedtest')
+  const uncachedSelection = await uncachedSelectionMessage
+  const uncachedEntityCount = Number(
+    uncachedSelection
+      .substring(uncachedSelection.indexOf('WED_READY:') + 'WED_READY:'.length)
+      .trim()
+      .split(':')[0]
+  )
+  if (!Number.isInteger(uncachedEntityCount) || uncachedEntityCount !== 0) {
+    throw new Error(`WorldEditDisplay unexpectedly cached a native-CUI-only selection: ${uncachedSelection}`)
+  }
+
+  const overrideEnabledMessage = waitForMessage(overrideClient, 'selection rendering enabled')
+  const overrideTextDisplay = waitForTextDisplay(overrideClient)
+  overrideClient.chat('/wedisplay toggle')
+  await overrideEnabledMessage
+  await overrideTextDisplay
+
+  const forcedRendererState = await readCuiState(overrideClient)
+  if (!forcedRendererState.cuiEnabled
+      || !forcedRendererState.renderingEnabled
+      || !forcedRendererState.serverRendererForced
+      || forcedRendererState.entityCount <= 0) {
+    throw new Error(`Manual WED override did not refresh and render the current selection: ${JSON.stringify(forcedRendererState)}`)
+  }
+
+  sendCuiHandshake(overrideClient)
+  const forcedAfterCuiRefreshState = await readCuiState(overrideClient, true)
+  if (!forcedAfterCuiRefreshState.cuiEnabled
+      || !forcedAfterCuiRefreshState.renderingEnabled
+      || !forcedAfterCuiRefreshState.serverRendererForced
+      || forcedAfterCuiRefreshState.entityCount <= 0) {
+    throw new Error(`Later CUI handshake cleared the manual WED override: ${JSON.stringify(forcedAfterCuiRefreshState)}`)
+  }
+
+  const overrideDisabledMessage = waitForMessage(overrideClient, 'selection rendering disabled')
+  const releasedSelectionPayload = waitForCuiPayload(overrideClient, 's|cuboid')
+  overrideClient.chat('/wedisplay toggle')
+  await overrideDisabledMessage
+  await releasedSelectionPayload
+  const releasedRendererState = await readCuiState(overrideClient)
+  if (!releasedRendererState.cuiEnabled
+      || releasedRendererState.renderingEnabled
+      || releasedRendererState.serverRendererForced
+      || releasedRendererState.entityCount !== 0) {
+    throw new Error(`Manual WED override did not release back to native CUI: ${JSON.stringify(releasedRendererState)}`)
   }
 
   console.log(JSON.stringify({
@@ -360,12 +420,16 @@ try {
     nativeCuiDetected: nativeCuiState.cuiEnabled,
     nativeCuiRendererCleared: nativeCuiState.entityCount === 0,
     nativeCuiPayloadForwarded: true,
-    nativeCuiRefreshSuppressed: refreshedNativeCuiState.entityCount === 0,
+    manualOverrideRefreshedSelection: forcedRendererState.entityCount > 0,
+    manualOverrideSurvivedCuiRefresh: forcedAfterCuiRefreshState.entityCount > 0,
+    manualOverrideReleasedSelectionToNativeCui: true,
+    manualOverrideReleasedToNativeCui: releasedRendererState.entityCount === 0,
     translation: entity.metadata[translationIndex]
   }))
   sharer.quit('e2e complete')
   viewer.quit('e2e complete')
   cuiClient.quit('e2e complete')
+  overrideClient.quit('e2e complete')
 } catch (error) {
   fatal(error)
 }

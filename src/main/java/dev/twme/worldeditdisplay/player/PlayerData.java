@@ -41,6 +41,7 @@ public class PlayerData {
     private final Player player;
     private final CUIEventDispatcher dispatcher;
     private volatile boolean isCuiEnabled = false;
+    private volatile boolean forceServerRenderer = false;
     private boolean renderingEnabled = false; // default off; will enable on login if player has permission
     private boolean debugEnabled = false;
     private volatile boolean bedrockPlayer = false; // true if joined via Floodgate (GeyserMC)
@@ -114,9 +115,25 @@ public class PlayerData {
     /**
      * Whether the Java client mod should render this player's own selection.
      * Bedrock clients always use the server renderer even if a proxy sends CUI traffic.
+     * A player can explicitly force WorldEditDisplay rendering for the current session,
+     * overriding an otherwise-positive CUI handshake.
      */
     public boolean isNativeCuiActive() {
-        return isCuiEnabled && !bedrockPlayer;
+        return isCuiEnabled && !bedrockPlayer && !forceServerRenderer;
+    }
+
+    /**
+     * Whether the player explicitly requested the server-side renderer for this session.
+     */
+    public boolean isServerRendererForced() {
+        return forceServerRenderer;
+    }
+
+    /**
+     * Force or release the server-side renderer even when a CUI-capable client is detected.
+     */
+    public void setServerRendererForced(boolean forceServerRenderer) {
+        this.forceServerRenderer = forceServerRenderer;
     }
 
     /**

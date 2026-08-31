@@ -176,7 +176,7 @@ public final class BStatsManager {
             Map<String, Integer> counts = new HashMap<>();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 PlayerData data = PlayerData.getPlayerData(player);
-                if (data.isCuiEnabled()) {
+                if (data.isNativeCuiActive()) {
                     counts.merge("WorldEditCUI", 1, Integer::sum);
                 } else if (data.isRenderingEnabled()) {
                     if (data.isParticleFallback()) {
