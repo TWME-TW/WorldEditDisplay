@@ -78,6 +78,13 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
             sendCui(player, "u|0");
             return true;
         }
+        if (arguments.length > 0 && arguments[0].equalsIgnoreCase("deselect")) {
+            // WorldEdit's //sel (without a selector argument) clears the selector and
+            // describes it with only the shape event; it does not send any point events.
+            currentSelections.put(player.getUniqueId(), List.of("s|cuboid"));
+            sendCui(player, "s|cuboid");
+            return true;
+        }
 
         int x = player.getLocation().getBlockX() + 2;
         int y = player.getLocation().getBlockY();
