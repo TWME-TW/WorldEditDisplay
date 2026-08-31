@@ -91,6 +91,7 @@ public class CUIEventSelection extends CUIEvent {
             // 非多重選區模式：只影響一般選區
             // 在設定新選區之前，先清除舊選區的渲染（僅清除主選區 renderer，不影響 multi）
             Region oldRegion = playerData.getSelection();
+            boolean hadPreviousSelection = oldRegion != null;
             if (oldRegion != null && region != null) {
                 RenderManager rm = getRenderManager();
                 if (rm != null) {
@@ -99,12 +100,10 @@ public class CUIEventSelection extends CUIEvent {
             }
             
             playerData.setSelection(region);
-            if (region == null) {
-                this.shouldTriggerRender = true;
-            } else {
-                // 創建新選區時不觸發渲染（等待點的資料）
-                this.shouldTriggerRender = false;
-            }
+            // WorldEdit describes a deselected region with a shape event and no
+            // following points. Schedule now so that shape-only updates clear shared
+            // renderers; point/detail events debounce this task for normal selections.
+            this.shouldTriggerRender = region == null || hadPreviousSelection;
         }
         
         return null;

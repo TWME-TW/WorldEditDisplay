@@ -147,6 +147,31 @@ function waitForTextDisplayCount(bot, expectedMinimum) {
   })
 }
 
+function waitForEntitiesGone(bot, entities) {
+  const entityIds = entities.map(entity => entity.id)
+  const remaining = () => entityIds.filter(id => bot.entities[id]).length
+
+  return new Promise((resolve, reject) => {
+    const finish = () => {
+      if (remaining() !== 0) return false
+      clearTimeout(timeout)
+      clearInterval(poll)
+      bot.removeListener('entityGone', listener)
+      resolve()
+      return true
+    }
+    const timeout = setTimeout(() => {
+      clearInterval(poll)
+      bot.removeListener('entityGone', listener)
+      reject(new Error(`Timed out waiting for ${entityIds.length} shared entities to disappear; remaining=${remaining()}`))
+    }, timeoutMs)
+    const listener = () => finish()
+    const poll = setInterval(() => finish(), 50)
+    bot.on('entityGone', listener)
+    finish()
+  })
+}
+
 function waitForCuiPayload(bot, expected) {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -303,6 +328,20 @@ try {
   const sharedLabel = await sharedLabelPromise
   const viewerTextDisplays = await waitForTextDisplayCount(viewer, visibleTextDisplays + 1)
 
+  const sharedEntities = Object.values(viewer.entities)
+    .filter(current => current.name === 'text_display')
+  if (sharedEntities.length === 0) {
+    throw new Error('WorldEditDisplay did not expose shared Text Display entities to the viewer')
+  }
+  const deselectedEntitiesGone = waitForEntitiesGone(viewer, sharedEntities)
+  sharer.chat('/wedtest deselect')
+  await deselectedEntitiesGone
+
+  // The share relationship remains active, so a later selection must become visible again.
+  const reselectedSharedLabelPromise = waitForTextDisplayText(viewer, 'WEDSharer')
+  sharer.chat('/wedtest')
+  await reselectedSharedLabelPromise
+
   const regularClientCuiState = await readCuiState(sharer)
   if (regularClientCuiState.cuiEnabled) {
     throw new Error('WorldEditDisplay mistook its silent server handshake for a client-side CUI')
@@ -416,6 +455,8 @@ try {
     sharedViewerTextDisplays: viewerTextDisplays,
     sharedLabelEntityId: sharedLabel.id,
     sharedLabelText: 'WEDSharer',
+    deselectedSharedEntitiesCleared: true,
+    sharedSelectionRenderedAgain: true,
     regularClientCuiDetected: regularClientCuiState.cuiEnabled,
     nativeCuiDetected: nativeCuiState.cuiEnabled,
     nativeCuiRendererCleared: nativeCuiState.entityCount === 0,
