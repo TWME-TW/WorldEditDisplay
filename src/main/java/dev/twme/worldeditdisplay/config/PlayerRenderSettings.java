@@ -15,6 +15,8 @@ import dev.twme.worldeditdisplay.util.ColorUtil;
 
 public class PlayerRenderSettings {
 
+    private static final String[] RENDERERS = {"cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron"};
+
     private final WorldEditDisplay plugin;
     private final UUID playerUUID;
     private final RenderSettings serverSettings;
@@ -155,8 +157,9 @@ public class PlayerRenderSettings {
 
         try {
             config = YamlConfiguration.loadConfiguration(configFile);
+            boolean migrated = migrateLegacyFillSeeThrough(config);
             reloadFields();
-            dirty = false;
+            dirty = migrated;
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,
                     "Failed to load player render settings: " + configFile.getAbsolutePath(), e);
@@ -164,6 +167,21 @@ public class PlayerRenderSettings {
             reloadFields();
             dirty = false;
         }
+    }
+
+    /** Preserve old player overrides once, then let line and fill settings change independently. */
+    static boolean migrateLegacyFillSeeThrough(FileConfiguration config) {
+        boolean changed = false;
+        for (String renderer : RENDERERS) {
+            String prefix = "renderer." + renderer + ".";
+            String lineKey = prefix + "see_through";
+            String fillKey = prefix + "fill_see_through";
+            if (config.isSet(lineKey) && !config.isSet(fillKey)) {
+                config.set(fillKey, config.getBoolean(lineKey));
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     /** Refreshes all parsed fields from the current in-memory config object without re-reading disk. */
@@ -276,7 +294,6 @@ public class PlayerRenderSettings {
         if (section == null) return;
         cuboidSeeThrough = getBoolean(section, "see_through");
         cuboidFillSeeThrough = getBoolean(section, "fill_see_through");
-        if (cuboidFillSeeThrough == null) cuboidFillSeeThrough = cuboidSeeThrough;
         cuboidEdgeColor = getColor(section, "edge_color");
         cuboidPoint1Color = getColor(section, "point1_color");
         cuboidPoint2Color = getColor(section, "point2_color");
@@ -294,7 +311,6 @@ public class PlayerRenderSettings {
         if (section == null) return;
         cylinderSeeThrough = getBoolean(section, "see_through");
         cylinderFillSeeThrough = getBoolean(section, "fill_see_through");
-        if (cylinderFillSeeThrough == null) cylinderFillSeeThrough = cylinderSeeThrough;
         cylinderCircleColor = getColor(section, "circle_color");
         cylinderGridColor = getColor(section, "grid_color");
         cylinderCenterColor = getColor(section, "center_color");
@@ -318,7 +334,6 @@ public class PlayerRenderSettings {
         if (section == null) return;
         ellipsoidSeeThrough = getBoolean(section, "see_through");
         ellipsoidFillSeeThrough = getBoolean(section, "fill_see_through");
-        if (ellipsoidFillSeeThrough == null) ellipsoidFillSeeThrough = ellipsoidSeeThrough;
         ellipsoidLineColor = getColor(section, "line_color");
         ellipsoidCenterLineColor = getColor(section, "center_line_color");
         ellipsoidCenterColor = getColor(section, "center_color");
@@ -341,7 +356,6 @@ public class PlayerRenderSettings {
         if (section == null) return;
         polygonSeeThrough = getBoolean(section, "see_through");
         polygonFillSeeThrough = getBoolean(section, "fill_see_through");
-        if (polygonFillSeeThrough == null) polygonFillSeeThrough = polygonSeeThrough;
         polygonEdgeColor = getColor(section, "edge_color");
         polygonVertexColor = getColor(section, "vertex_color");
         polygonVerticalColor = getColor(section, "vertical_color");
@@ -357,7 +371,6 @@ public class PlayerRenderSettings {
         if (section == null) return;
         polyhedronSeeThrough = getBoolean(section, "see_through");
         polyhedronFillSeeThrough = getBoolean(section, "fill_see_through");
-        if (polyhedronFillSeeThrough == null) polyhedronFillSeeThrough = polyhedronSeeThrough;
         polyhedronLineColor = getColor(section, "line_color");
         polyhedronVertex0Color = getColor(section, "vertex0_color");
         polyhedronVertexColor = getColor(section, "vertex_color");

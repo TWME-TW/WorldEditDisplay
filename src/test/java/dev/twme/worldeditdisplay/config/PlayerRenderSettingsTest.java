@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -76,15 +77,24 @@ class PlayerRenderSettingsTest {
     }
 
     @Test
-    void oldPlayerSeeThroughOverrideAlsoControlsFillUntilSetSeparately() {
+    void changingLineSeeThroughDoesNotChangeImplicitFillDefault() {
         assertTrue(settings.set("renderer.cuboid.see_through", false));
-        assertFalse(settings.isCuboidFillSeeThrough());
-
-        assertTrue(settings.set("renderer.cuboid.fill_see_through", true));
         assertTrue(settings.isCuboidFillSeeThrough());
+    }
 
-        settings.reset("renderer.cuboid.fill_see_through");
-        assertFalse(settings.isCuboidFillSeeThrough());
+    @Test
+    void migratesOldPlayerSeeThroughOverridesOnce() {
+        YamlConfiguration config = new YamlConfiguration();
+        for (String renderer : new String[] {"cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron"}) {
+            config.set("renderer." + renderer + ".see_through", false);
+        }
+
+        assertTrue(PlayerRenderSettings.migrateLegacyFillSeeThrough(config));
+        for (String renderer : new String[] {"cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron"}) {
+            config.set("renderer." + renderer + ".see_through", true);
+            assertFalse(config.getBoolean("renderer." + renderer + ".fill_see_through"));
+        }
+        assertFalse(PlayerRenderSettings.migrateLegacyFillSeeThrough(config));
     }
 
     @Test

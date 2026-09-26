@@ -190,9 +190,9 @@ Each renderer type has its own configuration section:
 - **cylinder**
 <img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/8dad5d894ce5b09282311ea3fd61227c8603672b.png" />
 - **polyhedron**
-
-`see_through` controls a shape's lines and markers; `fill_see_through` controls its fill surfaces independently. Both settings are available for cuboid, cylinder, ellipsoid, polygon, and polyhedron renderers. Existing server configs inherit their current `see_through` value for the new fill setting.
 <img width="2879" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/b902289ee7020086b93f6591fd3f8f30d29bf156.png" />
+
+`see_through` controls a shape's lines and markers; `fill_see_through` controls its fill surfaces independently. Both settings are available for cuboid, cylinder, ellipsoid, polygon, and polyhedron renderers. Existing server configs and player overrides copy their current `see_through` value into the new fill setting when upgrading.
 
 ### How It Works
 
@@ -506,9 +506,9 @@ player_limits:
 - **cylinder**
 <img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/8dad5d894ce5b09282311ea3fd61227c8603672b.png" />
 - **polyhedron**
-
-`see_through` 控制形狀的線條與標記；`fill_see_through` 獨立控制填充面。長方體、圓柱、橢球、多邊形與多面體都可分別設定。既有伺服器設定會以原本的 `see_through` 值作為新填充設定的初始值。
 <img width="2879" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/b902289ee7020086b93f6591fd3f8f30d29bf156.png" />
+
+`see_through` 控制形狀的線條與標記；`fill_see_through` 獨立控制填充面。長方體、圓柱、橢球、多邊形與多面體都可分別設定。升級時，既有伺服器設定與玩家覆寫會將原本的 `see_through` 值複製到新的填充設定。
 
 ### 運作原理
 

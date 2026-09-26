@@ -70,7 +70,7 @@ player_limits:
     max: 50                             # Maximum fill generators
   
   # See through related settings range (per-shape transparency through blocks)
-  see_through: true                    # Whether players can toggle see_through for individual shapes
+  see_through: true                    # Whether players can change line/fill see_through for individual shapes
 
 # Renderer Settings
 # Color format: #RRGGBBAA (hex, AA = alpha/opacity, 00=transparent, FF=opaque)

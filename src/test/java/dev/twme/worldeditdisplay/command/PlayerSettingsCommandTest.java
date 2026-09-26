@@ -26,6 +26,7 @@ class PlayerSettingsCommandTest {
     void parseValueAcceptsOnlyStrictBooleans() {
         assertEquals(Boolean.TRUE, command.parseValue("fill_enabled", "true"));
         assertEquals(Boolean.FALSE, command.parseValue("fill_enabled", "FALSE"));
+        assertEquals(Boolean.FALSE, command.parseValue("fill_see_through", "false"));
         assertNull(command.parseValue("fill_enabled", "maybe"));
     }
 
