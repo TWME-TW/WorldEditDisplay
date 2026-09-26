@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +55,46 @@ class PlayerRenderSettingsTest {
 
         assertTrue(settings.set("renderer.cuboid.max_grid_spacing", -1));
         assertEquals(-1, settings.getCuboidMaxGridSpacing());
+    }
+
+    @Test
+    void keepsLineAndFillSeeThroughSettingsIndependent() {
+        for (String renderer : new String[] {"cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron"}) {
+            assertTrue(settings.set("renderer." + renderer + ".see_through", false));
+            assertTrue(settings.set("renderer." + renderer + ".fill_see_through", true));
+        }
+
+        assertFalse(settings.isCuboidSeeThrough());
+        assertTrue(settings.isCuboidFillSeeThrough());
+        assertFalse(settings.isCylinderSeeThrough());
+        assertTrue(settings.isCylinderFillSeeThrough());
+        assertFalse(settings.isEllipsoidSeeThrough());
+        assertTrue(settings.isEllipsoidFillSeeThrough());
+        assertFalse(settings.isPolygonSeeThrough());
+        assertTrue(settings.isPolygonFillSeeThrough());
+        assertFalse(settings.isPolyhedronSeeThrough());
+        assertTrue(settings.isPolyhedronFillSeeThrough());
+    }
+
+    @Test
+    void changingLineSeeThroughDoesNotChangeImplicitFillDefault() {
+        assertTrue(settings.set("renderer.cuboid.see_through", false));
+        assertTrue(settings.isCuboidFillSeeThrough());
+    }
+
+    @Test
+    void migratesOldPlayerSeeThroughOverridesOnce() {
+        YamlConfiguration config = new YamlConfiguration();
+        for (String renderer : new String[] {"cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron"}) {
+            config.set("renderer." + renderer + ".see_through", false);
+        }
+
+        assertTrue(PlayerRenderSettings.migrateLegacyFillSeeThrough(config));
+        for (String renderer : new String[] {"cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron"}) {
+            config.set("renderer." + renderer + ".see_through", true);
+            assertFalse(config.getBoolean("renderer." + renderer + ".fill_see_through"));
+        }
+        assertFalse(PlayerRenderSettings.migrateLegacyFillSeeThrough(config));
     }
 
     @Test

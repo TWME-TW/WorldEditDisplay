@@ -26,6 +26,7 @@ class PlayerSettingsCommandTest {
     void parseValueAcceptsOnlyStrictBooleans() {
         assertEquals(Boolean.TRUE, command.parseValue("fill_enabled", "true"));
         assertEquals(Boolean.FALSE, command.parseValue("fill_enabled", "FALSE"));
+        assertEquals(Boolean.FALSE, command.parseValue("fill_see_through", "false"));
         assertNull(command.parseValue("fill_enabled", "maybe"));
     }
 
@@ -39,6 +40,11 @@ class PlayerSettingsCommandTest {
     void settingWhitelistRejectsUnknownKeys() {
         assertTrue(command.isValidSetting("cuboid", "edge_color"));
         assertTrue(command.isValidSetting("cuboid", "max_grid_spacing"));
+        assertTrue(command.isValidSetting("cuboid", "fill_see_through"));
+        assertTrue(command.isValidSetting("cylinder", "fill_see_through"));
+        assertTrue(command.isValidSetting("ellipsoid", "fill_see_through"));
+        assertTrue(command.isValidSetting("polygon", "fill_see_through"));
+        assertTrue(command.isValidSetting("polyhedron", "fill_see_through"));
         assertTrue(command.isValidSetting("cylinder", "sqrt_scale_factor"));
         assertTrue(command.isValidSetting("cylinder", "max_grid_spacing"));
         assertTrue(command.isValidSetting("ellipsoid", "sqrt_scale_factor"));

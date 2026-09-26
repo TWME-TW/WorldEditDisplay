@@ -24,6 +24,11 @@ public class PolygonRenderer extends RegionRenderer<PolygonRegion> {
     }
 
     @Override
+    protected boolean isFillSeeThrough() {
+        return settings.isPolygonFillSeeThrough();
+    }
+
+    @Override
     public void render(PolygonRegion region) {
         beginRetainedLineRender();
         try {

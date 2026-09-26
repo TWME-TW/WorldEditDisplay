@@ -34,6 +34,11 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
     }
 
     @Override
+    protected boolean isFillSeeThrough() {
+        return settings.isEllipsoidFillSeeThrough();
+    }
+
+    @Override
     public void render(EllipsoidRegion region) {
         beginRetainedLineRender();
         try {

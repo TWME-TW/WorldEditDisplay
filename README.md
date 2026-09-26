@@ -167,7 +167,9 @@ renderer:
     edge_color: "#FFD700FF"     # Color for edges in #RRGGBBAA
     edge_thickness: 0.05        # Line thickness
     grid_spacing: 8             # Grid spacing
+    see_through: true           # Show edges and lines through blocks
     fill_enabled: true          # Enable face filling
+    fill_see_through: false     # Keep fill faces hidden behind blocks
     fill_color: "#FF000040"     # Face fill color
     # ... more settings
 
@@ -189,6 +191,8 @@ Each renderer type has its own configuration section:
 <img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/8dad5d894ce5b09282311ea3fd61227c8603672b.png" />
 - **polyhedron**
 <img width="2879" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/b902289ee7020086b93f6591fd3f8f30d29bf156.png" />
+
+`see_through` controls a shape's lines and markers; `fill_see_through` controls its fill surfaces independently. Both settings are available for cuboid, cylinder, ellipsoid, polygon, and polyhedron renderers. Existing server configs and player overrides copy their current `see_through` value into the new fill setting when upgrading.
 
 ### How It Works
 
@@ -261,6 +265,10 @@ This allows server admins to control which player groups have rendering enabled 
 # Enable face filling with half-transparent red
 /wedisplay set cuboid fill_enabled true
 /wedisplay set cuboid fill_color #FF000080
+
+# Show lines through blocks but keep fill surfaces occluded
+/wedisplay set cuboid see_through true
+/wedisplay set cuboid fill_see_through false
 
 # Toggle rendering on/off
 /wedisplay toggle
@@ -475,7 +483,9 @@ renderer:
     edge_color: "#FFD700FF"     # 邊緣顏色 (#RRGGBBAA)
     edge_thickness: 0.05        # 線條粗細
     grid_spacing: 8             # 網格間距
+    see_through: true           # 線條與邊緣可透過方塊顯示
     fill_enabled: true          # 是否啟用表面填充
+    fill_see_through: false     # 填充面不透過方塊顯示
     fill_color: "#FF000040"     # 表面填充顏色
     # ... 更多設定
 
@@ -497,6 +507,8 @@ player_limits:
 <img width="2880" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/8dad5d894ce5b09282311ea3fd61227c8603672b.png" />
 - **polyhedron**
 <img width="2879" height="1750" alt="image" src="https://cdn.modrinth.com/data/eVvfozdY/images/b902289ee7020086b93f6591fd3f8f30d29bf156.png" />
+
+`see_through` 控制形狀的線條與標記；`fill_see_through` 獨立控制填充面。長方體、圓柱、橢球、多邊形與多面體都可分別設定。升級時，既有伺服器設定與玩家覆寫會將原本的 `see_through` 值複製到新的填充設定。
 
 ### 運作原理
 
@@ -569,6 +581,10 @@ worldeditdisplay.render.auto-enable:     # 登入時自動啟用渲染（預設�
 # 啟用半透明的紅色表面填充
 /wedisplay set cuboid fill_enabled true
 /wedisplay set cuboid fill_color #FF000080
+
+# 線條透視顯示，但填充面仍被方塊遮擋
+/wedisplay set cuboid see_through true
+/wedisplay set cuboid fill_see_through false
 
 # 切換渲染開關
 /wedisplay toggle

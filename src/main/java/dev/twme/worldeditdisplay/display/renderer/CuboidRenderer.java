@@ -32,6 +32,11 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
     }
 
     @Override
+    protected boolean isFillSeeThrough() {
+        return settings.isCuboidFillSeeThrough();
+    }
+
+    @Override
     public void render(CuboidRegion region) {
         beginRetainedLineRender();
         try {

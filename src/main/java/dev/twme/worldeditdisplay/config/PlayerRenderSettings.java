@@ -15,6 +15,8 @@ import dev.twme.worldeditdisplay.util.ColorUtil;
 
 public class PlayerRenderSettings {
 
+    private static final String[] RENDERERS = {"cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron"};
+
     private final WorldEditDisplay plugin;
     private final UUID playerUUID;
     private final RenderSettings serverSettings;
@@ -24,6 +26,7 @@ public class PlayerRenderSettings {
 
     // Cuboid
     private Boolean cuboidSeeThrough;
+    private Boolean cuboidFillSeeThrough;
     private Color cuboidEdgeColor;
     private Color cuboidPoint1Color;
     private Color cuboidPoint2Color;
@@ -38,6 +41,7 @@ public class PlayerRenderSettings {
 
     // Cylinder
     private Boolean cylinderSeeThrough;
+    private Boolean cylinderFillSeeThrough;
     private Color cylinderCircleColor;
     private Color cylinderGridColor;
     private Color cylinderCenterColor;
@@ -58,6 +62,7 @@ public class PlayerRenderSettings {
 
     // Ellipsoid
     private Boolean ellipsoidSeeThrough;
+    private Boolean ellipsoidFillSeeThrough;
     private Color ellipsoidLineColor;
     private Color ellipsoidCenterLineColor;
     private Color ellipsoidCenterColor;
@@ -77,6 +82,7 @@ public class PlayerRenderSettings {
 
     // Polygon
     private Boolean polygonSeeThrough;
+    private Boolean polygonFillSeeThrough;
     private Color polygonEdgeColor;
     private Color polygonVertexColor;
     private Color polygonVerticalColor;
@@ -89,6 +95,7 @@ public class PlayerRenderSettings {
 
     // Polyhedron
     private Boolean polyhedronSeeThrough;
+    private Boolean polyhedronFillSeeThrough;
     private Color polyhedronLineColor;
     private Color polyhedronVertex0Color;
     private Color polyhedronVertexColor;
@@ -150,8 +157,9 @@ public class PlayerRenderSettings {
 
         try {
             config = YamlConfiguration.loadConfiguration(configFile);
+            boolean migrated = migrateLegacyFillSeeThrough(config);
             reloadFields();
-            dirty = false;
+            dirty = migrated;
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,
                     "Failed to load player render settings: " + configFile.getAbsolutePath(), e);
@@ -159,6 +167,21 @@ public class PlayerRenderSettings {
             reloadFields();
             dirty = false;
         }
+    }
+
+    /** Preserve old player overrides once, then let line and fill settings change independently. */
+    static boolean migrateLegacyFillSeeThrough(FileConfiguration config) {
+        boolean changed = false;
+        for (String renderer : RENDERERS) {
+            String prefix = "renderer." + renderer + ".";
+            String lineKey = prefix + "see_through";
+            String fillKey = prefix + "fill_see_through";
+            if (config.isSet(lineKey) && !config.isSet(fillKey)) {
+                config.set(fillKey, config.getBoolean(lineKey));
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     /** Refreshes all parsed fields from the current in-memory config object without re-reading disk. */
@@ -173,6 +196,7 @@ public class PlayerRenderSettings {
 
     private void clearFields() {
         cuboidSeeThrough = null;
+        cuboidFillSeeThrough = null;
         cuboidEdgeColor = null;
         cuboidPoint1Color = null;
         cuboidPoint2Color = null;
@@ -186,6 +210,7 @@ public class PlayerRenderSettings {
         cuboidMaxGridSpacing = null;
 
         cylinderSeeThrough = null;
+        cylinderFillSeeThrough = null;
         cylinderCircleColor = null;
         cylinderGridColor = null;
         cylinderCenterColor = null;
@@ -205,6 +230,7 @@ public class PlayerRenderSettings {
         cylinderFillColor = null;
 
         ellipsoidSeeThrough = null;
+        ellipsoidFillSeeThrough = null;
         ellipsoidLineColor = null;
         ellipsoidCenterLineColor = null;
         ellipsoidCenterColor = null;
@@ -223,6 +249,7 @@ public class PlayerRenderSettings {
         ellipsoidFillGenerators = null;
 
         polygonSeeThrough = null;
+        polygonFillSeeThrough = null;
         polygonEdgeColor = null;
         polygonVertexColor = null;
         polygonVerticalColor = null;
@@ -234,6 +261,7 @@ public class PlayerRenderSettings {
         polygonMaxGridSpacing = null;
 
         polyhedronSeeThrough = null;
+        polyhedronFillSeeThrough = null;
         polyhedronLineColor = null;
         polyhedronVertex0Color = null;
         polyhedronVertexColor = null;
@@ -265,6 +293,7 @@ public class PlayerRenderSettings {
     private void loadCuboidSettings(ConfigurationSection section) {
         if (section == null) return;
         cuboidSeeThrough = getBoolean(section, "see_through");
+        cuboidFillSeeThrough = getBoolean(section, "fill_see_through");
         cuboidEdgeColor = getColor(section, "edge_color");
         cuboidPoint1Color = getColor(section, "point1_color");
         cuboidPoint2Color = getColor(section, "point2_color");
@@ -281,6 +310,7 @@ public class PlayerRenderSettings {
     private void loadCylinderSettings(ConfigurationSection section) {
         if (section == null) return;
         cylinderSeeThrough = getBoolean(section, "see_through");
+        cylinderFillSeeThrough = getBoolean(section, "fill_see_through");
         cylinderCircleColor = getColor(section, "circle_color");
         cylinderGridColor = getColor(section, "grid_color");
         cylinderCenterColor = getColor(section, "center_color");
@@ -303,6 +333,7 @@ public class PlayerRenderSettings {
     private void loadEllipsoidSettings(ConfigurationSection section) {
         if (section == null) return;
         ellipsoidSeeThrough = getBoolean(section, "see_through");
+        ellipsoidFillSeeThrough = getBoolean(section, "fill_see_through");
         ellipsoidLineColor = getColor(section, "line_color");
         ellipsoidCenterLineColor = getColor(section, "center_line_color");
         ellipsoidCenterColor = getColor(section, "center_color");
@@ -324,6 +355,7 @@ public class PlayerRenderSettings {
     private void loadPolygonSettings(ConfigurationSection section) {
         if (section == null) return;
         polygonSeeThrough = getBoolean(section, "see_through");
+        polygonFillSeeThrough = getBoolean(section, "fill_see_through");
         polygonEdgeColor = getColor(section, "edge_color");
         polygonVertexColor = getColor(section, "vertex_color");
         polygonVerticalColor = getColor(section, "vertical_color");
@@ -338,6 +370,7 @@ public class PlayerRenderSettings {
     private void loadPolyhedronSettings(ConfigurationSection section) {
         if (section == null) return;
         polyhedronSeeThrough = getBoolean(section, "see_through");
+        polyhedronFillSeeThrough = getBoolean(section, "fill_see_through");
         polyhedronLineColor = getColor(section, "line_color");
         polyhedronVertex0Color = getColor(section, "vertex0_color");
         polyhedronVertexColor = getColor(section, "vertex_color");
@@ -439,6 +472,7 @@ public class PlayerRenderSettings {
 
     // === Cuboid Getters ===
     public boolean isCuboidSeeThrough() { return cuboidSeeThrough != null ? cuboidSeeThrough : serverSettings.isCuboidSeeThrough(); }
+    public boolean isCuboidFillSeeThrough() { return cuboidFillSeeThrough != null ? cuboidFillSeeThrough : serverSettings.isCuboidFillSeeThrough(); }
     public Color getCuboidEdgeColor() { return cuboidEdgeColor != null ? cuboidEdgeColor : serverSettings.getCuboidEdgeColor(); }
     public Color getCuboidPoint1Color() { return cuboidPoint1Color != null ? cuboidPoint1Color : serverSettings.getCuboidPoint1Color(); }
     public Color getCuboidPoint2Color() { return cuboidPoint2Color != null ? cuboidPoint2Color : serverSettings.getCuboidPoint2Color(); }
@@ -453,6 +487,7 @@ public class PlayerRenderSettings {
 
     // === Cylinder Getters ===
     public boolean isCylinderSeeThrough() { return cylinderSeeThrough != null ? cylinderSeeThrough : serverSettings.isCylinderSeeThrough(); }
+    public boolean isCylinderFillSeeThrough() { return cylinderFillSeeThrough != null ? cylinderFillSeeThrough : serverSettings.isCylinderFillSeeThrough(); }
     public Color getCylinderCircleColor() { return cylinderCircleColor != null ? cylinderCircleColor : serverSettings.getCylinderCircleColor(); }
     public Color getCylinderGridColor() { return cylinderGridColor != null ? cylinderGridColor : serverSettings.getCylinderGridColor(); }
     public Color getCylinderCenterColor() { return cylinderCenterColor != null ? cylinderCenterColor : serverSettings.getCylinderCenterColor(); }
@@ -473,6 +508,7 @@ public class PlayerRenderSettings {
 
     // === Ellipsoid Getters ===
     public boolean isEllipsoidSeeThrough() { return ellipsoidSeeThrough != null ? ellipsoidSeeThrough : serverSettings.isEllipsoidSeeThrough(); }
+    public boolean isEllipsoidFillSeeThrough() { return ellipsoidFillSeeThrough != null ? ellipsoidFillSeeThrough : serverSettings.isEllipsoidFillSeeThrough(); }
     public Color getEllipsoidLineColor() { return ellipsoidLineColor != null ? ellipsoidLineColor : serverSettings.getEllipsoidLineColor(); }
     public Color getEllipsoidCenterLineColor() { return ellipsoidCenterLineColor != null ? ellipsoidCenterLineColor : serverSettings.getEllipsoidCenterLineColor(); }
     public Color getEllipsoidCenterColor() { return ellipsoidCenterColor != null ? ellipsoidCenterColor : serverSettings.getEllipsoidCenterColor(); }
@@ -492,6 +528,7 @@ public class PlayerRenderSettings {
 
     // === Polygon Getters ===
     public boolean isPolygonSeeThrough() { return polygonSeeThrough != null ? polygonSeeThrough : serverSettings.isPolygonSeeThrough(); }
+    public boolean isPolygonFillSeeThrough() { return polygonFillSeeThrough != null ? polygonFillSeeThrough : serverSettings.isPolygonFillSeeThrough(); }
     public Color getPolygonEdgeColor() { return polygonEdgeColor != null ? polygonEdgeColor : serverSettings.getPolygonEdgeColor(); }
     public Color getPolygonVertexColor() { return polygonVertexColor != null ? polygonVertexColor : serverSettings.getPolygonVertexColor(); }
     public Color getPolygonVerticalColor() { return polygonVerticalColor != null ? polygonVerticalColor : serverSettings.getPolygonVerticalColor(); }
@@ -504,6 +541,7 @@ public class PlayerRenderSettings {
 
     // === Polyhedron Getters ===
     public boolean isPolyhedronSeeThrough() { return polyhedronSeeThrough != null ? polyhedronSeeThrough : serverSettings.isPolyhedronSeeThrough(); }
+    public boolean isPolyhedronFillSeeThrough() { return polyhedronFillSeeThrough != null ? polyhedronFillSeeThrough : serverSettings.isPolyhedronFillSeeThrough(); }
     public Color getPolyhedronLineColor() { return polyhedronLineColor != null ? polyhedronLineColor : serverSettings.getPolyhedronLineColor(); }
     public Color getPolyhedronVertex0Color() { return polyhedronVertex0Color != null ? polyhedronVertex0Color : serverSettings.getPolyhedronVertex0Color(); }
     public Color getPolyhedronVertexColor() { return polyhedronVertexColor != null ? polyhedronVertexColor : serverSettings.getPolyhedronVertexColor(); }

@@ -27,6 +27,11 @@ public class PolyhedronRenderer extends RegionRenderer<PolyhedronRegion> {
     }
 
     @Override
+    protected boolean isFillSeeThrough() {
+        return settings.isPolyhedronFillSeeThrough();
+    }
+
+    @Override
     public void render(PolyhedronRegion region) {
         beginRetainedLineRender();
         try {
