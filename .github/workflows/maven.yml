@@ -33,4 +33,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: WorldEditDisplay
-          path: target/*.jar
+          path: target/WorldEditDisplay-*-paper.jar
+          if-no-files-found: error
