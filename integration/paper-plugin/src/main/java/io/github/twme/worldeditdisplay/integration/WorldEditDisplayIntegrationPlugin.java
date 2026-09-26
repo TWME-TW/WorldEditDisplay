@@ -89,6 +89,7 @@ public final class WorldEditDisplayIntegrationPlugin extends JavaPlugin {
         int x = player.getLocation().getBlockX() + 2;
         int y = player.getLocation().getBlockY();
         int z = player.getLocation().getBlockZ() + 2;
+        player.sendMessage("WED_SELECTION_BOUNDS:" + x + ":" + y + ":" + z + ":3");
         String selection = "s|cuboid";
         String firstPoint = "p|0|" + x + "|" + y + "|" + z + "|27";
         String secondPoint = "p|1|" + (x + 2) + "|" + (y + 2) + "|" + (z + 2) + "|27";

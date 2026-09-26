@@ -3,14 +3,14 @@ set -euo pipefail
 
 readonly PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly PAPER_API="https://fill.papermc.io/v3/projects/paper/versions/1.21.11/builds/latest"
-readonly PACKETEVENTS_URL="https://github.com/retrooper/packetevents/releases/download/v2.13.0/packetevents-spigot-2.13.0.jar"
-readonly PACKETEVENTS_SHA256="6d9ece0d87ee727a79a20b7ffbd432021609c6f52bafcb654fc2d3e9b6f064c5"
+readonly PACKETEVENTS_URL="https://github.com/retrooper/packetevents/releases/download/v2.14.0/packetevents-spigot-2.14.0.jar"
+readonly PACKETEVENTS_SHA256="060087c58ec268eae7dd0eb1f17ac3bea1eaadda1693414141ff64e506091bd7"
 readonly PORT="${WED_E2E_PORT:-$(node -e 'const net=require("net");const server=net.createServer();server.listen(0,"127.0.0.1",()=>{console.log(server.address().port);server.close()})')}"
 readonly TEMP_DIR="$(mktemp -d)"
 readonly SERVER_DIR="${TEMP_DIR}/server"
 readonly CACHE_DIR="${PROJECT_DIR}/target/mineflayer-cache"
 readonly PAPER_JAR="${CACHE_DIR}/paper-1.21.11.jar"
-readonly PACKETEVENTS_JAR="${CACHE_DIR}/packetevents-spigot-2.13.0.jar"
+readonly PACKETEVENTS_JAR="${CACHE_DIR}/packetevents-spigot-2.14.0.jar"
 readonly INTEGRATION_JAR="${PROJECT_DIR}/integration/paper-plugin/target/WorldEditDisplayIntegration.jar"
 SERVER_PID=""
 

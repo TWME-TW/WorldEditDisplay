@@ -15,6 +15,10 @@
     <java.version>17</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <platform>paper</platform>
+    <!-- Adventure shipped by Paper 26.3 (adventure-bom) for the Paper profile. -->
+    <adventure.paper.version>5.2.0</adventure.paper.version>
+    <!-- Adventure shipped by PacketEvents for the Spigot profile. -->
+    <adventure.spigot.version>4.26.1</adventure.spigot.version>
   </properties>
 
   <build>
@@ -135,13 +139,16 @@
     <dependency>
       <groupId>com.github.retrooper</groupId>
       <artifactId>packetevents-spigot</artifactId>
-      <version>2.13.0</version>
+      <version>2.14.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>dev.twme</groupId>
+      <!-- Pin the TextDisplayShapes orientation fix until it receives a release.
+           Its old rotation mirrors the single-space TextDisplay background away
+           from the requested line and face vertices. -->
+      <groupId>com.github.TWME-TW.TextDisplayShapes</groupId>
       <artifactId>textdisplayshape-packet</artifactId>
-      <version>3.0.0</version>
+      <version>79f954c</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -187,7 +194,32 @@
         <dependency>
           <groupId>io.papermc.paper</groupId>
           <artifactId>paper-api</artifactId>
-          <version>1.21.11-R0.1-SNAPSHOT</version>
+          <version>26.3.build.41-alpha</version>
+          <scope>provided</scope>
+        </dependency>
+        <!--
+          Paper 26.3 ships Adventure 5.2.0. PacketEvents is compiled against Adventure 4.26.1
+          and is listed before paper-api, so without these pins Maven resolves the older
+          4.26.1 API onto the compile classpath and Paper-only types (for example
+          net.kyori.adventure.text.object.ObjectContentsLike) cannot be read.
+          Compilation only; the Paper server provides these classes at runtime.
+        -->
+        <dependency>
+          <groupId>net.kyori</groupId>
+          <artifactId>adventure-api</artifactId>
+          <version>${adventure.paper.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>net.kyori</groupId>
+          <artifactId>adventure-text-minimessage</artifactId>
+          <version>${adventure.paper.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>net.kyori</groupId>
+          <artifactId>adventure-text-serializer-legacy</artifactId>
+          <version>${adventure.paper.version}</version>
           <scope>provided</scope>
         </dependency>
         <!-- For compilation only; available at runtime via Paper server -->
@@ -210,7 +242,7 @@
         <dependency>
           <groupId>org.spigotmc</groupId>
           <artifactId>spigot-api</artifactId>
-          <version>1.21.4-R0.1-SNAPSHOT</version>
+          <version>26.3-R0.1-SNAPSHOT</version>
           <scope>provided</scope>
         </dependency>
         <!-- Spigot's plugin classloader does NOT expose adventure-api to plugins;
@@ -223,13 +255,13 @@
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-api</artifactId>
-          <version>4.17.0</version>
+          <version>${adventure.spigot.version}</version>
           <scope>compile</scope>
         </dependency>
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-key</artifactId>
-          <version>4.17.0</version>
+          <version>${adventure.spigot.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
@@ -247,13 +279,13 @@
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-text-minimessage</artifactId>
-          <version>4.17.0</version>
+          <version>${adventure.spigot.version}</version>
           <scope>compile</scope>
         </dependency>
         <dependency>
           <groupId>net.kyori</groupId>
           <artifactId>adventure-text-serializer-legacy</artifactId>
-          <version>4.17.0</version>
+          <version>${adventure.spigot.version}</version>
           <scope>compile</scope>
         </dependency>
         <!-- BungeeCord serializer: converts Adventure Component → BaseComponent[] to preserve click events -->

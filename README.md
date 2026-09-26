@@ -2,8 +2,8 @@
 
 <div align="center">
 
-[![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.x-brightgreen.svg)](https://www.minecraft.net/)
-[![Java Version](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
+[![Minecraft Version](https://img.shields.io/badge/Minecraft-26.3-brightgreen.svg)](https://www.minecraft.net/)
+[![Java Version](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://www.oracle.com/java/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
 
 A server-side WorldEdit selection visualization plugin | WorldEdit 選區視覺化伺服器端插件
@@ -70,10 +70,10 @@ Players can customize their own rendering preferences:
 
 ### Requirements
 
-- Paper 1.19.4 ~ 26.2; Folia / Spigot 1.20 ~ 1.21.x
-- Java 17 or higher (subject to the Minecraft server version's own Java requirement)
+- Paper 1.19.4 ~ 26.3; Folia / Spigot 1.20 ~ 26.3
+- Java 17 or higher (subject to the Minecraft server version's own Java requirement; Minecraft 26.x requires Java 25)
 - Required plugins:
-  - [PacketEvents](https://github.com/retrooper/packetevents) 2.13.0+
+  - [PacketEvents](https://github.com/retrooper/packetevents) 2.14.0+
 
 ### Installation
 
@@ -279,11 +279,15 @@ mvn clean package
 
 The compiled jar will be in `target/WorldEditDisplay-version-platform.jar`
 
-Run the full Paper 1.21.11, PacketEvents 2.13.0, and Mineflayer CUI rendering test with:
+Building against the Paper 26.3 API requires JDK 25. The artifact still targets Java 17 bytecode, so every server version listed under [Requirements](#requirements) keeps working.
+
+Run the Paper 1.21.11, PacketEvents 2.14.0, and Mineflayer CUI rendering test with:
 
 ```bash
 ./integration/mineflayer/run-e2e.sh
 ```
+
+Mineflayer cannot log in to Minecraft 26.x yet, so the black-box test pins a Paper 1.21.11 server and exercises the same plugin jar that targets 26.3.
 
 **Project Structure**
 ```
@@ -374,10 +378,10 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 
 ### 需求
 
-- Paper 1.19.4 ~ 26.2；Folia / Spigot 1.20 ~ 1.21.x
-- Java 17 或更高版本（仍須符合 Minecraft 伺服器版本本身的 Java 需求）
+- Paper 1.19.4 ~ 26.3；Folia / Spigot 1.20 ~ 26.3
+- Java 17 或更高版本（仍須符合 Minecraft 伺服器版本本身的 Java 需求；Minecraft 26.x 需要 Java 25）
 - 必要插件：
-  - [PacketEvents](https://github.com/retrooper/packetevents) 2.13.0+
+  - [PacketEvents](https://github.com/retrooper/packetevents) 2.14.0+
 
 ### 安裝
 
@@ -582,6 +586,8 @@ mvn clean package
 ```
 
 編譯後的 jar 檔會在 `target/WorldEditDisplay-version-platform.jar`
+
+以 Paper 26.3 API 建置需要 JDK 25；產物仍以 Java 17 bytecode 為目標，因此 [需求](#需求) 中列出的所有伺服器版本都能繼續運作。
 
 **專案結構**
 ```
