@@ -347,6 +347,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "vertex_marker_size", settings.getCuboidVertexMarkerSize(), highlightedSetting);
                 sendRendererSetting(player, renderer, "height_grid_division", settings.getCuboidHeightGridDivision(), highlightedSetting);
                 sendRendererSetting(player, renderer, "max_grid_spacing", settings.getCuboidMaxGridSpacing(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_see_through", settings.isCuboidFillSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_enabled", settings.isCuboidFillEnabled(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getCuboidFillColor()), highlightedSetting);
             }
@@ -367,6 +368,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "height_grid_division", settings.getCylinderHeightGridDivision(), highlightedSetting);
                 sendRendererSetting(player, renderer, "radius_grid_division", settings.getCylinderRadiusGridDivision(), highlightedSetting);
                 sendRendererSetting(player, renderer, "max_grid_spacing", settings.getCylinderMaxGridSpacing(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_see_through", settings.isCylinderFillSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_enabled", settings.isCylinderFillEnabled(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getCylinderFillColor()), highlightedSetting);
             }
@@ -385,6 +387,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "sqrt_scale_factor", settings.getEllipsoidSqrtScaleFactor(), highlightedSetting);
                 sendRendererSetting(player, renderer, "radius_grid_division", settings.getEllipsoidRadiusGridDivision(), highlightedSetting);
                 sendRendererSetting(player, renderer, "max_grid_spacing", settings.getEllipsoidMaxGridSpacing(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_see_through", settings.isEllipsoidFillSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_enabled", settings.isEllipsoidFillEnabled(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getEllipsoidFillColor()), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_generators", settings.getEllipsoidFillGenerators(), highlightedSetting);
@@ -398,6 +401,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "vertical_thickness", settings.getPolygonVerticalThickness(), highlightedSetting);
                 sendRendererSetting(player, renderer, "height_grid_division", settings.getPolygonHeightGridDivision(), highlightedSetting);
                 sendRendererSetting(player, renderer, "max_grid_spacing", settings.getPolygonMaxGridSpacing(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_see_through", settings.isPolygonFillSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_enabled", settings.isPolygonFillEnabled(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getPolygonFillColor()), highlightedSetting);
             }
@@ -409,6 +413,7 @@ public class PlayerSettingsCommand implements TabExecutor {
                 sendRendererSetting(player, renderer, "line_thickness", settings.getPolyhedronLineThickness(), highlightedSetting);
                 sendRendererSetting(player, renderer, "vertex_size", settings.getPolyhedronVertexSize(), highlightedSetting);
                 sendRendererSetting(player, renderer, "vertex_thickness", settings.getPolyhedronVertexThickness(), highlightedSetting);
+                sendRendererSetting(player, renderer, "fill_see_through", settings.isPolyhedronFillSeeThrough(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_enabled", settings.isPolyhedronFillEnabled(), highlightedSetting);
                 sendRendererSetting(player, renderer, "fill_color", ColorUtil.toHexString(settings.getPolyhedronFillColor()), highlightedSetting);
             }
@@ -582,27 +587,27 @@ public class PlayerSettingsCommand implements TabExecutor {
             case "cuboid" -> Arrays.asList(
                     "edge_color", "point1_color", "point2_color", "grid_color",
                     "edge_thickness", "grid_thickness", "vertex_marker_size", "height_grid_division",
-                    "max_grid_spacing", "see_through", "fill_enabled", "fill_color");
+                    "max_grid_spacing", "see_through", "fill_see_through", "fill_enabled", "fill_color");
             case "cylinder" -> Arrays.asList(
                     "circle_color", "grid_color", "center_color", "center_line_color",
                     "circle_thickness", "grid_thickness", "center_line_thickness", "center_thickness",
                     "min_circle_segments", "max_circle_segments", "target_segment_length",
                     "sqrt_scale_factor", "height_grid_division", "radius_grid_division", "max_grid_spacing",
-                    "see_through", "fill_enabled", "fill_color");
+                    "see_through", "fill_see_through", "fill_enabled", "fill_color");
             case "ellipsoid" -> Arrays.asList(
                     "line_color", "center_line_color", "center_color",
                     "line_thickness", "center_line_thickness", "center_marker_size", "center_thickness",
                     "min_segments", "max_segments", "target_segment_length",
                     "sqrt_scale_factor", "radius_grid_division", "max_grid_spacing",
-                    "see_through", "fill_enabled", "fill_color", "fill_generators");
+                    "see_through", "fill_see_through", "fill_enabled", "fill_color", "fill_generators");
             case "polygon" -> Arrays.asList(
                     "edge_color", "vertex_color", "vertical_color",
                     "edge_thickness", "vertical_thickness", "height_grid_division",
-                    "max_grid_spacing", "see_through", "fill_enabled", "fill_color");
+                    "max_grid_spacing", "see_through", "fill_see_through", "fill_enabled", "fill_color");
             case "polyhedron" -> Arrays.asList(
                     "line_color", "vertex0_color", "vertex_color",
                     "line_thickness", "vertex_size", "vertex_thickness",
-                    "see_through", "fill_enabled", "fill_color");
+                    "see_through", "fill_see_through", "fill_enabled", "fill_color");
             default -> new ArrayList<>();
         };
     }

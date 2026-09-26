@@ -78,7 +78,8 @@ renderer:
   # Cuboid (Rectangular Box) Renderer Settings
   cuboid:
     # View Settings
-    see_through: true                   # Whether cuboid shapes are visible through blocks
+    see_through: true                   # Whether cuboid lines/markers are visible through blocks
+    fill_see_through: true              # Whether cuboid fill faces are visible through blocks
     
     # Color Settings
     edge_color: "#CC3333CC"             # Edge line color
@@ -102,7 +103,8 @@ renderer:
   # Cylinder Renderer Settings
   cylinder:
     # View Settings
-    see_through: true                   # Whether cylinder shapes are visible through blocks
+    see_through: true                   # Whether cylinder lines/markers are visible through blocks
+    fill_see_through: true              # Whether cylinder fill faces are visible through blocks
     
     # Color Settings
     circle_color: "#CC4C4CCC"           # Circle ring color
@@ -134,7 +136,8 @@ renderer:
   # Ellipsoid Renderer Settings
   ellipsoid:
     # View Settings
-    see_through: true                   # Whether ellipsoid shapes are visible through blocks
+    see_through: true                   # Whether ellipsoid lines/markers are visible through blocks
+    fill_see_through: true              # Whether ellipsoid fill faces are visible through blocks
     
     # Color Settings
     line_color: "#CC4C4CCC"             # Line color
@@ -165,7 +168,8 @@ renderer:
   # Polygon Renderer Settings
   polygon:
     # View Settings
-    see_through: true                   # Whether polygon shapes are visible through blocks
+    see_through: true                   # Whether polygon lines/markers are visible through blocks
+    fill_see_through: true              # Whether polygon fill faces are visible through blocks
     
     # Color Settings
     edge_color: "#CC4C4CCC"             # Edge color
@@ -187,7 +191,8 @@ renderer:
   # Polyhedron Renderer Settings
   polyhedron:
     # View Settings
-    see_through: true                   # Whether polyhedron shapes are visible through blocks
+    see_through: true                   # Whether polyhedron lines/markers are visible through blocks
+    fill_see_through: true              # Whether polyhedron fill faces are visible through blocks
     
     # Color Settings
     line_color: "#CC3333CC"             # Edge line color
@@ -216,4 +221,3 @@ particle_fallback:
   # Point marker colours (#RRGGBBAA format)
   point1_color: "#33CC33CC"
   point2_color: "#3333CCCC"
-

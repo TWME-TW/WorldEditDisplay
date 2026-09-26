@@ -207,6 +207,9 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected abstract boolean isSeeThrough();
 
+    /** Whether fill surfaces should render through blocks. */
+    protected abstract boolean isFillSeeThrough();
+
     /**
      * Render a line using TextDisplayShapes
      */
@@ -327,7 +330,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .parallelogram(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
-                .seeThrough(isSeeThrough())
+                .seeThrough(isFillSeeThrough())
                 .doubleSided(true)
                 .brightness(15, 15)
                 .viewRange(100f)
@@ -346,7 +349,7 @@ public abstract class RegionRenderer<T extends Region> {
                 .triangle(origin, p1, p2, p3)
             .rootAnchor(true)
                 .color(color)
-                .seeThrough(isSeeThrough())
+                .seeThrough(isFillSeeThrough())
                 .doubleSided(true)
                 .brightness(15, 15)
                 .viewRange(100f)

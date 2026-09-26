@@ -25,6 +25,11 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
     }
 
     @Override
+    protected boolean isFillSeeThrough() {
+        return settings.isCylinderFillSeeThrough();
+    }
+
+    @Override
     public void render(CylinderRegion region) {
         beginRetainedLineRender();
         try {

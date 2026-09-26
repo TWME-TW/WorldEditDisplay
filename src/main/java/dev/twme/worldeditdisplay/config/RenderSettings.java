@@ -43,6 +43,7 @@ public class RenderSettings {
     
     // === Cuboid 設定 ===
     private boolean cuboidSeeThrough;
+    private boolean cuboidFillSeeThrough;
     private Color cuboidEdgeColor;
     private Color cuboidPoint1Color;
     private Color cuboidPoint2Color;
@@ -57,6 +58,7 @@ public class RenderSettings {
     
     // === Cylinder 設定 ===
     private boolean cylinderSeeThrough;
+    private boolean cylinderFillSeeThrough;
     private Color cylinderCircleColor;
     private Color cylinderGridColor;
     private Color cylinderCenterColor;
@@ -77,6 +79,7 @@ public class RenderSettings {
     
     // === Ellipsoid 設定 ===
     private boolean ellipsoidSeeThrough;
+    private boolean ellipsoidFillSeeThrough;
     private Color ellipsoidLineColor;
     private Color ellipsoidCenterLineColor;
     private Color ellipsoidCenterColor;
@@ -96,6 +99,7 @@ public class RenderSettings {
     
     // === Polygon 設定 ===
     private boolean polygonSeeThrough;
+    private boolean polygonFillSeeThrough;
     private Color polygonEdgeColor;
     private Color polygonVertexColor;
     private Color polygonVerticalColor;
@@ -108,6 +112,7 @@ public class RenderSettings {
     
     // === Polyhedron 設定 ===
     private boolean polyhedronSeeThrough;
+    private boolean polyhedronFillSeeThrough;
     private Color polyhedronLineColor;
     private Color polyhedronVertex0Color;
     private Color polyhedronVertexColor;
@@ -153,6 +158,7 @@ public class RenderSettings {
         seeThroughAllowed = true;
         
         cuboidSeeThrough = true;
+        cuboidFillSeeThrough = true;
         cuboidPoint1Color = ColorUtil.parseHexColor("#33CC33CC");
         cuboidPoint2Color = ColorUtil.parseHexColor("#3333CCCC");
         cuboidGridColor = ColorUtil.parseHexColor("#CC4C4CCC");
@@ -165,6 +171,7 @@ public class RenderSettings {
         cuboidMaxGridSpacing = -1;
         
         cylinderSeeThrough = true;
+        cylinderFillSeeThrough = true;
         cylinderCircleColor = ColorUtil.parseHexColor("#CC4C4CCC");
         cylinderGridColor = ColorUtil.parseHexColor("#CC3333CC");
         cylinderCenterColor = ColorUtil.parseHexColor("#CC33CCCC");
@@ -184,6 +191,7 @@ public class RenderSettings {
         cylinderFillColor = ColorUtil.parseHexColor("#CC4C4C40");
         
         ellipsoidSeeThrough = true;
+        ellipsoidFillSeeThrough = true;
         ellipsoidCenterLineColor = ColorUtil.parseHexColor("#CC3333CC");
         ellipsoidCenterColor = ColorUtil.parseHexColor("#CCCC33CC");
         ellipsoidLineThickness = 0.04f;
@@ -201,6 +209,7 @@ public class RenderSettings {
         ellipsoidFillGenerators = 15;
         
         polygonSeeThrough = true;
+        polygonFillSeeThrough = true;
         polygonVertexColor = ColorUtil.parseHexColor("#33CCCCCC");
         polygonVerticalColor = ColorUtil.parseHexColor("#CC4C4CCC");
         polygonFillEnabled = false;
@@ -211,6 +220,7 @@ public class RenderSettings {
         polygonMaxGridSpacing = -1;
         
         polyhedronSeeThrough = true;
+        polyhedronFillSeeThrough = true;
         polyhedronVertex0Color = ColorUtil.parseHexColor("#33CC33CC");
         polyhedronVertexColor = ColorUtil.parseHexColor("#33CCCCCC");
         polyhedronFillEnabled = false;
@@ -266,6 +276,13 @@ public class RenderSettings {
             if (jarDefaults.isConfigurationSection(key)) continue; // skip sections
             if (!current.isSet(key)) {
                 Object value = jarDefaults.get(key);
+                if (key.endsWith(".fill_see_through")) {
+                    String legacyKey = key.substring(0, key.length() - "fill_see_through".length())
+                            + "see_through";
+                    if (current.isSet(legacyKey)) {
+                        value = current.getBoolean(legacyKey);
+                    }
+                }
                 current.set(key, value);
                 changed = true;
             }
@@ -363,6 +380,7 @@ public class RenderSettings {
     private void loadCuboidSettings(ConfigurationSection section) {
         if (section == null) return;
         cuboidSeeThrough = section.getBoolean("see_through", cuboidSeeThrough);
+        cuboidFillSeeThrough = section.getBoolean("fill_see_through", cuboidFillSeeThrough);
         cuboidEdgeColor = getColor(section, "edge_color", cuboidEdgeColor);
         cuboidPoint1Color = getColor(section, "point1_color", cuboidPoint1Color);
         cuboidPoint2Color = getColor(section, "point2_color", cuboidPoint2Color);
@@ -379,6 +397,7 @@ public class RenderSettings {
     private void loadCylinderSettings(ConfigurationSection section) {
         if (section == null) return;
         cylinderSeeThrough = section.getBoolean("see_through", cylinderSeeThrough);
+        cylinderFillSeeThrough = section.getBoolean("fill_see_through", cylinderFillSeeThrough);
         cylinderCircleColor = getColor(section, "circle_color", cylinderCircleColor);
         cylinderGridColor = getColor(section, "grid_color", cylinderGridColor);
         cylinderCenterColor = getColor(section, "center_color", cylinderCenterColor);
@@ -401,6 +420,7 @@ public class RenderSettings {
     private void loadEllipsoidSettings(ConfigurationSection section) {
         if (section == null) return;
         ellipsoidSeeThrough = section.getBoolean("see_through", ellipsoidSeeThrough);
+        ellipsoidFillSeeThrough = section.getBoolean("fill_see_through", ellipsoidFillSeeThrough);
         ellipsoidLineColor = getColor(section, "line_color", ellipsoidLineColor);
         ellipsoidCenterLineColor = getColor(section, "center_line_color", ellipsoidCenterLineColor);
         ellipsoidCenterColor = getColor(section, "center_color", ellipsoidCenterColor);
@@ -422,6 +442,7 @@ public class RenderSettings {
     private void loadPolygonSettings(ConfigurationSection section) {
         if (section == null) return;
         polygonSeeThrough = section.getBoolean("see_through", polygonSeeThrough);
+        polygonFillSeeThrough = section.getBoolean("fill_see_through", polygonFillSeeThrough);
         polygonEdgeColor = getColor(section, "edge_color", polygonEdgeColor);
         polygonVertexColor = getColor(section, "vertex_color", polygonVertexColor);
         polygonVerticalColor = getColor(section, "vertical_color", polygonVerticalColor);
@@ -436,6 +457,7 @@ public class RenderSettings {
     private void loadPolyhedronSettings(ConfigurationSection section) {
         if (section == null) return;
         polyhedronSeeThrough = section.getBoolean("see_through", polyhedronSeeThrough);
+        polyhedronFillSeeThrough = section.getBoolean("fill_see_through", polyhedronFillSeeThrough);
         polyhedronLineColor = getColor(section, "line_color", polyhedronLineColor);
         polyhedronVertex0Color = getColor(section, "vertex0_color", polyhedronVertex0Color);
         polyhedronVertexColor = getColor(section, "vertex_color", polyhedronVertexColor);
@@ -484,6 +506,7 @@ public class RenderSettings {
 
     // === Cuboid Getters ===
     public boolean isCuboidSeeThrough() { return cuboidSeeThrough; }
+    public boolean isCuboidFillSeeThrough() { return cuboidFillSeeThrough; }
     public Color getCuboidEdgeColor() { return cuboidEdgeColor; }
     public Color getCuboidPoint1Color() { return cuboidPoint1Color; }
     public Color getCuboidPoint2Color() { return cuboidPoint2Color; }
@@ -497,6 +520,7 @@ public class RenderSettings {
     public int getCuboidMaxGridSpacing() { return cuboidMaxGridSpacing; }
     
     // === Cylinder Getters ===
+    public boolean isCylinderFillSeeThrough() { return cylinderFillSeeThrough; }
     public Color getCylinderCircleColor() { return cylinderCircleColor; }
     public Color getCylinderGridColor() { return cylinderGridColor; }
     public Color getCylinderCenterColor() { return cylinderCenterColor; }
@@ -518,6 +542,7 @@ public class RenderSettings {
     
     // === Ellipsoid Getters ===
     public boolean isEllipsoidSeeThrough() { return ellipsoidSeeThrough; }
+    public boolean isEllipsoidFillSeeThrough() { return ellipsoidFillSeeThrough; }
     public Color getEllipsoidLineColor() { return ellipsoidLineColor; }
     public Color getEllipsoidCenterLineColor() { return ellipsoidCenterLineColor; }
     public Color getEllipsoidCenterColor() { return ellipsoidCenterColor; }
@@ -537,6 +562,7 @@ public class RenderSettings {
     
     // === Polygon Getters ===
     public boolean isPolygonSeeThrough() { return polygonSeeThrough; }
+    public boolean isPolygonFillSeeThrough() { return polygonFillSeeThrough; }
     public Color getPolygonEdgeColor() { return polygonEdgeColor; }
     public Color getPolygonVertexColor() { return polygonVertexColor; }
     public Color getPolygonVerticalColor() { return polygonVerticalColor; }
@@ -549,6 +575,7 @@ public class RenderSettings {
     
     // === Polyhedron Getters ===
     public boolean isPolyhedronSeeThrough() { return polyhedronSeeThrough; }
+    public boolean isPolyhedronFillSeeThrough() { return polyhedronFillSeeThrough; }
     public Color getPolyhedronLineColor() { return polyhedronLineColor; }
     public Color getPolyhedronVertex0Color() { return polyhedronVertex0Color; }
     public Color getPolyhedronVertexColor() { return polyhedronVertexColor; }

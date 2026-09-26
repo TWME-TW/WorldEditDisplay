@@ -39,6 +39,7 @@ class PlayerSettingsCommandTest {
     void settingWhitelistRejectsUnknownKeys() {
         assertTrue(command.isValidSetting("cuboid", "edge_color"));
         assertTrue(command.isValidSetting("cuboid", "max_grid_spacing"));
+        assertTrue(command.isValidSetting("cuboid", "fill_see_through"));
         assertTrue(command.isValidSetting("cylinder", "sqrt_scale_factor"));
         assertTrue(command.isValidSetting("cylinder", "max_grid_spacing"));
         assertTrue(command.isValidSetting("ellipsoid", "sqrt_scale_factor"));

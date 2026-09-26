@@ -57,6 +57,15 @@ class PlayerRenderSettingsTest {
     }
 
     @Test
+    void keepsLineAndFillSeeThroughSettingsIndependent() {
+        assertTrue(settings.set("renderer.cuboid.see_through", false));
+        assertTrue(settings.set("renderer.cuboid.fill_see_through", true));
+
+        assertFalse(settings.isCuboidSeeThrough());
+        assertTrue(settings.isCuboidFillSeeThrough());
+    }
+
+    @Test
     void reloadFromDiskDiscardsPendingDirtyState() {
         assertTrue(settings.set("renderer.cuboid.max_grid_spacing", 8));
         assertTrue(settings.isDirty());
