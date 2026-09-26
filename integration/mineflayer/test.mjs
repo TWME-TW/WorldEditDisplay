@@ -76,6 +76,79 @@ function componentText(component) {
   return ''
 }
 
+function rotateVector(quaternion, vector) {
+  const cross = (a, b) => ({
+    x: a.y * b.z - a.z * b.y,
+    y: a.z * b.x - a.x * b.z,
+    z: a.x * b.y - a.y * b.x
+  })
+  const axis = { x: quaternion.x, y: quaternion.y, z: quaternion.z }
+  const twiceCross = cross(axis, vector)
+  for (const coordinate of ['x', 'y', 'z']) twiceCross[coordinate] *= 2
+  const correction = cross(axis, twiceCross)
+  return {
+    x: vector.x + quaternion.w * twiceCross.x + correction.x,
+    y: vector.y + quaternion.w * twiceCross.y + correction.y,
+    z: vector.z + quaternion.w * twiceCross.z + correction.z
+  }
+}
+
+function assertSelectionGeometry(bot, bounds) {
+  const metadataKeys = bot.registry.entitiesByName.text_display.metadataKeys
+  const index = Object.fromEntries(['text', 'translation', 'scale', 'left_rotation', 'right_rotation']
+    .map(key => [key, metadataKeys.indexOf(key)]))
+  if (Object.values(index).some(value => value < 0)) {
+    throw new Error(`Mineflayer lacks Text Display geometry metadata: ${JSON.stringify(index)}`)
+  }
+
+  // Vanilla 26.2/26.3 render a single-space background with a 4-pixel width
+  // and a 9-pixel height. These are its corners after the client's fixed
+  // 180-degree Y rotation, -0.025 scale, and text offset.
+  const corners = [
+    { x: -0.05, y: 0, z: 0 },
+    { x: 0.075, y: 0, z: 0 },
+    { x: -0.05, y: 0.25, z: 0 },
+    { x: 0.075, y: 0.25, z: 0 }
+  ]
+  const tolerance = 0.15
+  let checked = 0
+
+  for (const entity of Object.values(bot.entities)) {
+    if (entity.name !== 'text_display' || componentText(entity.metadata[index.text]) !== ' ') continue
+    const translation = entity.metadata[index.translation]
+    const scale = entity.metadata[index.scale]
+    const left = entity.metadata[index.left_rotation]
+    const right = entity.metadata[index.right_rotation] ?? { x: 0, y: 0, z: 0, w: 1 }
+    if (![translation, scale, left, right].every(value => value
+      && Object.values(value).every(Number.isFinite))) {
+      throw new Error(`Text Display ${entity.id} has incomplete transformation metadata`)
+    }
+
+    for (const corner of corners) {
+      const local = rotateVector(right, corner)
+      local.x *= scale.x
+      local.y *= scale.y
+      local.z *= scale.z
+      const transformed = rotateVector(left, local)
+      const world = {
+        x: entity.position.x + translation.x + transformed.x,
+        y: entity.position.y + translation.y + transformed.y,
+        z: entity.position.z + translation.z + transformed.z
+      }
+      for (const coordinate of ['x', 'y', 'z']) {
+        if (world[coordinate] < bounds[coordinate] - tolerance
+            || world[coordinate] > bounds[coordinate] + bounds.size + tolerance) {
+          throw new Error(`Text Display ${entity.id} extends outside the selection: ${JSON.stringify({ world, bounds, position: entity.position, translation, scale, left, right, corner })}`)
+        }
+      }
+    }
+    checked++
+  }
+
+  if (checked === 0) throw new Error('No single-space Text Display shapes were available for geometry verification')
+  return checked
+}
+
 function waitForTextDisplayText(bot, expected) {
   const textIndex = bot.registry.entitiesByName.text_display.metadataKeys.indexOf('text')
   if (textIndex < 0) {
@@ -275,11 +348,23 @@ try {
   sharer.chat('/wedisplay debug')
   await debugEnabledMessage
 
+  const fillEnabledMessage = waitForMessage(sharer, 'Set cuboid.fill_enabled = true')
+  sharer.chat('/wedisplay set cuboid fill_enabled true')
+  await fillEnabledMessage
+
   const readyMessage = waitForMessage(sharer, 'WED_READY:')
+  const boundsMessage = waitForMessage(sharer, 'WED_SELECTION_BOUNDS:')
   const retainedLineCountMessage = waitForMessage(sharer, 'Retained line shapes:')
   const retainedLinePassMessage = waitForMessage(sharer, 'Last line pass reused/spawned/removed:')
   sharer.chat('/wedtest')
   const ready = await readyMessage
+  const boundsValues = (await boundsMessage)
+    .split('WED_SELECTION_BOUNDS:')[1].trim().split(':').map(Number)
+  if (boundsValues.length !== 4 || boundsValues.some(value => !Number.isInteger(value))) {
+    throw new Error(`Invalid selection bounds: ${JSON.stringify(boundsValues)}`)
+  }
+  const [boundsX, boundsY, boundsZ, boundsSize] = boundsValues
+  const bounds = { x: boundsX, y: boundsY, z: boundsZ, size: boundsSize }
   await Promise.all([retainedLineCountMessage, retainedLinePassMessage])
 
   const state = ready
@@ -316,6 +401,10 @@ try {
   if (visibleTextDisplays <= 0) {
     throw new Error('WorldEditDisplay did not leave any visible Text Display entities')
   }
+  const checkedShapeGeometry = assertSelectionGeometry(sharer, bounds)
+  if (checkedShapeGeometry < retainedLineEntityCount + 12) {
+    throw new Error(`Expected to verify six double-sided cuboid fill faces as well as ${retainedLineEntityCount} lines; checked ${checkedShapeGeometry} shapes`)
+  }
 
   const inviteReceived = waitForMessage(viewer, 'wants to share their selection with you')
   sharer.chat('/wedisplay share invite WEDViewer')
@@ -326,7 +415,10 @@ try {
   viewer.chat('/wedisplay share accept WEDSharer')
   await acceptedMessage
   const sharedLabel = await sharedLabelPromise
-  const viewerTextDisplays = await waitForTextDisplayCount(viewer, visibleTextDisplays + 1)
+  // SharedRenderSettings intentionally omits fill faces, so the shared viewer
+  // receives the retained lines, their root anchors, and the sharer label.
+  const viewerTextDisplays = await waitForTextDisplayCount(
+    viewer, retainedLineEntityCount + retainedLineCount + 1)
 
   const sharedEntities = Object.values(viewer.entities)
     .filter(current => current.name === 'text_display')
@@ -452,6 +544,7 @@ try {
     retainedLinePass: { reusedLines, spawnedLines, removedLines },
     debugMessagesObserved: true,
     visibleTextDisplays,
+    checkedShapeGeometry,
     sharedViewerTextDisplays: viewerTextDisplays,
     sharedLabelEntityId: sharedLabel.id,
     sharedLabelText: 'WEDSharer',

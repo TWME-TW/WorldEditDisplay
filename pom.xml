@@ -143,9 +143,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>dev.twme</groupId>
+      <!-- Pin the TextDisplayShapes orientation fix until it receives a release.
+           Its old rotation mirrors the single-space TextDisplay background away
+           from the requested line and face vertices. -->
+      <groupId>com.github.TWME-TW.TextDisplayShapes</groupId>
       <artifactId>textdisplayshape-packet</artifactId>
-      <version>3.0.0</version>
+      <version>79f954c</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
