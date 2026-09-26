@@ -6,7 +6,7 @@
 
   <groupId>dev.twme</groupId>
   <artifactId>WorldEditDisplay</artifactId>
-  <version>2.5.1</version>
+  <version>2.6.0</version>
   <packaging>jar</packaging>
 
   <name>WorldEditDisplay</name>
@@ -143,12 +143,9 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <!-- Pin the TextDisplayShapes orientation fix until it receives a release.
-           Its old rotation mirrors the single-space TextDisplay background away
-           from the requested line and face vertices. -->
-      <groupId>com.github.TWME-TW.TextDisplayShapes</groupId>
+      <groupId>dev.twme</groupId>
       <artifactId>textdisplayshape-packet</artifactId>
-      <version>79f954c</version>
+      <version>3.0.1</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
