@@ -58,11 +58,33 @@ class PlayerRenderSettingsTest {
 
     @Test
     void keepsLineAndFillSeeThroughSettingsIndependent() {
-        assertTrue(settings.set("renderer.cuboid.see_through", false));
-        assertTrue(settings.set("renderer.cuboid.fill_see_through", true));
+        for (String renderer : new String[] {"cuboid", "cylinder", "ellipsoid", "polygon", "polyhedron"}) {
+            assertTrue(settings.set("renderer." + renderer + ".see_through", false));
+            assertTrue(settings.set("renderer." + renderer + ".fill_see_through", true));
+        }
 
         assertFalse(settings.isCuboidSeeThrough());
         assertTrue(settings.isCuboidFillSeeThrough());
+        assertFalse(settings.isCylinderSeeThrough());
+        assertTrue(settings.isCylinderFillSeeThrough());
+        assertFalse(settings.isEllipsoidSeeThrough());
+        assertTrue(settings.isEllipsoidFillSeeThrough());
+        assertFalse(settings.isPolygonSeeThrough());
+        assertTrue(settings.isPolygonFillSeeThrough());
+        assertFalse(settings.isPolyhedronSeeThrough());
+        assertTrue(settings.isPolyhedronFillSeeThrough());
+    }
+
+    @Test
+    void oldPlayerSeeThroughOverrideAlsoControlsFillUntilSetSeparately() {
+        assertTrue(settings.set("renderer.cuboid.see_through", false));
+        assertFalse(settings.isCuboidFillSeeThrough());
+
+        assertTrue(settings.set("renderer.cuboid.fill_see_through", true));
+        assertTrue(settings.isCuboidFillSeeThrough());
+
+        settings.reset("renderer.cuboid.fill_see_through");
+        assertFalse(settings.isCuboidFillSeeThrough());
     }
 
     @Test

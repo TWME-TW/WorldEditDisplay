@@ -40,6 +40,10 @@ class PlayerSettingsCommandTest {
         assertTrue(command.isValidSetting("cuboid", "edge_color"));
         assertTrue(command.isValidSetting("cuboid", "max_grid_spacing"));
         assertTrue(command.isValidSetting("cuboid", "fill_see_through"));
+        assertTrue(command.isValidSetting("cylinder", "fill_see_through"));
+        assertTrue(command.isValidSetting("ellipsoid", "fill_see_through"));
+        assertTrue(command.isValidSetting("polygon", "fill_see_through"));
+        assertTrue(command.isValidSetting("polyhedron", "fill_see_through"));
         assertTrue(command.isValidSetting("cylinder", "sqrt_scale_factor"));
         assertTrue(command.isValidSetting("cylinder", "max_grid_spacing"));
         assertTrue(command.isValidSetting("ellipsoid", "sqrt_scale_factor"));
