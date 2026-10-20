@@ -355,7 +355,7 @@ try {
   const readyMessage = waitForMessage(sharer, 'WED_READY:')
   const boundsMessage = waitForMessage(sharer, 'WED_SELECTION_BOUNDS:')
   const retainedLineCountMessage = waitForMessage(sharer, 'Retained line shapes:')
-  const retainedLinePassMessage = waitForMessage(sharer, 'Last line pass reused/spawned/removed:')
+  const retainedLinePassMessage = waitForMessage(sharer, 'Last line pass reused/moved/spawned/removed:')
   sharer.chat('/wedtest')
   const ready = await readyMessage
   const boundsValues = (await boundsMessage)
