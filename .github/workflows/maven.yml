@@ -35,3 +35,11 @@ jobs:
           name: WorldEditDisplay
           path: target/WorldEditDisplay-*-paper.jar
           if-no-files-found: error
+      - name: Build Spigot variant
+        run: mvn -B clean package -P spigot -DskipTests --file pom.xml
+      - name: Upload Spigot JAR
+        uses: actions/upload-artifact@v7
+        with:
+          name: WorldEditDisplay-spigot
+          path: target/WorldEditDisplay-*-spigot.jar
+          if-no-files-found: error

@@ -19,13 +19,22 @@ jobs:
           java-version: '25'
           distribution: temurin
           cache: maven
-      - name: Build release artifact
-        run: mvn -B clean package
+      # The platform profiles compile against different APIs, so each needs a clean build.
+      - name: Build Paper artifact
+        run: |
+          mvn -B clean package
+          mkdir -p dist
+          cp target/WorldEditDisplay-*-paper.jar dist/
+      - name: Build Spigot artifact
+        run: |
+          mvn -B clean package -P spigot -DskipTests
+          cp target/WorldEditDisplay-*-spigot.jar dist/
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh release create "${GITHUB_REF_NAME}"
-          target/WorldEditDisplay-*-paper.jar
+          dist/WorldEditDisplay-*-paper.jar
+          dist/WorldEditDisplay-*-spigot.jar
           --title "WorldEditDisplay ${GITHUB_REF_NAME}"
           --generate-notes

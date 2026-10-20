@@ -23,6 +23,7 @@ WorldEditDisplay is a server-side plugin for Minecraft that adds visual selectio
 Version 2.5.1 preserves the retained-line renderer and expanded debug statistics while improving WorldEditCUI client detection and handoff, on top of the VirtualEntities rendering backend introduced in 2.5.0.
 Version 2.6.0 adds Minecraft 26.3 support, corrects Text Display geometry via TextDisplayShapes 3.0.1, and separates line and fill see-through settings.
 Version 2.7.0 renders WorldEditCUI multi-regions sent by other plugins (such as the ClipboardCUI clipboard preview) like WorldEditCUI does: transparent colours are skipped, `+grid` below 1 hides the grid, and steady updates render at least every 250 ms.
+Version 2.8.0 moves regions that only shifted (such as a clipboard preview following the player) by teleporting their existing line entities instead of respawning them, using TextDisplayShapes 3.1.0, and publishes a Spigot jar next to the Paper jar.
 
 ### Features
 
@@ -86,7 +87,7 @@ Players can customize their own rendering preferences:
 ### Installation
 
 1. Make sure WorldEdit and PacketEvents are installed on your server
-2. Download `WorldEditDisplay.jar`
+2. Download the jar for your server from the [releases](https://github.com/TWME-TW/WorldEditDisplay/releases): `WorldEditDisplay-<version>-paper.jar` for Paper and Folia, `WorldEditDisplay-<version>-spigot.jar` for Spigot
 3. Place it in your server's `plugins` folder
 4. Restart the server
 5. Edit `plugins/WorldEditDisplay/config.yml` if needed
@@ -415,7 +416,7 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 ### 安裝
 
 1. 確保伺服器已安裝 WorldEdit 和 PacketEvents
-2. 下載 `WorldEditDisplay.jar`
+2. 從 [releases](https://github.com/TWME-TW/WorldEditDisplay/releases) 下載對應的 jar：Paper 與 Folia 用 `WorldEditDisplay-<版本>-paper.jar`，Spigot 用 `WorldEditDisplay-<版本>-spigot.jar`
 3. 放入伺服器的 `plugins` 資料夾
 4. 重啟伺服器
 5. 如需要可編輯 `plugins/WorldEditDisplay/config.yml`
