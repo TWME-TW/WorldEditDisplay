@@ -3,6 +3,7 @@ package dev.twme.worldeditdisplay.display.renderer;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
@@ -42,5 +43,13 @@ class RegionRendererTest {
         Location unloadedPlayerLocation = new Location(null, 100.0, 64.0, 0.0);
 
         assertFalse(RegionRenderer.isSameLoadedWorld(unloadedPlayerLocation, unloadedOrigin));
+    }
+
+    @Test
+    void treatsOnlyZeroAlphaAsInvisible() {
+        assertTrue(RegionRenderer.isInvisible(Color.fromARGB(0, 255, 255, 255)));
+        assertFalse(RegionRenderer.isInvisible(Color.fromARGB(1, 255, 255, 255)));
+        assertFalse(RegionRenderer.isInvisible(Color.fromARGB(255, 0, 0, 0)));
+        assertFalse(RegionRenderer.isInvisible(null));
     }
 }

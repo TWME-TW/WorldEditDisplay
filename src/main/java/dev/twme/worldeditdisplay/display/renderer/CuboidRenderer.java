@@ -96,6 +96,7 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
 
         double sizeX = x2 - x1, sizeY = y2 - y1, sizeZ = z2 - z1;
         double gridSpacing = region.getGridSpacing();
+        if (isGridDisabledByCui(region.isGridSpacingSet(), gridSpacing)) return;
 
         double spacingX, spacingY, spacingZ;
 
@@ -125,6 +126,13 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
         renderXYPlane(x1, y1, z2, x2, y2, spacingX, spacingY, gridColor);
         renderYZPlane(x1, y1, z1, y2, z2, spacingY, spacingZ, gridColor);
         renderYZPlane(x2, y1, z1, y2, z2, spacingY, spacingZ, gridColor);
+    }
+
+    /**
+     * Matches WorldEditCUI: an explicit grid spacing below {@link #MIN_SPACING} hides the grid.
+     */
+    static boolean isGridDisabledByCui(boolean spacingSet, double spacing) {
+        return spacingSet && !(spacing >= MIN_SPACING);
     }
 
     private void renderXZPlane(double x1, double y, double z1, double x2, double z2,
