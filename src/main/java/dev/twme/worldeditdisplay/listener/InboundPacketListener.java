@@ -12,6 +12,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.common.Constants;
 import dev.twme.worldeditdisplay.player.PlayerData;
+import dev.twme.worldeditdisplay.util.MessageUtil;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 /**
@@ -67,10 +68,30 @@ public class InboundPacketListener implements PacketListener {
             if (!active || plugin.getRenderManager() == null || !shouldClearForNativeCui(playerData)) return;
             plugin.getRenderManager().clearRender(player.getUniqueId());
         }, null);
+        scheduleHandoffNotice(player, playerData);
+    }
+
+    /**
+     * Tells the player that WorldEditCUI took over, so a client mod that is installed but not
+     * drawing anything does not look like WorldEditDisplay being broken.
+     */
+    private void scheduleHandoffNotice(Player player, PlayerData playerData) {
+        if (!plugin.getRenderSettings().isClientCuiNotifyOnHandoff()) return;
+
+        // Delayed so it lands after join messages and after a restored /wedisplay toggle choice
+        FoliaScheduler.getEntityScheduler().execute(player, plugin, () -> {
+            if (!active || !player.isOnline()) return;
+            if (!shouldNotifyHandoff(playerData, player.hasPermission("worldeditdisplay.use"))) return;
+            MessageUtil.sendTranslated(player, "command.wedisplay.toggle.cui_handoff");
+        }, null, 40L);
     }
 
     static boolean shouldClearForNativeCui(PlayerData playerData) {
         return playerData.isNativeCuiActive();
+    }
+
+    static boolean shouldNotifyHandoff(PlayerData playerData, boolean hasUsePermission) {
+        return hasUsePermission && playerData.isRenderingEnabled() && playerData.isNativeCuiActive();
     }
 
     static boolean isCuiHandshake(String channel, byte[] data) {

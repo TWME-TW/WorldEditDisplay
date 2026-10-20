@@ -457,8 +457,10 @@ try {
     throw new Error(`WorldEditDisplay did not render for a client before its CUI handshake: ${cuiRendererReady}`)
   }
 
+  const handoffNoticeMessage = waitForMessage(cuiClient, 'WorldEditCUI detected')
   sendCuiHandshake(cuiClient)
   const nativeCuiState = await readCuiState(cuiClient)
+  await handoffNoticeMessage
   if (!nativeCuiState.cuiEnabled
       || !nativeCuiState.renderingEnabled
       || nativeCuiState.serverRendererForced
@@ -523,12 +525,32 @@ try {
     throw new Error(`Later CUI handshake cleared the manual WED override: ${JSON.stringify(forcedAfterCuiRefreshState)}`)
   }
 
-  const overrideDisabledMessage = waitForMessage(overrideClient, 'selection rendering disabled')
-  const releasedSelectionPayload = waitForCuiPayload(overrideClient, 's|cuboid')
-  overrideClient.chat('/wedisplay toggle')
+  // The manual override must survive a reconnect (e.g. a Velocity server switch).
+  overrideClient.quit('reconnect')
+  await new Promise(resolve => setTimeout(resolve, 2_000))
+  const reconnectedClient = await createAndSpawnBot('WEDOverride')
+  bots.push(reconnectedClient)
+  reconnectedClient.once('error', fatal)
+  reconnectedClient.once('kicked', reason => fatal(new Error(`WEDOverride was kicked after reconnect: ${reason}`)))
+
+  sendCuiHandshake(reconnectedClient)
+  const reconnectedSelectionMessage = waitForMessage(reconnectedClient, 'WED_READY:')
+  reconnectedClient.chat('/wedtest')
+  await reconnectedSelectionMessage
+  const reconnectedState = await readCuiState(reconnectedClient, true)
+  if (!reconnectedState.cuiEnabled
+      || !reconnectedState.renderingEnabled
+      || !reconnectedState.serverRendererForced
+      || reconnectedState.entityCount <= 0) {
+    throw new Error(`Manual WED override was not restored after reconnect: ${JSON.stringify(reconnectedState)}`)
+  }
+
+  const overrideDisabledMessage = waitForMessage(reconnectedClient, 'selection rendering disabled')
+  const releasedSelectionPayload = waitForCuiPayload(reconnectedClient, 's|cuboid')
+  reconnectedClient.chat('/wedisplay toggle')
   await overrideDisabledMessage
   await releasedSelectionPayload
-  const releasedRendererState = await readCuiState(overrideClient)
+  const releasedRendererState = await readCuiState(reconnectedClient)
   if (!releasedRendererState.cuiEnabled
       || releasedRendererState.renderingEnabled
       || releasedRendererState.serverRendererForced
@@ -553,9 +575,11 @@ try {
     regularClientCuiDetected: regularClientCuiState.cuiEnabled,
     nativeCuiDetected: nativeCuiState.cuiEnabled,
     nativeCuiRendererCleared: nativeCuiState.entityCount === 0,
+    nativeCuiHandoffNoticeShown: true,
     nativeCuiPayloadForwarded: true,
     manualOverrideRefreshedSelection: forcedRendererState.entityCount > 0,
     manualOverrideSurvivedCuiRefresh: forcedAfterCuiRefreshState.entityCount > 0,
+    manualOverrideRestoredAfterReconnect: reconnectedState.entityCount > 0,
     manualOverrideReleasedSelectionToNativeCui: true,
     manualOverrideReleasedToNativeCui: releasedRendererState.entityCount === 0,
     translation: entity.metadata[translationIndex]
@@ -563,7 +587,7 @@ try {
   sharer.quit('e2e complete')
   viewer.quit('e2e complete')
   cuiClient.quit('e2e complete')
-  overrideClient.quit('e2e complete')
+  reconnectedClient.quit('e2e complete')
 } catch (error) {
   fatal(error)
 }

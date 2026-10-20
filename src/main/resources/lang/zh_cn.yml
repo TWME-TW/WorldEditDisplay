@@ -59,6 +59,7 @@ command:
     toggle:
       enabled: "<green>已开启 WorldEdit 选区渲染！"
       disabled: "<#E8C96D>已关闭 WorldEdit 选区渲染！"
+      cui_handoff: "<#C2C7D3>检测到客户端的 WorldEditCUI，选区已改由它显示。如果看不到选区，请输入 <#478FC6>/wedisplay toggle<#C2C7D3> 改用 WorldEditDisplay 显示。"
     
     debug:
       enabled: "<green>已开启调试模式！每次渲染时将显示实体数量。"

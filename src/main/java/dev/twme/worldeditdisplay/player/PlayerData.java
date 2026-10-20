@@ -23,6 +23,7 @@ import io.github.retrooper.packetevents.util.folia.TaskWrapper;
  */
 public class PlayerData {
     private static final Map<UUID, PlayerData> playerDataMap = new ConcurrentHashMap<>();
+    private static volatile boolean clientCuiHandoffEnabled = true;
 
     /**
      * Render mode preference for the particle-fallback feature.
@@ -119,7 +120,19 @@ public class PlayerData {
      * overriding an otherwise-positive CUI handshake.
      */
     public boolean isNativeCuiActive() {
-        return isCuiEnabled && !bedrockPlayer && !forceServerRenderer;
+        return clientCuiHandoffEnabled && isCuiEnabled && !bedrockPlayer && !forceServerRenderer;
+    }
+
+    /**
+     * Server-wide switch ({@code client_cui.handoff}): when disabled, a detected CUI client
+     * never takes over rendering from WorldEditDisplay.
+     */
+    public static boolean isClientCuiHandoffEnabled() {
+        return clientCuiHandoffEnabled;
+    }
+
+    public static void setClientCuiHandoffEnabled(boolean enabled) {
+        clientCuiHandoffEnabled = enabled;
     }
 
     /**

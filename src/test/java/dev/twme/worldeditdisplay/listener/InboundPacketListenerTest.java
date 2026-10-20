@@ -76,4 +76,20 @@ class InboundPacketListenerTest {
 
         assertFalse(InboundPacketListener.shouldClearForNativeCui(playerData));
     }
+
+    @Test
+    void handoffNoticeOnlyWhenClientCuiActuallyTakesOver() {
+        PlayerData playerData = new PlayerData((Player) null);
+        playerData.setRenderingEnabled(true);
+        playerData.setCuiEnabled(true);
+        assertTrue(InboundPacketListener.shouldNotifyHandoff(playerData, true));
+        assertFalse(InboundPacketListener.shouldNotifyHandoff(playerData, false));
+
+        playerData.setServerRendererForced(true);
+        assertFalse(InboundPacketListener.shouldNotifyHandoff(playerData, true));
+
+        playerData.setServerRendererForced(false);
+        playerData.setRenderingEnabled(false);
+        assertFalse(InboundPacketListener.shouldNotifyHandoff(playerData, true));
+    }
 }

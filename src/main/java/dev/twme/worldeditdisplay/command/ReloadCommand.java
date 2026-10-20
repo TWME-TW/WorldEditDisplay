@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.logging.Level;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
+import dev.twme.worldeditdisplay.player.PlayerData;
+import dev.twme.worldeditdisplay.util.CuiProtocolUtil;
 import dev.twme.worldeditdisplay.util.MessageUtil;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
@@ -30,12 +32,17 @@ public class ReloadCommand implements CommandExecutor {
         }
         
         try {
+            boolean handoffBefore = PlayerData.isClientCuiHandoffEnabled();
             plugin.getRenderSettings().reload();
+            // Whoever renders now (client mod or WorldEditDisplay) missed earlier selection packets
+            boolean resendSelections = handoffBefore != PlayerData.isClientCuiHandoffEnabled();
             plugin.getLanguageManager().reload();
             if (plugin.getShareManager() != null) plugin.getShareManager().reloadConfig();
             for (Player player : plugin.getServer().getOnlinePlayers()) {
                 FoliaScheduler.getEntityScheduler().execute(player, plugin, () -> {
-                    if (player.isOnline()) plugin.getRenderManager().refreshPlayerRenderer(player);
+                    if (!player.isOnline()) return;
+                    plugin.getRenderManager().refreshPlayerRenderer(player);
+                    if (resendSelections) CuiProtocolUtil.requestSelectionRefresh(player);
                 }, null, 1L);
             }
             MessageUtil.sendTranslated(sender, "general.reload_success");

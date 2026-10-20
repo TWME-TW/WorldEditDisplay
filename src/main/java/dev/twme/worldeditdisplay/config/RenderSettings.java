@@ -11,6 +11,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
+import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.util.ColorUtil;
 
 public class RenderSettings {
@@ -133,6 +134,10 @@ public class RenderSettings {
     // === bStats 設定 ===
     private boolean bStatsEnabled;
 
+    // WorldEditCUI client mod handling
+    private boolean clientCuiHandoffEnabled;
+    private boolean clientCuiNotifyOnHandoff;
+
     public RenderSettings(WorldEditDisplay plugin) {
         this.plugin = plugin;
         loadDefaults();
@@ -240,6 +245,9 @@ public class RenderSettings {
         // bStats defaults
         bStatsEnabled = true;
 
+        clientCuiHandoffEnabled = true;
+        clientCuiNotifyOnHandoff = true;
+
         viewAllDistanceBasedEnabled = true;
         viewAllMinDistance = 64.0;
         viewAllSizeMultiplier = 2.0;
@@ -311,11 +319,13 @@ public class RenderSettings {
             loadParticleFallbackSettings(config.getConfigurationSection("particle_fallback"));
             loadBStatsSettings(config);
             loadViewAllSettings(config);
+            loadClientCuiSettings(config);
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,
                     "Failed to reload render settings; falling back to built-in defaults", e);
             loadDefaults();
         }
+        PlayerData.setClientCuiHandoffEnabled(clientCuiHandoffEnabled);
     }
 
     private void loadViewAllSettings(FileConfiguration config) {
@@ -496,6 +506,16 @@ public class RenderSettings {
     // ─── bStats getters ────────────────────────────────────────────────────
 
     public boolean isBStatsEnabled() { return bStatsEnabled; }
+
+    // ─── WorldEditCUI client mod settings ──────────────────────────────────
+
+    private void loadClientCuiSettings(FileConfiguration config) {
+        clientCuiHandoffEnabled = config.getBoolean("client_cui.handoff", clientCuiHandoffEnabled);
+        clientCuiNotifyOnHandoff = config.getBoolean("client_cui.notify_on_handoff", clientCuiNotifyOnHandoff);
+    }
+
+    public boolean isClientCuiHandoffEnabled() { return clientCuiHandoffEnabled; }
+    public boolean isClientCuiNotifyOnHandoff() { return clientCuiNotifyOnHandoff; }
 
     private Color getColor(ConfigurationSection section, String key, Color defaultValue) {
         String colorStr = section.getString(key);

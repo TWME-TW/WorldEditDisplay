@@ -9,6 +9,7 @@ import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.util.CuiProtocolUtil;
 import dev.twme.worldeditdisplay.util.FloodgateUtil;
+import dev.twme.worldeditdisplay.util.ServerRendererPreference;
 import dev.twme.worldeditdisplay.util.VersionChecker;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
@@ -34,6 +35,11 @@ public class PlayerJoinListener implements Listener {
         // Set auto-rendering based on permissions
         PlayerData playerData = PlayerData.getPlayerData(player);
         playerData.setRenderingEnabled(player.hasPermission("worldeditdisplay.render.auto-enable"));
+
+        // Restore a previous /wedisplay toggle choice to keep WorldEditDisplay over a detected CUI client
+        if (ServerRendererPreference.isForced(plugin, player)) {
+            playerData.setServerRendererForced(true);
+        }
 
         // Detect Floodgate Bedrock players and disable CUI for them
         if (FloodgateUtil.isBedrockPlayer(player)) {

@@ -5,6 +5,14 @@
 bstats:
   enabled: true                         # Whether to enable bStats anonymous statistics (default: true)
 
+# WorldEditCUI Client Mod Settings
+client_cui:
+  # Hand selection rendering to the WorldEditCUI client mod when a player's client announces it.
+  # Set to false to always render with WorldEditDisplay, even for WorldEditCUI users.
+  handoff: true
+  # Tell players when rendering was handed to WorldEditCUI and how to switch back (/wedisplay toggle)
+  notify_on_handoff: true
+
 # Share Settings
 share:
   # How long (in seconds) a pending share invitation stays valid before it expires
