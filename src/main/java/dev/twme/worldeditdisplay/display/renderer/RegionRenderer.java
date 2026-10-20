@@ -1,9 +1,12 @@
 package dev.twme.worldeditdisplay.display.renderer;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +43,8 @@ public abstract class RegionRenderer<T extends Region> {
     protected final List<Shape> shapes;
     private final Map<LineKey, Shape> retainedLineShapes;
     private final Set<Shape> retainedLineShapeSet;
-    private Set<LineKey> retainedLinePassKeys;
+    /** Lines requested by the current retained pass; spawned, moved or reused when it finishes. */
+    private Map<LineKey, PendingLine> retainedLinePass;
     private RetainedLineStats currentRetainedLineStats = RetainedLineStats.empty();
     private RetainedLineStats lastRetainedLineStats = RetainedLineStats.empty();
 
@@ -53,6 +57,18 @@ public abstract class RegionRenderer<T extends Region> {
 
     private static final double REBASE_DISTANCE_SQUARED = 80.0 * 80.0;
     private static final float MIN_LINE_LENGTH_SQUARED = 1.0e-6f;
+    /** Coordinate tolerance when matching a pass against the retained lines moved by one offset. */
+    private static final float TRANSLATION_EPSILON = 1.0e-3f;
+    private static final Comparator<LineKey> LINE_KEY_ORDER = Comparator
+            .comparingInt(LineKey::color)
+            .thenComparingInt(LineKey::thickness)
+            .thenComparing(LineKey::seeThrough)
+            .thenComparingDouble(LineKey::startX)
+            .thenComparingDouble(LineKey::startY)
+            .thenComparingDouble(LineKey::startZ)
+            .thenComparingDouble(LineKey::endX)
+            .thenComparingDouble(LineKey::endY)
+            .thenComparingDouble(LineKey::endZ);
 
     public RegionRenderer(WorldEditDisplay plugin, Player player, PlayerRenderSettings settings) {
         this.plugin = plugin;
@@ -90,7 +106,7 @@ public abstract class RegionRenderer<T extends Region> {
         shapes.clear();
         retainedLineShapes.clear();
         retainedLineShapeSet.clear();
-        retainedLinePassKeys = null;
+        retainedLinePass = null;
         currentRetainedLineStats = RetainedLineStats.empty();
         lastRetainedLineStats = RetainedLineStats.empty();
         lastRebaseOrigin = null;
@@ -100,7 +116,7 @@ public abstract class RegionRenderer<T extends Region> {
         renderOrigin = null;
         currentRetainedLineStats = RetainedLineStats.empty();
         removeNonRetainedShapes();
-        retainedLinePassKeys = new HashSet<>();
+        retainedLinePass = new LinkedHashMap<>();
     }
 
     private void removeNonRetainedShapes() {
@@ -119,13 +135,70 @@ public abstract class RegionRenderer<T extends Region> {
         }
     }
 
+    /**
+     * Applies the lines requested by this pass. Unchanged lines are kept; when every line moved by
+     * the same offset (a selection or preview that was only shifted), the existing shapes are
+     * translated, which costs one teleport per line instead of a despawn and respawn.
+     */
     protected void finishRetainedLineRender() {
-        if (retainedLinePassKeys == null) return;
+        if (retainedLinePass == null) return;
+        Map<LineKey, PendingLine> pass = retainedLinePass;
+        retainedLinePass = null;
 
+        boolean translated = false;
+        if (!pass.keySet().equals(retainedLineShapes.keySet())) {
+            translated = translateRetainedLines(pass.keySet());
+            if (!translated) removeStaleLines(pass.keySet());
+        }
+        for (Map.Entry<LineKey, PendingLine> entry : pass.entrySet()) {
+            if (retainedLineShapes.containsKey(entry.getKey())) {
+                if (!translated) currentRetainedLineStats = currentRetainedLineStats.withReusedLine();
+                continue;
+            }
+            PendingLine line = entry.getValue();
+            Shape shape = createLineShape(line.line(), line.color(), line.thickness());
+            retainedLineShapes.put(entry.getKey(), shape);
+            retainedLineShapeSet.add(shape);
+            shapes.add(shape);
+            currentRetainedLineStats = currentRetainedLineStats.withSpawnedLine();
+        }
+
+        lastRetainedLineStats = currentRetainedLineStats;
+    }
+
+    private boolean translateRetainedLines(Collection<LineKey> requested) {
+        List<LineKey> previous = sortedLineKeys(retainedLineShapes.keySet());
+        List<LineKey> next = sortedLineKeys(requested);
+        Vector3f offset = findTranslation(previous, next);
+        if (offset == null) return false;
+
+        Map<LineKey, Shape> moved = new HashMap<>();
+        // One bundle for the whole move, so the client sees every line in its new place at once.
+        plugin.getPacketShapeFactory().batch(() -> {
+            for (int index = 0; index < previous.size(); index++) {
+                Shape shape = retainedLineShapes.get(previous.get(index));
+                try {
+                    shape.translate(offset.x, offset.y, offset.z);
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING, "Failed to translate line shape", e);
+                    return;
+                }
+                moved.put(next.get(index), shape);
+            }
+        });
+        // On failure the lines keep their old keys, so the respawn path replaces all of them.
+        if (moved.size() != previous.size()) return false;
+        retainedLineShapes.clear();
+        retainedLineShapes.putAll(moved);
+        currentRetainedLineStats = currentRetainedLineStats.withTranslatedLines(moved.size());
+        return true;
+    }
+
+    private void removeStaleLines(Set<LineKey> requested) {
         Iterator<Map.Entry<LineKey, Shape>> iterator = retainedLineShapes.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<LineKey, Shape> entry = iterator.next();
-            if (retainedLinePassKeys.contains(entry.getKey())) continue;
+            if (requested.contains(entry.getKey())) continue;
 
             Shape shape = entry.getValue();
             try {
@@ -138,9 +211,36 @@ public abstract class RegionRenderer<T extends Region> {
             retainedLineShapeSet.remove(shape);
             currentRetainedLineStats = currentRetainedLineStats.withRemovedLine();
         }
+    }
 
-        retainedLinePassKeys = null;
-        lastRetainedLineStats = currentRetainedLineStats;
+    static List<LineKey> sortedLineKeys(Collection<LineKey> keys) {
+        List<LineKey> sorted = new ArrayList<>(keys);
+        sorted.sort(LINE_KEY_ORDER);
+        return sorted;
+    }
+
+    /**
+     * Returns the single non-zero offset that maps every previous line onto the next lines, or
+     * {@code null} when the two passes differ in anything but position. Both lists must be sorted
+     * with {@link #sortedLineKeys}; a translation keeps that order, so lines pair up by index.
+     */
+    static Vector3f findTranslation(List<LineKey> previous, List<LineKey> next) {
+        if (previous.isEmpty() || previous.size() != next.size()) return null;
+
+        LineKey first = previous.get(0);
+        LineKey firstNext = next.get(0);
+        float dx = firstNext.startX() - first.startX();
+        float dy = firstNext.startY() - first.startY();
+        float dz = firstNext.startZ() - first.startZ();
+        if (Math.abs(dx) < TRANSLATION_EPSILON && Math.abs(dy) < TRANSLATION_EPSILON
+                && Math.abs(dz) < TRANSLATION_EPSILON) {
+            return null;
+        }
+
+        for (int index = 0; index < previous.size(); index++) {
+            if (!previous.get(index).isTranslationOf(next.get(index), dx, dy, dz)) return null;
+        }
+        return new Vector3f(dx, dy, dz);
     }
 
     protected Location toLocation(double x, double y, double z) {
@@ -216,20 +316,9 @@ public abstract class RegionRenderer<T extends Region> {
     protected void renderLine(Line line, Color color, float thickness) {
         if (!isRenderableLine(line) || isInvisible(color)) return;
 
-        if (retainedLinePassKeys != null) {
-            LineKey key = LineKey.of(line, color, thickness, isSeeThrough());
-            retainedLinePassKeys.add(key);
-            Shape existing = retainedLineShapes.get(key);
-            if (existing != null) {
-                currentRetainedLineStats = currentRetainedLineStats.withReusedLine();
-                return;
-            }
-
-            Shape shape = createLineShape(line, color, thickness);
-            retainedLineShapes.put(key, shape);
-            retainedLineShapeSet.add(shape);
-            shapes.add(shape);
-            currentRetainedLineStats = currentRetainedLineStats.withSpawnedLine();
+        if (retainedLinePass != null) {
+            retainedLinePass.putIfAbsent(LineKey.of(line, color, thickness, isSeeThrough()),
+                    new PendingLine(line, color, thickness));
             return;
         }
 
@@ -435,32 +524,48 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     protected record Line(Vector3f start, Vector3f end){};
-    public record RetainedLineStats(int reusedLines, int spawnedLines, int removedLines, int removedTransientShapes) {
+    private record PendingLine(Line line, Color color, float thickness) {}
+    public record RetainedLineStats(int reusedLines, int translatedLines, int spawnedLines, int removedLines,
+                                    int removedTransientShapes) {
         public static RetainedLineStats empty() {
-            return new RetainedLineStats(0, 0, 0, 0);
+            return new RetainedLineStats(0, 0, 0, 0, 0);
         }
 
         private RetainedLineStats withReusedLine() {
-            return new RetainedLineStats(reusedLines + 1, spawnedLines, removedLines, removedTransientShapes);
+            return new RetainedLineStats(reusedLines + 1, translatedLines, spawnedLines, removedLines, removedTransientShapes);
+        }
+
+        private RetainedLineStats withTranslatedLines(int count) {
+            return new RetainedLineStats(reusedLines, translatedLines + count, spawnedLines, removedLines, removedTransientShapes);
         }
 
         private RetainedLineStats withSpawnedLine() {
-            return new RetainedLineStats(reusedLines, spawnedLines + 1, removedLines, removedTransientShapes);
+            return new RetainedLineStats(reusedLines, translatedLines, spawnedLines + 1, removedLines, removedTransientShapes);
         }
 
         private RetainedLineStats withRemovedLine() {
-            return new RetainedLineStats(reusedLines, spawnedLines, removedLines + 1, removedTransientShapes);
+            return new RetainedLineStats(reusedLines, translatedLines, spawnedLines, removedLines + 1, removedTransientShapes);
         }
 
         private RetainedLineStats withTransientRemoved() {
-            return new RetainedLineStats(reusedLines, spawnedLines, removedLines, removedTransientShapes + 1);
+            return new RetainedLineStats(reusedLines, translatedLines, spawnedLines, removedLines, removedTransientShapes + 1);
         }
     }
 
-    private record LineKey(float startX, float startY, float startZ,
-                           float endX, float endY, float endZ,
-                           int color, int thickness, boolean seeThrough) {
-        private static LineKey of(Line line, Color color, float thickness, boolean seeThrough) {
+    record LineKey(float startX, float startY, float startZ,
+                   float endX, float endY, float endZ,
+                   int color, int thickness, boolean seeThrough) {
+        private boolean isTranslationOf(LineKey moved, float dx, float dy, float dz) {
+            return color == moved.color && thickness == moved.thickness && seeThrough == moved.seeThrough
+                    && Math.abs(startX + dx - moved.startX) < TRANSLATION_EPSILON
+                    && Math.abs(startY + dy - moved.startY) < TRANSLATION_EPSILON
+                    && Math.abs(startZ + dz - moved.startZ) < TRANSLATION_EPSILON
+                    && Math.abs(endX + dx - moved.endX) < TRANSLATION_EPSILON
+                    && Math.abs(endY + dy - moved.endY) < TRANSLATION_EPSILON
+                    && Math.abs(endZ + dz - moved.endZ) < TRANSLATION_EPSILON;
+        }
+
+        static LineKey of(Line line, Color color, float thickness, boolean seeThrough) {
             Vector3f start = line.start();
             Vector3f end = line.end();
             return new LineKey(

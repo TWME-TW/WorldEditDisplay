@@ -199,7 +199,8 @@ public class RenderManager {
                 MessageUtil.sendTranslated(player, "command.wedisplay.debug.retained_line_count", retainedLineCount, retainedLineEntityCount);
                 RetainedLineStats retainedLineStats = getPlayerRetainedLineStats(playerId);
                 MessageUtil.sendTranslated(player, "command.wedisplay.debug.retained_line_pass",
-                        retainedLineStats.reusedLines(), retainedLineStats.spawnedLines(), retainedLineStats.removedLines());
+                        retainedLineStats.reusedLines(), retainedLineStats.translatedLines(),
+                        retainedLineStats.spawnedLines(), retainedLineStats.removedLines());
             }
         }
     }
@@ -1422,6 +1423,7 @@ public class RenderManager {
     private RetainedLineStats addRetainedLineStats(RetainedLineStats first, RetainedLineStats second) {
         return new RetainedLineStats(
                 first.reusedLines() + second.reusedLines(),
+                first.translatedLines() + second.translatedLines(),
                 first.spawnedLines() + second.spawnedLines(),
                 first.removedLines() + second.removedLines(),
                 first.removedTransientShapes() + second.removedTransientShapes());

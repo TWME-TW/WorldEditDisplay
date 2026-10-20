@@ -69,6 +69,7 @@ Players can customize their own rendering preferences:
 - Renders WorldEditCUI multi-region messages (`+s|<shape>|<uuid>`, `+p`, `+poly`, `+col`, `+grid`) sent by other plugins, such as the [ClipboardCUI](https://github.com/twme-ai/ClipboardCUI) clipboard paste preview
 - Colours with alpha `00` are not rendered, and `+grid` below 1 hides the cuboid grid, matching WorldEditCUI
 - Frequent updates are rendered at least every 250 ms instead of being postponed until they stop
+- A region that only moved (same shape and colours) is moved by teleporting its existing line entities in one bundle, instead of despawning and respawning them
 
 **Configuration System**
 - Server-wide defaults in `config.yml`
@@ -397,6 +398,7 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 - 渲染其他插件送出的 WorldEditCUI 多選區訊息（`+s|<shape>|<uuid>`、`+p`、`+poly`、`+col`、`+grid`），例如 [ClipboardCUI](https://github.com/twme-ai/ClipboardCUI) 的剪貼簿貼上預覽
 - alpha 為 `00` 的顏色不生成實體；`+grid` 小於 1 時不畫長方體網格，與 WorldEditCUI 一致
 - 更新頻繁時至少每 250 ms 渲染一次，不會一直延後到停止更新
+- 選區只是整體移動（形狀、顏色不變）時，會在同一個 bundle 中 teleport 既有的線段實體，而不是刪除後重新生成
 
 **配置系統**
 - 伺服器預設值設定在 `config.yml`
