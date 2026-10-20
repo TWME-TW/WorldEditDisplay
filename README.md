@@ -22,6 +22,7 @@ WorldEditDisplay is a server-side plugin for Minecraft that adds visual selectio
 
 Version 2.5.1 preserves the retained-line renderer and expanded debug statistics while improving WorldEditCUI client detection and handoff, on top of the VirtualEntities rendering backend introduced in 2.5.0.
 Version 2.6.0 adds Minecraft 26.3 support, corrects Text Display geometry via TextDisplayShapes 3.0.1, and separates line and fill see-through settings.
+Version 2.7.0 renders WorldEditCUI multi-regions sent by other plugins (such as the ClipboardCUI clipboard preview) like WorldEditCUI does: transparent colours are skipped, `+grid` below 1 hides the grid, and steady updates render at least every 250 ms.
 
 ### Features
 
