@@ -12,6 +12,8 @@ public abstract class Region {
 
     protected final PlayerData playerData;
     protected double gridSpacing;
+    /** Whether a CUI grid event set {@link #gridSpacing}; unset regions use automatic spacing. */
+    protected boolean gridSpacingSet;
     protected boolean dirty = true;
 
     /**
@@ -53,6 +55,7 @@ public abstract class Region {
      */
     public void setGridSpacing(double spacing) {
         this.gridSpacing = spacing;
+        this.gridSpacingSet = true;
         markDirty();
     }
 
@@ -61,6 +64,13 @@ public abstract class Region {
      */
     public double getGridSpacing() {
         return this.gridSpacing;
+    }
+
+    /**
+     * Whether grid spacing was set explicitly by a CUI grid event
+     */
+    public boolean isGridSpacingSet() {
+        return this.gridSpacingSet;
     }
 
     /**

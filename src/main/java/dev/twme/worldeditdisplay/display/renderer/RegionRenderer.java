@@ -214,7 +214,7 @@ public abstract class RegionRenderer<T extends Region> {
      * Render a line using TextDisplayShapes
      */
     protected void renderLine(Line line, Color color, float thickness) {
-        if (!isRenderableLine(line)) return;
+        if (!isRenderableLine(line) || isInvisible(color)) return;
 
         if (retainedLinePassKeys != null) {
             LineKey key = LineKey.of(line, color, thickness, isSeeThrough());
@@ -244,6 +244,14 @@ public abstract class RegionRenderer<T extends Region> {
                 && line.start().isFinite()
                 && line.end().isFinite()
                 && line.start().distanceSquared(line.end()) >= MIN_LINE_LENGTH_SQUARED;
+    }
+
+    /**
+     * Fully transparent colors (for example a CUI colour override of {@code #00000000})
+     * draw nothing, so their shapes are not spawned at all.
+     */
+    static boolean isInvisible(Color color) {
+        return color != null && color.getAlpha() == 0;
     }
 
     private Shape createLineShape(Line line, Color color, float thickness) {
@@ -325,6 +333,7 @@ public abstract class RegionRenderer<T extends Region> {
      * The fourth corner is automatically p2 + p3 - p1.
      */
     protected void renderParallelogram(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
+        if (isInvisible(color)) return;
         Location origin = getOrigin();
         Shape shape = plugin.getPacketShapeFactory()
                 .parallelogram(origin, p1, p2, p3)
@@ -344,6 +353,7 @@ public abstract class RegionRenderer<T extends Region> {
      * Render a triangle face using TextDisplayShapes
      */
     protected void renderTriangle(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
+        if (isInvisible(color)) return;
         Location origin = getOrigin();
         Shape shape = plugin.getPacketShapeFactory()
                 .triangle(origin, p1, p2, p3)

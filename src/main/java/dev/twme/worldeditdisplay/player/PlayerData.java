@@ -57,7 +57,9 @@ public class PlayerData {
     private UUID currentMultiRegionId; // tracks which multi-region the player is currently editing
 
     // Debounced render task
+    private static final long MAX_RENDER_DEFER_MS = 250L;
     private TaskWrapper pendingRenderTask;
+    private long pendingRenderSince;
 
     // Color settings
     private String primaryColor;
@@ -380,11 +382,17 @@ public class PlayerData {
 
     /**
      * 延遲渲染更新（防抖機制）
-     * 每次呼叫時重置計時器，等待 2 ticks（約 100ms）後才執行渲染
+     * 每次呼叫時重置計時器，等待 2 ticks（約 100ms）後才執行渲染。
+     * 若持續收到 CUI 事件（例如每 tick 更新的多重選區），最多延後
+     * {@link #MAX_RENDER_DEFER_MS} 就保留既有任務，避免渲染被無限期餓死。
      */
     public synchronized void scheduleRenderUpdate() {
+        long now = System.currentTimeMillis();
         if (pendingRenderTask != null) {
+            if (!shouldRestartRenderDebounce(pendingRenderSince, now)) return;
             pendingRenderTask.cancel();
+        } else {
+            pendingRenderSince = now;
         }
         WorldEditDisplay plugin = WorldEditDisplay.getPlugin();
         if (plugin == null || plugin.getRenderManager() == null) return;
@@ -396,6 +404,16 @@ public class PlayerData {
                     }
                     plugin.getRenderManager().updateRender(player);
                 }, null, 2L);
+    }
+
+    /**
+     * Whether a new CUI event may push the pending render back by another debounce period.
+     *
+     * @param pendingSince when the first still-unrendered event was scheduled
+     * @param now current time in milliseconds
+     */
+    static boolean shouldRestartRenderDebounce(long pendingSince, long now) {
+        return now - pendingSince < MAX_RENDER_DEFER_MS;
     }
 
     /**
