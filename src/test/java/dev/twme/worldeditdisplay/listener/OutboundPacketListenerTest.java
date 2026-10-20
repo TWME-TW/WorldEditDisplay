@@ -87,4 +87,20 @@ class OutboundPacketListenerTest {
 
         assertTrue(OutboundPacketListener.shouldUseServerRenderer(playerData));
     }
+
+    @Test
+    void disablingClientCuiHandoffKeepsServerRenderer() {
+        PlayerData playerData = new PlayerData((Player) null);
+        playerData.setRenderingEnabled(true);
+        playerData.setCuiEnabled(true);
+
+        try {
+            PlayerData.setClientCuiHandoffEnabled(false);
+            assertFalse(playerData.isNativeCuiActive());
+            assertTrue(OutboundPacketListener.shouldUseServerRenderer(playerData));
+        } finally {
+            PlayerData.setClientCuiHandoffEnabled(true);
+        }
+        assertFalse(OutboundPacketListener.shouldUseServerRenderer(playerData));
+    }
 }

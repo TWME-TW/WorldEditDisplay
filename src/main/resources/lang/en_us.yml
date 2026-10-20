@@ -59,6 +59,7 @@ command:
     toggle:
       enabled: "<green>WorldEdit selection rendering enabled!"
       disabled: "<#E8C96D>WorldEdit selection rendering disabled!"
+      cui_handoff: "<#C2C7D3>WorldEditCUI detected on your client, so it now draws your selection. If you see nothing, run <#478FC6>/wedisplay toggle<#C2C7D3> to use WorldEditDisplay instead."
     
     debug:
       enabled: "<green>Debug mode enabled! Entity count will be shown on each render."

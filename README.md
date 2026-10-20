@@ -108,8 +108,10 @@ Players can customize their own rendering preferences:
 
 `/wedisplay toggle` - Toggle rendering on/off
 - Quick command to enable or disable selection visualization
-- Explicitly enabling WED overrides automatic WorldEditCUI detection for the current session and requests a fresh copy of the current selection from WorldEdit, so WED can still render when a client registers `worldedit:cui` but does not actually draw the selection
+- Explicitly enabling WED overrides automatic WorldEditCUI detection and requests a fresh copy of the current selection from WorldEdit, so WED can still render when a client registers `worldedit:cui` but does not actually draw the selection
 - Disabling a manual override refreshes the current selection and hands rendering back to native WorldEditCUI
+- The override is remembered across reconnects and server switches (stored in each backend server's player data)
+- When rendering is handed to WorldEditCUI, the player gets a chat notice pointing at this command
 - Works independently for each player
 
 `/wedisplay reloadplayer` - Reload your personal configuration file
@@ -162,6 +164,10 @@ language:
   default: "en-us"              # Default language
   auto_detect: true             # Auto-detect player's client language
   allow_player_change: true     # Allow players to change language manually
+
+client_cui:
+  handoff: true                 # Let a detected WorldEditCUI client draw selections instead of WED
+  notify_on_handoff: true       # Tell players when rendering was handed to WorldEditCUI
 
 renderer:
   cuboid:
@@ -424,8 +430,10 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 
 `/wedisplay toggle` - 切換渲染開關
 - 快速指令來啟用或停用選區視覺化
-- 玩家明確啟用 WED 時，會在該次連線期間覆寫自動 WorldEditCUI 偵測，並主動要求 WorldEdit 重送目前選區；即使客戶端註冊了 `worldedit:cui` 但實際沒有繪製選區，WED 仍可接手顯示
+- 玩家明確啟用 WED 時，會覆寫自動 WorldEditCUI 偵測，並主動要求 WorldEdit 重送目前選區；即使客戶端註冊了 `worldedit:cui` 但實際沒有繪製選區，WED 仍可接手顯示
 - 關閉手動覆寫時會刷新目前選區，並將渲染交還給原生 WorldEditCUI
+- 覆寫設定在重新連線與切換伺服器後仍會保留（存於各後端伺服器的玩家資料）
+- 渲染交給 WorldEditCUI 時，玩家會收到聊天提示，告知可用此指令切換
 - 每個玩家獨立運作
 
 `/wedisplay reloadplayer` - 重新載入你的個人配置檔案
@@ -478,6 +486,10 @@ language:
   default: "zh_tw"              # 預設語言
   auto_detect: true             # 自動偵測玩家客戶端語言
   allow_player_change: true     # 允許玩家手動變更語言
+
+client_cui:
+  handoff: true                 # 偵測到 WorldEditCUI 時改由客戶端模組顯示選區
+  notify_on_handoff: true       # 交接給 WorldEditCUI 時提示玩家
 
 renderer:
   cuboid:

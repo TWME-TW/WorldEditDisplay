@@ -17,6 +17,7 @@ import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.util.ColorUtil;
 import dev.twme.worldeditdisplay.util.CuiProtocolUtil;
 import dev.twme.worldeditdisplay.util.MessageUtil;
+import dev.twme.worldeditdisplay.util.ServerRendererPreference;
 
 /**
  * command for players to manage their personal settings
@@ -245,6 +246,7 @@ public class PlayerSettingsCommand implements TabExecutor {
 
         data.setRenderingEnabled(newState);
         data.setServerRendererForced(newState);
+        ServerRendererPreference.setForced(plugin, player, newState);
 
         if (newState) {
             MessageUtil.sendTranslated(player, "command.wedisplay.toggle.enabled");
