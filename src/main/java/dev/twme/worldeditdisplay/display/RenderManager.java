@@ -1122,6 +1122,20 @@ public class RenderManager {
     }
 
     public void clearRender(UUID playerId) {
+        clearOwnRenders(playerId);
+
+        // Clear shared renderers this player holds (selections they were watching as a viewer)
+        clearSharedRenders(playerId);
+
+        // Clear this player's own selection from all viewers who were watching it
+        clearSharerRenders(playerId);
+    }
+
+    /**
+     * Clears only the renderers that draw this player's own main and multi selections for this player.
+     * Shared renderers and viewers of this player are untouched.
+     */
+    public void clearOwnRenders(UUID playerId) {
         // TextDisplay renderers
         RegionRenderer mainRenderer = mainRenderers.remove(playerId);
         if (mainRenderer != null) mainRenderer.clear();
@@ -1139,12 +1153,6 @@ public class RenderManager {
             playerMultiParticle.values().forEach(ParticleRenderer::clear);
             playerMultiParticle.clear();
         }
-
-        // Clear shared renderers this player holds (selections they were watching as a viewer)
-        clearSharedRenders(playerId);
-
-        // Clear this player's own selection from all viewers who were watching it
-        clearSharerRenders(playerId);
     }
 
     /**

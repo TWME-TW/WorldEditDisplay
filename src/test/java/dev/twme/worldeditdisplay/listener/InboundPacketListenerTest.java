@@ -38,31 +38,25 @@ class InboundPacketListenerTest {
     }
 
     @Test
-    void detectsCuiInNullSeparatedRegistrationList() {
-        assertTrue(InboundPacketListener.isCuiHandshake(
+    void channelRegistrationAloneIsNotWorldEditCui() {
+        // WorldEdit's Fabric/NeoForge mod registers worldedit:cui without WorldEditCUI (#71).
+        assertFalse(InboundPacketListener.isCuiHandshake(
                 Constants.REGISTER_CHANNEL,
                 "example:first\0worldedit:cui\0example:last\0".getBytes(StandardCharsets.UTF_8)
         ));
-    }
-
-    @Test
-    void detectsSingleChannelRegistrationWithoutTrailingNull() {
-        assertTrue(InboundPacketListener.isCuiHandshake(
+        assertFalse(InboundPacketListener.isCuiHandshake(
                 Constants.REGISTER_CHANNEL,
                 Constants.CUI_CHANNEL.getBytes(StandardCharsets.UTF_8)
         ));
     }
 
     @Test
-    void registrationRequiresAnExactChannelName() {
+    void versionHelloOnOtherChannelsIsIgnored() {
         assertFalse(InboundPacketListener.isCuiHandshake(
-                Constants.REGISTER_CHANNEL,
-                "example:worldedit:cui-proxy".getBytes(StandardCharsets.UTF_8)
+                "example:cui",
+                "v|4".getBytes(StandardCharsets.UTF_8)
         ));
-        assertFalse(InboundPacketListener.isCuiHandshake(
-                Constants.REGISTER_CHANNEL,
-                new byte[0]
-        ));
+        assertFalse(InboundPacketListener.isCuiHandshake(Constants.CUI_CHANNEL, null));
     }
 
     @Test

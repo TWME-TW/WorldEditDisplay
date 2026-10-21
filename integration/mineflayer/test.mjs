@@ -294,6 +294,14 @@ function sendCuiHandshake(bot) {
   })
 }
 
+// What WorldEdit's Fabric/NeoForge mod does without WorldEditCUI installed (#71).
+function registerCuiChannelOnly(bot) {
+  bot._client.write('custom_payload', {
+    channel: 'minecraft:register',
+    data: Buffer.from('worldedit:cui\0', 'utf8')
+  })
+}
+
 function createAndSpawnBot(username) {
   const bot = mineflayer.createBot({
     host: '127.0.0.1',
@@ -439,6 +447,12 @@ try {
     throw new Error('WorldEditDisplay mistook its silent server handshake for a client-side CUI')
   }
 
+  registerCuiChannelOnly(sharer)
+  const registeredOnlyCuiState = await readCuiState(sharer)
+  if (registeredOnlyCuiState.cuiEnabled || registeredOnlyCuiState.entityCount === 0) {
+    throw new Error(`WorldEditDisplay handed off to a client that only registered worldedit:cui: ${JSON.stringify(registeredOnlyCuiState)}`)
+  }
+
   const cuiClient = await createAndSpawnBot('WEDCUI')
   bots.push(cuiClient)
   cuiClient.once('error', fatal)
@@ -573,6 +587,7 @@ try {
     deselectedSharedEntitiesCleared: true,
     sharedSelectionRenderedAgain: true,
     regularClientCuiDetected: regularClientCuiState.cuiEnabled,
+    registeredOnlyCuiDetected: registeredOnlyCuiState.cuiEnabled,
     nativeCuiDetected: nativeCuiState.cuiEnabled,
     nativeCuiRendererCleared: nativeCuiState.entityCount === 0,
     nativeCuiHandoffNoticeShown: true,
