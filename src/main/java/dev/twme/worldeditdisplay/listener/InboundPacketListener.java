@@ -17,7 +17,7 @@ import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 /**
  * Listens to incoming plugin messages.
- * Detects CUI registration or version handshakes and marks players as having CUI enabled.
+ * Detects the WorldEditCUI version handshake and marks players as having CUI enabled.
  */
 public class InboundPacketListener implements PacketListener {
     private final WorldEditDisplay plugin;
@@ -94,38 +94,16 @@ public class InboundPacketListener implements PacketListener {
         return hasUsePermission && playerData.isRenderingEnabled() && playerData.isNativeCuiActive();
     }
 
+    /**
+     * Only the version hello ({@code v|<protocol>}) proves that WorldEditCUI is running.
+     * Registering the {@code worldedit:cui} channel does not: the WorldEditCUI protocol library
+     * that WorldEdit's own Fabric/NeoForge mod bundles registers it on every client, so a player
+     * with WorldEdit installed for singleplayer would otherwise lose server-side rendering.
+     */
     static boolean isCuiHandshake(String channel, byte[] data) {
-        if (data == null) return false;
+        if (data == null || !Constants.CUI_CHANNEL.equals(channel)) return false;
 
-        if (Constants.CUI_CHANNEL.equals(channel)) {
-            String message = new String(data, StandardCharsets.UTF_8);
-            return message.startsWith("v|") && message.length() > 2;
-        }
-
-        return Constants.REGISTER_CHANNEL.equals(channel)
-                && containsRegisteredChannel(data, Constants.CUI_CHANNEL);
-    }
-
-    private static boolean containsRegisteredChannel(byte[] data, String expectedChannel) {
-        byte[] expected = expectedChannel.getBytes(StandardCharsets.UTF_8);
-        int channelStart = 0;
-
-        for (int i = 0; i <= data.length; i++) {
-            if (i < data.length && data[i] != 0) continue;
-
-            int channelLength = i - channelStart;
-            if (channelLength == expected.length) {
-                boolean matches = true;
-                for (int j = 0; j < expected.length; j++) {
-                    if (data[channelStart + j] != expected[j]) {
-                        matches = false;
-                        break;
-                    }
-                }
-                if (matches) return true;
-            }
-            channelStart = i + 1;
-        }
-        return false;
+        String message = new String(data, StandardCharsets.UTF_8);
+        return message.startsWith("v|") && message.length() > 2;
     }
 }
