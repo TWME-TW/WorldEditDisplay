@@ -24,6 +24,7 @@ Version 2.5.1 preserves the retained-line renderer and expanded debug statistics
 Version 2.6.0 adds Minecraft 26.3 support, corrects Text Display geometry via TextDisplayShapes 3.0.1, and separates line and fill see-through settings.
 Version 2.7.0 renders WorldEditCUI multi-regions sent by other plugins (such as the ClipboardCUI clipboard preview) like WorldEditCUI does: transparent colours are skipped, `+grid` below 1 hides the grid, and steady updates render at least every 250 ms.
 Version 2.8.0 moves regions that only shifted (such as a clipboard preview following the player) by teleporting their existing line entities instead of respawning them, using TextDisplayShapes 3.1.0, and publishes a Spigot jar next to the Paper jar.
+Version 2.8.1 keeps server rendering for players who have the WorldEdit client mod but not WorldEditCUI (only the WorldEditCUI handshake counts as detection now), and respawns a player's own selections and multi-regions after changing world.
 
 ### Features
 
