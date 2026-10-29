@@ -70,6 +70,7 @@ Players can customize their own rendering preferences:
 **Multi-region Messages from Other Plugins**
 - Renders WorldEditCUI multi-region messages (`+s|<shape>|<uuid>`, `+p`, `+poly`, `+col`, `+grid`) sent by other plugins, such as the [ClipboardCUI](https://github.com/twme-ai/ClipboardCUI) clipboard paste preview
 - Colours with alpha `00` are not rendered, and `+grid` below 1 hides the cuboid grid, matching WorldEditCUI
+- `+wed|outline` (a WorldEditDisplay hint that WorldEditCUI ignores) draws an ellipsoid as its three great circles and a cylinder as its two end circles and four sides, for previews that move often such as the [BrushCUI](https://github.com/twme-ai/BrushCUI) brush preview (about 100 lines instead of 460 for a radius 5 sphere)
 - Frequent updates are rendered at least every 250 ms instead of being postponed until they stop
 - A region that only moved (same shape and colours) is moved by teleporting its existing line entities in one bundle, instead of despawning and respawning them
 
@@ -345,6 +346,7 @@ See [LICENSE](LICENSE) file for details.
 - [PacketEvents](https://github.com/retrooper/packetevents) - Packet handling library
 - [TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes) - VirtualEntities-based shape rendering library used by the plugin
 - [ClipboardCUI](https://github.com/twme-ai/ClipboardCUI) - Shows the WorldEdit clipboard paste footprint through WorldEditCUI or WorldEditDisplay
+- [BrushCUI](https://github.com/twme-ai/BrushCUI) - Shows the space the WorldEdit/FAWE brush in hand would affect through WorldEditCUI or WorldEditDisplay
 - [VirtualEntities](https://github.com/twme-ai/VirtualEntities) - Packet-only entity lifecycle and metadata library used by TextDisplayShapes and shared labels
 
 ---
@@ -399,6 +401,7 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 **其他插件送出的多選區訊息**
 - 渲染其他插件送出的 WorldEditCUI 多選區訊息（`+s|<shape>|<uuid>`、`+p`、`+poly`、`+col`、`+grid`），例如 [ClipboardCUI](https://github.com/twme-ai/ClipboardCUI) 的剪貼簿貼上預覽
 - alpha 為 `00` 的顏色不生成實體；`+grid` 小於 1 時不畫長方體網格，與 WorldEditCUI 一致
+- `+wed|outline`（WorldEditDisplay 專用提示，WorldEditCUI 會忽略）讓橢球只畫三個大圓、圓柱只畫上下兩圈和四條邊，適合頻繁移動的預覽，例如 [BrushCUI](https://github.com/twme-ai/BrushCUI) 的筆刷範圍預覽（半徑 5 的球約 100 條線，原本約 460 條）
 - 更新頻繁時至少每 250 ms 渲染一次，不會一直延後到停止更新
 - 選區只是整體移動（形狀、顏色不變）時，會在同一個 bundle 中 teleport 既有的線段實體，而不是刪除後重新生成
 
@@ -666,6 +669,7 @@ src/main/java/dev/twme/worldeditdisplay/
 - [PacketEvents](https://github.com/retrooper/packetevents) - 封包處理函式庫
 - [TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes) - 此插件使用、基於 VirtualEntities 的形狀渲染函式庫
 - [ClipboardCUI](https://github.com/twme-ai/ClipboardCUI) - 透過 WorldEditCUI 或 WorldEditDisplay 顯示 WorldEdit 剪貼簿的貼上範圍
+- [BrushCUI](https://github.com/twme-ai/BrushCUI) - 透過 WorldEditCUI 或 WorldEditDisplay 顯示手上 WorldEdit/FAWE 筆刷的作用範圍
 - [VirtualEntities](https://github.com/twme-ai/VirtualEntities) - TextDisplayShapes 與共享標籤使用的封包虛擬實體生命週期與 metadata 函式庫
 
 ---

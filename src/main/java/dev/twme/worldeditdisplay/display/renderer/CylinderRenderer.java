@@ -77,6 +77,50 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
             return;
         }
 
+        if (region.isOutlineOnly()) {
+            renderOutline(cxCircle, czCircle, radiusX, radiusZ, minY, maxY + 1, circleMat);
+        } else {
+            renderGridded(center, cxCircle, czCircle, radiusX, radiusZ, minY, maxY,
+                    circleMat, gridMat, centerLineMat);
+        }
+
+        // Render center cube
+        renderCube(new Vector3f((float)(center.getX() + 0.5),
+                        (float)(center.getY() + 0.5),
+                        (float)(center.getZ() + 0.5)),
+                1.03f, centerMat, settings.getCylinderCenterThickness());
+
+        // Render fill surface using parallelograms
+        if (settings.isCylinderFillEnabled()) {
+            Color fillMat = getFillColorWithOverride(region, 3, settings.getCylinderFillColor(), isMulti);
+            renderCylinderBand(cxCircle, czCircle, radiusX, radiusZ,
+                    (float) minY, (float) (maxY + 1), fillMat);
+            renderCircleCap(cxCircle, minY, czCircle, radiusX, radiusZ, fillMat);
+            renderCircleCap(cxCircle, maxY + 1, czCircle, radiusX, radiusZ, fillMat);
+        }
+    }
+
+    /**
+     * Outline only (for example a brush preview that follows the crosshair): the top and bottom
+     * circles and four vertical lines, all in the circle colour.
+     */
+    private void renderOutline(double cx, double cz, double radiusX, double radiusZ,
+                               double bottom, double top, Color mat) {
+        float thickness = settings.getCylinderCircleThickness();
+        int segments = calculateCircleSegments(radiusX, radiusZ);
+        renderCircle(cx, bottom, cz, radiusX, radiusZ, segments, mat, thickness);
+        renderCircle(cx, top, cz, radiusX, radiusZ, segments, mat, thickness);
+        double[][] sides = {{radiusX, 0}, {-radiusX, 0}, {0, radiusZ}, {0, -radiusZ}};
+        for (double[] side : sides) {
+            float x = (float) (cx + side[0]);
+            float z = (float) (cz + side[1]);
+            renderLine(new Line(new Vector3f(x, (float) bottom, z), new Vector3f(x, (float) top, z)), mat, thickness);
+        }
+    }
+
+    private void renderGridded(Vector3 center, double cxCircle, double czCircle,
+                               double radiusX, double radiusZ, int minY, int maxY,
+                               Color circleMat, Color gridMat, Color centerLineMat) {
         int height = maxY - minY + 1;
         int stepY = calculateGridStep(height);
         int circleSegments = calculateCircleSegments(radiusX, radiusZ);
@@ -104,21 +148,6 @@ public class CylinderRenderer extends RegionRenderer<CylinderRegion> {
         // Render top/bottom cap grid lines
         renderCapGrid(cxCircle, minY, czCircle, radiusX, radiusZ, gridMat, centerLineMat);
         renderCapGrid(cxCircle, maxY + 1, czCircle, radiusX, radiusZ, gridMat, centerLineMat);
-
-        // Render center cube
-        renderCube(new Vector3f((float)(center.getX() + 0.5),
-                        (float)(center.getY() + 0.5),
-                        (float)(center.getZ() + 0.5)),
-                1.03f, centerMat, settings.getCylinderCenterThickness());
-
-        // Render fill surface using parallelograms
-        if (settings.isCylinderFillEnabled()) {
-            Color fillMat = getFillColorWithOverride(region, 3, settings.getCylinderFillColor(), isMulti);
-            renderCylinderBand(cxCircle, czCircle, radiusX, radiusZ,
-                    (float) minY, (float) (maxY + 1), fillMat);
-            renderCircleCap(cxCircle, minY, czCircle, radiusX, radiusZ, fillMat);
-            renderCircleCap(cxCircle, maxY + 1, czCircle, radiusX, radiusZ, fillMat);
-        }
     }
 
     private void renderRectangularGrid(double centerX, double centerZ,

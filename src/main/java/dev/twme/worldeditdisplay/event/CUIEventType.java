@@ -9,6 +9,7 @@ import dev.twme.worldeditdisplay.event.events.CUIEventColour;
 import dev.twme.worldeditdisplay.event.events.CUIEventCylinder;
 import dev.twme.worldeditdisplay.event.events.CUIEventEllipsoid;
 import dev.twme.worldeditdisplay.event.events.CUIEventGrid;
+import dev.twme.worldeditdisplay.event.events.CUIEventHint;
 import dev.twme.worldeditdisplay.event.events.CUIEventPoint2D;
 import dev.twme.worldeditdisplay.event.events.CUIEventPoint3D;
 import dev.twme.worldeditdisplay.event.events.CUIEventPolygon;
@@ -28,7 +29,9 @@ public enum CUIEventType {
     UPDATE(CUIEventUpdate::new, "Update", "u", 1),
     POLYGON(CUIEventPolygon::new, "Polygon", "poly", 3, 99),
     COLOUR(CUIEventColour::new, "Colour", "col", 4),
-    GRID(CUIEventGrid::new, "Grid", "grid", 1, 2);
+    GRID(CUIEventGrid::new, "Grid", "grid", 1, 2),
+    /** WorldEditDisplay extension; WorldEditCUI ignores unknown event keys. */
+    HINT(CUIEventHint::new, "Hint", "wed", 1, 8);
 
     private final Function<CUIEventArgs, CUIEvent> maker;
     private final String key;
