@@ -26,6 +26,8 @@ Version 2.7.0 renders WorldEditCUI multi-regions sent by other plugins (such as 
 Version 2.8.0 moves regions that only shifted (such as a clipboard preview following the player) by teleporting their existing line entities instead of respawning them, using TextDisplayShapes 3.1.0, and publishes a Spigot jar next to the Paper jar.
 Version 2.8.1 keeps server rendering for players who have the WorldEdit client mod but not WorldEditCUI (only the WorldEditCUI handshake counts as detection now), and respawns a player's own selections and multi-regions after changing world.
 
+Version 2.9.0 adds the `+wed|outline` multi-region hint: an ellipsoid is drawn as its three great circles and a cylinder as its end circles and four sides, so previews that follow the crosshair, such as the [BrushCUI](https://github.com/twme-ai/BrushCUI) brush preview, use about a quarter of the entities.
+
 ### Features
 
 **Selection Types**
