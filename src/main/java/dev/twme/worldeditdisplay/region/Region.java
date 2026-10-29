@@ -14,6 +14,8 @@ public abstract class Region {
     protected double gridSpacing;
     /** Whether a CUI grid event set {@link #gridSpacing}; unset regions use automatic spacing. */
     protected boolean gridSpacingSet;
+    /** Set by the WorldEditDisplay hint {@code +wed|outline}: draw round regions as outlines only. */
+    protected boolean outlineOnly;
     protected boolean dirty = true;
 
     /**
@@ -71,6 +73,19 @@ public abstract class Region {
      */
     public boolean isGridSpacingSet() {
         return this.gridSpacingSet;
+    }
+
+    /**
+     * Draw only the outline of round regions (three great circles for an ellipsoid; the two
+     * end circles and four sides for a cylinder) instead of the full grid.
+     */
+    public void setOutlineOnly(boolean outlineOnly) {
+        this.outlineOnly = outlineOnly;
+        markDirty();
+    }
+
+    public boolean isOutlineOnly() {
+        return this.outlineOnly;
     }
 
     /**

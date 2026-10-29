@@ -70,13 +70,23 @@ public class EllipsoidRenderer extends RegionRenderer<EllipsoidRegion> {
 
         renderCube(centerPos, settings.getEllipsoidCenterMarkerSize(), centerMat, settings.getEllipsoidCenterThickness());
 
-        int xStep = calculateGridStep(radii.getX());
-        int yStep = calculateGridStep(radii.getY());
-        int zStep = calculateGridStep(radii.getZ());
+        if (region.isOutlineOnly()) {
+            // Outline only (for example a brush preview that follows the crosshair): the three
+            // great circles in the region colour, without latitude rings.
+            float rx = (float) radii.getX(), ry = (float) radii.getY(), rz = (float) radii.getZ();
+            float thickness = settings.getEllipsoidLineThickness();
+            drawEllipseXZ(centerPos, rx, ry, rz, 0, lineMat, thickness);
+            drawEllipseYZ(centerPos, rx, ry, rz, 0, lineMat, thickness);
+            drawEllipseXY(centerPos, rx, ry, rz, 0, lineMat, thickness);
+        } else {
+            int xStep = calculateGridStep(radii.getX());
+            int yStep = calculateGridStep(radii.getY());
+            int zStep = calculateGridStep(radii.getZ());
 
-        renderXZPlane(centerPos, radii, yStep, lineMat, centerLineMat);
-        renderYZPlane(centerPos, radii, xStep, lineMat, centerLineMat);
-        renderXYPlane(centerPos, radii, zStep, lineMat, centerLineMat);
+            renderXZPlane(centerPos, radii, yStep, lineMat, centerLineMat);
+            renderYZPlane(centerPos, radii, xStep, lineMat, centerLineMat);
+            renderXYPlane(centerPos, radii, zStep, lineMat, centerLineMat);
+        }
 
         // Render fill surface using parallelogram latitude bands
         if (settings.isEllipsoidFillEnabled()) {
