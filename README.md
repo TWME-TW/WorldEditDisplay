@@ -99,7 +99,7 @@ Players can customize their own rendering preferences:
 
 #### Bedrock through Geyser
 
-Bedrock players can see continuous outlines, grids, point markers and optional translucent faces without a resource pack. WorldEditDisplay sends these overlays directly to Bedrock clients with compatible local Geyser-Spigot builds (2.12.1 build 1311 or later). Earlier builds use particle outlines and point markers.
+Bedrock players can see continuous outlines, grids, point markers and optional translucent faces without a resource pack. WorldEditDisplay sends these overlays directly to Bedrock clients when Geyser-Spigot runs on the same server and supports text primitives. This was tested with Geyser-Spigot 2.12.1 build 1313. Other Geyser builds use particle outlines and point markers when text primitives are unavailable.
 
 Enable fills with the same settings as on Java, for example `/wedisplay set cuboid fill_enabled true`. Triangular and skewed faces are approximated with strips because Bedrock primitive text supports rotation and uniform scaling.
 
@@ -438,11 +438,11 @@ WorldEditDisplay 是一個 Minecraft 伺服器端插件，為 WorldEdit 增加�
 
 #### 透過 Geyser 連線的基岩版玩家
 
-基岩版不需資源包即可顯示連續輪廓、網格、選點及可選的半透明填充面。若伺服器安裝了支援基礎文字圖元的 Geyser-Spigot（2.12.1 build 1311 起），WorldEditDisplay 會自動使用此渲染方式。較舊版本使用粒子顯示輪廓與選點。
+基岩版不需資源包即可顯示連續輪廓、網格、選點及可選的半透明填充面。當支援文字圖元的 Geyser-Spigot 與 WorldEditDisplay 安裝於同一台伺服器時，會自動使用此渲染方式。此功能已在 Geyser-Spigot 2.12.1 build 1313 上測試。若 Geyser 不支援文字圖元，則會使用粒子顯示輪廓與選點。
 
 填充面與 Java 版使用相同設定，例如 `/wedisplay set cuboid fill_enabled true`。三角形和非矩形的平行四邊形填充面以條帶近似呈現。
 
-如果 Geyser 安裝在代理伺服器上，請在後端安裝 Floodgate 並啟用玩家資料轉發。具備渲染模式權限的玩家可在代理支援基礎文字圖元時使用 `/wedisplay render text`，或使用 `/wedisplay render particle` 切換為粒子顯示。請參閱 [Floodgate 安裝指南](https://geysermc.org/wiki/floodgate/setup/)。
+如果 Geyser 安裝在代理伺服器上，請在後端安裝 Floodgate 並啟用玩家資料轉發。WorldEditDisplay 會為這些玩家使用粒子顯示輪廓與選點。請參閱 [Floodgate 安裝指南](https://geysermc.org/wiki/floodgate/setup/)。
 
 ### 指令
 
