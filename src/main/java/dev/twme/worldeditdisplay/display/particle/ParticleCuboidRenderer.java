@@ -30,8 +30,7 @@ public class ParticleCuboidRenderer extends ParticleRenderer<CuboidRegion> {
     }
 
     @Override
-    public void render(CuboidRegion region) {
-        clear();
+    protected void renderPoints(CuboidRegion region) {
 
         Vector3 point1 = region.getPoint1();
         Vector3 point2 = region.getPoint2();

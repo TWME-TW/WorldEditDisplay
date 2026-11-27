@@ -21,6 +21,7 @@ import org.joml.Vector3f;
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
+import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.region.Region;
 
 /**
@@ -39,6 +40,7 @@ public abstract class RegionRenderer<T extends Region> {
     protected final Player player;
     protected final UUID playerUUID;
     protected final PlayerRenderSettings settings;
+    private final boolean bedrockViewer;
     // pool of shapes
     protected final List<Shape> shapes;
     private final Map<LineKey, Shape> retainedLineShapes;
@@ -75,6 +77,7 @@ public abstract class RegionRenderer<T extends Region> {
         this.player = player;
         this.playerUUID = player.getUniqueId();
         this.settings = settings;
+        this.bedrockViewer = PlayerData.getPlayerData(player).isBedrockPlayer();
         this.shapes = new ArrayList<>();
         this.retainedLineShapes = new HashMap<>();
         this.retainedLineShapeSet = new HashSet<>();
@@ -344,6 +347,9 @@ public abstract class RegionRenderer<T extends Region> {
     }
 
     private Shape createLineShape(Line line, Color color, float thickness) {
+        if (bedrockViewer) {
+            return spawnBedrockShape(BedrockTextGeometry.line(line.start(), line.end(), thickness), color, isSeeThrough());
+        }
         Location origin = getOrigin();
         Shape shape = plugin.getPacketShapeFactory()
                 .line(origin, line.start(), line.end(), thickness)
@@ -423,6 +429,10 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderParallelogram(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         if (isInvisible(color)) return;
+        if (bedrockViewer) {
+            shapes.add(spawnBedrockShape(BedrockTextGeometry.face(p1, p2, p3, false), color, isFillSeeThrough()));
+            return;
+        }
         Location origin = getOrigin();
         Shape shape = plugin.getPacketShapeFactory()
                 .parallelogram(origin, p1, p2, p3)
@@ -443,6 +453,10 @@ public abstract class RegionRenderer<T extends Region> {
      */
     protected void renderTriangle(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
         if (isInvisible(color)) return;
+        if (bedrockViewer) {
+            shapes.add(spawnBedrockShape(BedrockTextGeometry.face(p1, p2, p3, true), color, isFillSeeThrough()));
+            return;
+        }
         Location origin = getOrigin();
         Shape shape = plugin.getPacketShapeFactory()
                 .triangle(origin, p1, p2, p3)
@@ -456,6 +470,13 @@ public abstract class RegionRenderer<T extends Region> {
         shape.addViewer(player.getUniqueId());
         shape.spawn();
         shapes.add(shape);
+    }
+
+    private Shape spawnBedrockShape(List<BedrockTextGeometry.Panel> panels, Color color, boolean seeThrough) {
+        Shape shape = new BedrockTextShape(panels, color == null ? Color.WHITE : color, seeThrough);
+        shape.addViewer(playerUUID);
+        shape.spawn();
+        return shape;
     }
 
     public void setConfig(RenderConfig config) {

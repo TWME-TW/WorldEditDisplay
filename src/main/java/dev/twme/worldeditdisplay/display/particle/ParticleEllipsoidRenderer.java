@@ -30,8 +30,7 @@ public class ParticleEllipsoidRenderer extends ParticleRenderer<EllipsoidRegion>
     }
 
     @Override
-    public void render(EllipsoidRegion region) {
-        clear();
+    protected void renderPoints(EllipsoidRegion region) {
 
         Vector3 center = region.getCenter();
         Vector3 radii = region.getRadii();

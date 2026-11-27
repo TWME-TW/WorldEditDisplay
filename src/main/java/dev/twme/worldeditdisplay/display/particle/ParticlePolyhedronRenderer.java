@@ -31,8 +31,7 @@ public class ParticlePolyhedronRenderer extends ParticleRenderer<PolyhedronRegio
     }
 
     @Override
-    public void render(PolyhedronRegion region) {
-        clear();
+    protected void renderPoints(PolyhedronRegion region) {
 
         List<Vector3> vertices = region.getVertices();
         List<int[]> faces = region.getFaces();

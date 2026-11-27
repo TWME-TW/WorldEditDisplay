@@ -33,8 +33,7 @@ public class ParticlePolygonRenderer extends ParticleRenderer<PolygonRegion> {
     }
 
     @Override
-    public void render(PolygonRegion region) {
-        clear();
+    protected void renderPoints(PolygonRegion region) {
 
         List<Vector2> points2d = region.getPoints();
         if (points2d.isEmpty()) return;

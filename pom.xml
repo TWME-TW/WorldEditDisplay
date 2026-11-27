@@ -167,6 +167,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.geysermc.geyser</groupId>
+      <artifactId>api</artifactId>
+      <version>2.12.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>com.viaversion</groupId>
       <artifactId>viaversion-api</artifactId>
       <version>5.0.0</version>

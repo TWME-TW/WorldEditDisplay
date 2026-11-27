@@ -29,8 +29,7 @@ public class ParticleCylinderRenderer extends ParticleRenderer<CylinderRegion> {
     }
 
     @Override
-    public void render(CylinderRegion region) {
-        clear();
+    protected void renderPoints(CylinderRegion region) {
 
         Vector3 center = region.getCenter();
         if (center == null) return;
