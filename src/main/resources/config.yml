@@ -216,7 +216,7 @@ renderer:
     vertex_size: 1.0                    # Vertex marker size
     vertex_thickness: 0.06              # Vertex marker cube thickness
 
-# Particle Fallback Settings (for clients < 1.19.4 that do not support TextDisplay entities)
+# Particle Fallback Settings (for Bedrock and Java clients older than 1.19.4)
 particle_fallback:
   # Whether to enable particle fallback
   enabled: true

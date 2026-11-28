@@ -7,8 +7,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.player.PlayerData;
+import dev.twme.worldeditdisplay.util.BedrockPlayers;
 import dev.twme.worldeditdisplay.util.CuiProtocolUtil;
-import dev.twme.worldeditdisplay.util.FloodgateUtil;
 import dev.twme.worldeditdisplay.util.ServerRendererPreference;
 import dev.twme.worldeditdisplay.util.VersionChecker;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
@@ -41,9 +41,9 @@ public class PlayerJoinListener implements Listener {
             playerData.setServerRendererForced(true);
         }
 
-        // Detect Floodgate Bedrock players and disable CUI for them
-        if (FloodgateUtil.isBedrockPlayer(player)) {
-            playerData.setBedrockPlayer(true);
+        playerData.setBedrockPlayer(BedrockPlayers.isBedrockPlayer(player.getUniqueId()));
+        if (playerData.isBedrockPlayer()) {
+            playerData.setBedrockPrimitiveText(BedrockPlayers.supportsPrimitiveText(player.getUniqueId()));
         }
 
         // Detect client version: < 1.19.4 players use particle fallback (no TextDisplay support)

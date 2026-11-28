@@ -28,7 +28,7 @@ public class PlayerData {
     /**
      * Render mode preference for the particle-fallback feature.
      * <ul>
-     *   <li>{@link #AUTO} — uses ViaVersion client detection (< 1.19.4 → particles)</li>
+     *   <li>{@link #AUTO} — chooses the renderer based on client support</li>
      *   <li>{@link #TEXT_DISPLAY} — always use TextDisplay entities</li>
      *   <li>{@link #PARTICLE} — always use particle fallback</li>
      * </ul>
@@ -45,7 +45,8 @@ public class PlayerData {
     private volatile boolean forceServerRenderer = false;
     private boolean renderingEnabled = false; // default off; will enable on login if player has permission
     private boolean debugEnabled = false;
-    private volatile boolean bedrockPlayer = false; // true if joined via Floodgate (GeyserMC)
+    private volatile boolean bedrockPlayer = false;
+    private volatile boolean bedrockPrimitiveText;
     private boolean particleFallback = false; // true if player's client is < 1.19.4 (TextDisplay unsupported)
     private RenderMode renderMode = RenderMode.AUTO; // user preference, defaults to AUTO
 
@@ -166,17 +167,21 @@ public class PlayerData {
     }
 
     /**
-     * Check if this player is a Bedrock (Floodgate) player.
+     * Check if this player joined from Bedrock.
      */
     public boolean isBedrockPlayer() {
         return bedrockPlayer;
     }
 
     /**
-     * Set whether this player is a Bedrock (Floodgate) player.
+     * Set whether this player joined from Bedrock.
      */
     public void setBedrockPlayer(boolean bedrockPlayer) {
         this.bedrockPlayer = bedrockPlayer;
+    }
+
+    public void setBedrockPrimitiveText(boolean bedrockPrimitiveText) {
+        this.bedrockPrimitiveText = bedrockPrimitiveText;
     }
 
     /**
@@ -184,20 +189,19 @@ public class PlayerData {
      * <p>
      * Considers the player's {@link RenderMode} preference:
      * <ul>
-     *   <li>{@link RenderMode#TEXT_DISPLAY} — always returns {@code false}</li>
+     *   <li>{@link RenderMode#TEXT_DISPLAY} — requests display rendering</li>
      *   <li>{@link RenderMode#PARTICLE} — always returns {@code true}</li>
      *   <li>{@link RenderMode#AUTO} — returns the auto-detected value</li>
      * </ul>
      * <p>
-     * Bedrock (Floodgate) players are always forced to particle fallback
-     * since they do not support TextDisplay entities.
+     * Bedrock needs direct access to a compatible Geyser connection for primitive rendering.
      */
     public boolean isParticleFallback() {
-        if (isBedrockPlayer()) return true;
+        if (bedrockPlayer && !bedrockPrimitiveText) return true;
         return switch (renderMode) {
             case TEXT_DISPLAY -> false;
             case PARTICLE -> true;
-            case AUTO -> particleFallback;
+            case AUTO -> !bedrockPlayer && particleFallback;
         };
     }
 

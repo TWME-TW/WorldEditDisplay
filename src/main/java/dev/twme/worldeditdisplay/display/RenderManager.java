@@ -619,7 +619,6 @@ public class RenderManager {
 
         try {
             renderer.render(sharerRegion);
-            renderer.postRender();
             // Do NOT clear dirty here – the sharer's own updateRender handles that
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "shared particle render fail for viewer "
@@ -1055,7 +1054,6 @@ public class RenderManager {
 
         try {
             currentRenderer.render(mainSelection);
-            currentRenderer.postRender();
             mainSelection.clearDirty();
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "particle main render fail: " + player.getName(), e);
@@ -1113,7 +1111,6 @@ public class RenderManager {
 
             try {
                 renderer.render(region);
-                renderer.postRender();
                 region.clearDirty();
             } catch (Exception e) {
                 plugin.getLogger().log(Level.SEVERE, "multi render fail: " + player.getName(), e);

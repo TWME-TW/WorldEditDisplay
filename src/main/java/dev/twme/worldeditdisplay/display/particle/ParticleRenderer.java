@@ -18,17 +18,19 @@ import dev.twme.worldeditdisplay.region.Vector3;
 /**
  * Abstract base class for rendering region selections using Bukkit Particle API.
  * <p>
- * Designed for players whose client version is below 1.19.4 (no TextDisplay support).
+ * Used by Bedrock players and Java players using the particle fallback.
  * Uses {@link Player#spawnParticle(Particle, Location, int, double, double, double, double)}
  * so that particles are sent to exactly one viewer, preserving per-player visibility.
  * <p>
- * Subclasses implement {@link #render(Region)} to discretise the region geometry
+ * Subclasses implement {@link #renderPoints(Region)} to discretise the region geometry
  * into point clouds, and {@link #tick()} sends them to the owning player (or to
  * shared viewers).
  *
  * @param <T> the region type this renderer handles
  */
 public abstract class ParticleRenderer<T extends Region> {
+
+    private static final Particle DUST_PARTICLE = resolveDustParticle();
 
     protected final WorldEditDisplay plugin;
     protected final Player player;
@@ -47,9 +49,6 @@ public abstract class ParticleRenderer<T extends Region> {
     // When non-null, ALL particles use this colour (shared selections via DUST).
     // When null, edge points use FLAME and marker points use the configured DustOptions color.
     protected Color sharedColor;
-
-    // Per-frame cache to avoid recreating lists on every tick
-    private boolean pointsDirty = true;
 
     // Configuration (will be loaded from ParticleFallbackSettings in Phase 3)
     protected double edgeDensity = 1.0;
@@ -73,10 +72,19 @@ public abstract class ParticleRenderer<T extends Region> {
     // ─── Abstract methods ────────────────────────────────────────────────────
 
     /**
+     * Rebuild the particle geometry while retaining the current viewers.
+     */
+    public final synchronized void render(T region) {
+        clearPoints();
+        renderPoints(region);
+        limitEdgePoints();
+    }
+
+    /**
      * Compute the point cloud for this region.
      * Subclasses must populate {@link #edgePoints} and {@link #markerPoints}.
      */
-    public abstract void render(T region);
+    protected abstract void renderPoints(T region);
 
     /**
      * @return the concrete region type this renderer handles
@@ -89,7 +97,7 @@ public abstract class ParticleRenderer<T extends Region> {
      * Send all cached points as particles to every viewer.
      * Call this periodically (e.g. every 5 ticks) via a shared scheduler task.
      */
-    public void tick() {
+    public synchronized void tick() {
         if (edgePoints.isEmpty() && coloredEdgePoints.isEmpty() && markerPoints.isEmpty()) return;
         if (viewers.isEmpty()) return;
 
@@ -121,20 +129,28 @@ public abstract class ParticleRenderer<T extends Region> {
         }
     }
 
+    private static Particle resolveDustParticle() {
+        try {
+            return Particle.valueOf("DUST");
+        } catch (IllegalArgumentException ignored) {
+            return Particle.valueOf("REDSTONE");
+        }
+    }
+
     /** All point types rendered as DUST with the same colour (shared / viewall mode). */
     private void sendPointsAsDust(Player viewer, Particle.DustOptions dustOptions) {
         for (Vector3 point : edgePoints) {
-            viewer.spawnParticle(Particle.DUST,
+            viewer.spawnParticle(DUST_PARTICLE,
                     point.getX(), point.getY(), point.getZ(),
                     0, 0.0, 0.0, 0.0, 0.0, dustOptions);
         }
         for (ColoredEdgePoint cp : coloredEdgePoints) {
-            viewer.spawnParticle(Particle.DUST,
+            viewer.spawnParticle(DUST_PARTICLE,
                     cp.position.getX(), cp.position.getY(), cp.position.getZ(),
                     0, 0.0, 0.0, 0.0, 0.0, dustOptions);
         }
         for (MarkerPoint mp : markerPoints) {
-            viewer.spawnParticle(Particle.DUST,
+            viewer.spawnParticle(DUST_PARTICLE,
                     mp.position.getX(), mp.position.getY(), mp.position.getZ(),
                     0, 0.0, 0.0, 0.0, 0.0, dustOptions);
         }
@@ -148,7 +164,7 @@ public abstract class ParticleRenderer<T extends Region> {
             Particle.DustOptions dustOptions = new Particle.DustOptions(
                     Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()),
                     1.0f);
-            viewer.spawnParticle(Particle.DUST,
+            viewer.spawnParticle(DUST_PARTICLE,
                     cp.position.getX(), cp.position.getY(), cp.position.getZ(),
                     0, 0.0, 0.0, 0.0, 0.0, dustOptions);
         }
@@ -162,7 +178,7 @@ public abstract class ParticleRenderer<T extends Region> {
             Particle.DustOptions dustOptions = new Particle.DustOptions(
                     Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()),
                     1.0f);
-            viewer.spawnParticle(Particle.DUST,
+            viewer.spawnParticle(DUST_PARTICLE,
                     mp.position.getX(), mp.position.getY(), mp.position.getZ(),
                     0, 0.0, 0.0, 0.0, 0.0, dustOptions);
         }
@@ -173,35 +189,31 @@ public abstract class ParticleRenderer<T extends Region> {
     /**
      * Clear all cached points and reset state.
      */
-    public void clear() {
+    public synchronized void clear() {
+        clearPoints();
+        viewers.clear();
+    }
+
+    private void clearPoints() {
         edgePoints.clear();
         coloredEdgePoints.clear();
         markerPoints.clear();
-        viewers.clear();
-        pointsDirty = true;
-    }
-
-    /**
-     * Mark points as needing recomputation on the next tick.
-     */
-    protected void markDirty() {
-        pointsDirty = true;
     }
 
     // ─── Viewer management ───────────────────────────────────────────────────
 
-    public void addViewer(UUID viewerId) {
+    public synchronized void addViewer(UUID viewerId) {
         if (!viewers.contains(viewerId)) {
             viewers.add(viewerId);
         }
     }
 
-    public void removeViewer(UUID viewerId) {
+    public synchronized void removeViewer(UUID viewerId) {
         viewers.remove(viewerId);
     }
 
-    public List<UUID> getViewers() {
-        return viewers;
+    public synchronized List<UUID> getViewers() {
+        return List.copyOf(viewers);
     }
 
     // ─── Shared colour ───────────────────────────────────────────────────────
@@ -401,11 +413,10 @@ public abstract class ParticleRenderer<T extends Region> {
     private static final double MIN_DOWNGRADE_SCALE = 0.25;
 
     /**
-     * Called automatically by RenderManager after {@link #render(Region)}.
      * If the total particle count exceeds the threshold, edge points are
      * sub-sampled to keep packet count manageable.
      */
-    public void postRender() {
+    private void limitEdgePoints() {
         int total = edgePoints.size() + coloredEdgePoints.size() + markerPoints.size();
         if (total <= LARGE_SELECTION_THRESHOLD) return;
 
@@ -427,7 +438,7 @@ public abstract class ParticleRenderer<T extends Region> {
     /**
      * @return the total number of edge + marker points currently in the cache
      */
-    public int getPointCount() {
+    public synchronized int getPointCount() {
         return edgePoints.size() + coloredEdgePoints.size() + markerPoints.size();
     }
 
