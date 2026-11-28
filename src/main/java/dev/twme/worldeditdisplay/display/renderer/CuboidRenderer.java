@@ -1,5 +1,6 @@
 package dev.twme.worldeditdisplay.display.renderer;
 
+import org.bukkit.Axis;
 import org.bukkit.Color;
 import org.bukkit.entity.Player;
 import org.joml.Vector3f;
@@ -140,13 +141,13 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
         float thickness = settings.getCuboidGridThickness();
         for (double z = z1; z <= z2; z += spacingZ) {
             if (z > z1 && z2 - z < SKIP_THRESHOLD) continue;
-            renderLine(new Line(new Vector3f((float) x1, (float) y, (float) z),
-                new Vector3f((float) x2, (float) y, (float) z)), color, thickness);
+            renderGridLine(new Line(new Vector3f((float) x1, (float) y, (float) z),
+                new Vector3f((float) x2, (float) y, (float) z)), color, thickness, Axis.Z, z1, z2);
         }
         for (double x = x1; x <= x2; x += spacingX) {
             if (x > x1 && x2 - x < SKIP_THRESHOLD) continue;
-            renderLine(new Line(new Vector3f((float) x, (float) y, (float) z1),
-                new Vector3f((float) x, (float) y, (float) z2)), color, thickness);
+            renderGridLine(new Line(new Vector3f((float) x, (float) y, (float) z1),
+                new Vector3f((float) x, (float) y, (float) z2)), color, thickness, Axis.X, x1, x2);
         }
     }
 
@@ -155,13 +156,13 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
         float thickness = settings.getCuboidGridThickness();
         for (double y = y1; y <= y2; y += spacingY) {
             if (y > y1 && y2 - y < SKIP_THRESHOLD) continue;
-            renderLine(new Line(new Vector3f((float) x1, (float) y, (float) z),
-                new Vector3f((float) x2, (float) y, (float) z)), color, thickness);
+            renderGridLine(new Line(new Vector3f((float) x1, (float) y, (float) z),
+                new Vector3f((float) x2, (float) y, (float) z)), color, thickness, Axis.Y, y1, y2);
         }
         for (double x = x1; x <= x2; x += spacingX) {
             if (x > x1 && x2 - x < SKIP_THRESHOLD) continue;
-            renderLine(new Line(new Vector3f((float) x, (float) y1, (float) z),
-                new Vector3f((float) x, (float) y2, (float) z)), color, thickness);
+            renderGridLine(new Line(new Vector3f((float) x, (float) y1, (float) z),
+                new Vector3f((float) x, (float) y2, (float) z)), color, thickness, Axis.X, x1, x2);
         }
     }
 
@@ -170,13 +171,13 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
         float thickness = settings.getCuboidGridThickness();
         for (double z = z1; z <= z2; z += spacingZ) {
             if (z > z1 && z2 - z < SKIP_THRESHOLD) continue;
-            renderLine(new Line(new Vector3f((float) x, (float) y1, (float) z),
-                new Vector3f((float) x, (float) y2, (float) z)), color, thickness);
+            renderGridLine(new Line(new Vector3f((float) x, (float) y1, (float) z),
+                new Vector3f((float) x, (float) y2, (float) z)), color, thickness, Axis.Z, z1, z2);
         }
         for (double y = y1; y <= y2; y += spacingY) {
             if (y > y1 && y2 - y < SKIP_THRESHOLD) continue;
-            renderLine(new Line(new Vector3f((float) x, (float) y, (float) z1),
-                new Vector3f((float) x, (float) y, (float) z2)), color, thickness);
+            renderGridLine(new Line(new Vector3f((float) x, (float) y, (float) z1),
+                new Vector3f((float) x, (float) y, (float) z2)), color, thickness, Axis.Y, y1, y2);
         }
     }
 
@@ -192,17 +193,17 @@ public class CuboidRenderer extends RegionRenderer<CuboidRegion> {
         Vector3f v111 = new Vector3f((float) x2, (float) y2, (float) z2);
 
         // Bottom face (y1): p1=v000, p2=v100 (width), p3=v001 (depth)
-        renderParallelogram(v000, v100, v001, fillColor);
+        renderCuboidFace(v000, v100, v001, fillColor);
         // Top face (y2): p1=v010, p2=v110 (width), p3=v011 (depth)
-        renderParallelogram(v010, v110, v011, fillColor);
+        renderCuboidFace(v010, v110, v011, fillColor);
         // Front face (z1): p1=v000, p2=v100 (width), p3=v010 (height)
-        renderParallelogram(v000, v100, v010, fillColor);
+        renderCuboidFace(v000, v100, v010, fillColor);
         // Back face (z2): p1=v001, p2=v101 (width), p3=v011 (height)
-        renderParallelogram(v001, v101, v011, fillColor);
+        renderCuboidFace(v001, v101, v011, fillColor);
         // Left face (x1): p1=v000, p2=v001 (depth), p3=v010 (height)
-        renderParallelogram(v000, v001, v010, fillColor);
+        renderCuboidFace(v000, v001, v010, fillColor);
         // Right face (x2): p1=v100, p2=v101 (depth), p3=v110 (height)
-        renderParallelogram(v100, v101, v110, fillColor);
+        renderCuboidFace(v100, v101, v110, fillColor);
     }
 
     public void setRenderGrid(boolean render) {

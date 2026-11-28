@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import org.bukkit.Axis;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -21,6 +22,7 @@ import org.joml.Vector3f;
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.worldeditdisplay.WorldEditDisplay;
 import dev.twme.worldeditdisplay.config.PlayerRenderSettings;
+import dev.twme.worldeditdisplay.display.renderer.BedrockTextGeometry.Stroke;
 import dev.twme.worldeditdisplay.player.PlayerData;
 import dev.twme.worldeditdisplay.region.Region;
 
@@ -65,6 +67,8 @@ public abstract class RegionRenderer<T extends Region> {
             .comparingInt(LineKey::color)
             .thenComparingInt(LineKey::thickness)
             .thenComparing(LineKey::seeThrough)
+            .thenComparing(key -> key.stroke().axis(), Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparingInt(key -> key.stroke().inward())
             .thenComparingDouble(LineKey::startX)
             .thenComparingDouble(LineKey::startY)
             .thenComparingDouble(LineKey::startZ)
@@ -348,7 +352,8 @@ public abstract class RegionRenderer<T extends Region> {
 
     private Shape createLineShape(Line line, Color color, float thickness) {
         if (bedrockViewer) {
-            return spawnBedrockShape(BedrockTextGeometry.line(line.start(), line.end(), thickness), color, isSeeThrough());
+            return spawnBedrockShape(BedrockTextGeometry.line(line.start(), line.end(), thickness, line.stroke()),
+                    color, isSeeThrough());
         }
         Location origin = getOrigin();
         Shape shape = plugin.getPacketShapeFactory()
@@ -374,6 +379,16 @@ public abstract class RegionRenderer<T extends Region> {
         }
     }
 
+    protected void renderGridLine(Line line, Color color, float thickness, Axis across,
+                                  double min, double max) {
+        if (bedrockViewer) {
+            float coordinate = line.start().get(across.ordinal());
+            int inward = coordinate == (float) min ? 1 : coordinate == (float) max ? -1 : 0;
+            line = new Line(line.start(), line.end(), new Stroke(across, inward));
+        }
+        renderLine(line, color, thickness);
+    }
+
     /**
      * Render a cube marker
      */
@@ -397,7 +412,7 @@ public abstract class RegionRenderer<T extends Region> {
         Vector3f v110 = new Vector3f((float) maxX, (float) maxY, (float) minZ);
         Vector3f v111 = new Vector3f((float) maxX, (float) maxY, (float) maxZ);
 
-        renderLines(color, thickness,
+        Line[] edges = {
                 // Bottom face
                 new Line(v000, v001), new Line(v000, v100),
                 new Line(v001, v101), new Line(v100, v101),
@@ -409,7 +424,27 @@ public abstract class RegionRenderer<T extends Region> {
                 // Vertical edges
                 new Line(v000, v010), new Line(v001, v011),
                 new Line(v100, v110), new Line(v101, v111)
-        );
+        };
+        if (bedrockViewer) {
+            for (Line edge : edges) {
+                renderBedrockBoxEdge(edge, v000, v111, color, thickness);
+            }
+        } else {
+            renderLines(color, thickness, edges);
+        }
+    }
+
+    private void renderBedrockBoxEdge(Line edge, Vector3f min, Vector3f max, Color color, float thickness) {
+        // Each edge has an inward stroke on both adjoining faces.
+        for (Axis axis : Axis.values()) {
+            int component = axis.ordinal();
+            float start = edge.start().get(component);
+            float end = edge.end().get(component);
+            float span = max.get(component) - min.get(component);
+            if (start != end || span <= 0) continue;
+            int inward = start == min.get(component) ? 1 : -1;
+            renderLine(new Line(edge.start(), edge.end(), new Stroke(axis, inward)), color, Math.min(thickness, span));
+        }
     }
 
     /**
@@ -428,9 +463,19 @@ public abstract class RegionRenderer<T extends Region> {
      * The fourth corner is automatically p2 + p3 - p1.
      */
     protected void renderParallelogram(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
+        renderParallelogram(p1, p2, p3, color, false);
+    }
+
+    protected void renderCuboidFace(Vector3f p1, Vector3f p2, Vector3f p3, Color color) {
+        renderParallelogram(p1, p2, p3, color, true);
+    }
+
+    private void renderParallelogram(Vector3f p1, Vector3f p2, Vector3f p3, Color color, boolean cuboid) {
         if (isInvisible(color)) return;
         if (bedrockViewer) {
-            shapes.add(spawnBedrockShape(BedrockTextGeometry.face(p1, p2, p3, false), color, isFillSeeThrough()));
+            var panels = cuboid ? BedrockTextGeometry.cuboidFace(p1, p2, p3)
+                    : BedrockTextGeometry.face(p1, p2, p3, false);
+            shapes.add(spawnBedrockShape(panels, color, isFillSeeThrough()));
             return;
         }
         Location origin = getOrigin();
@@ -544,7 +589,11 @@ public abstract class RegionRenderer<T extends Region> {
         return playerData.getMultiRegions().containsValue(region);
     }
 
-    protected record Line(Vector3f start, Vector3f end){};
+    protected record Line(Vector3f start, Vector3f end, Stroke stroke) {
+        protected Line(Vector3f start, Vector3f end) {
+            this(start, end, Stroke.AUTO);
+        }
+    }
     private record PendingLine(Line line, Color color, float thickness) {}
     public record RetainedLineStats(int reusedLines, int translatedLines, int spawnedLines, int removedLines,
                                     int removedTransientShapes) {
@@ -575,9 +624,10 @@ public abstract class RegionRenderer<T extends Region> {
 
     record LineKey(float startX, float startY, float startZ,
                    float endX, float endY, float endZ,
-                   int color, int thickness, boolean seeThrough) {
+                   int color, int thickness, boolean seeThrough, Stroke stroke) {
         private boolean isTranslationOf(LineKey moved, float dx, float dy, float dz) {
             return color == moved.color && thickness == moved.thickness && seeThrough == moved.seeThrough
+                    && stroke.equals(moved.stroke)
                     && Math.abs(startX + dx - moved.startX) < TRANSLATION_EPSILON
                     && Math.abs(startY + dy - moved.startY) < TRANSLATION_EPSILON
                     && Math.abs(startZ + dz - moved.startZ) < TRANSLATION_EPSILON
@@ -592,7 +642,7 @@ public abstract class RegionRenderer<T extends Region> {
             return new LineKey(
                     start.x, start.y, start.z,
                     end.x, end.y, end.z,
-                    color.asARGB(), Float.floatToIntBits(thickness), seeThrough);
+                    color.asARGB(), Float.floatToIntBits(thickness), seeThrough, line.stroke());
         }
     }
 }
